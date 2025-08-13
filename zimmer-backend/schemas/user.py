@@ -12,6 +12,7 @@ class UserSignupResponse(BaseModel):
     message: str
     user_id: int
     email: str
+    access_token: str
 
 class UserLoginRequest(BaseModel):
     email: EmailStr
