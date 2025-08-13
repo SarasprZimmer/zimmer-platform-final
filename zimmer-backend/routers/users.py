@@ -57,11 +57,15 @@ async def signup_user(
         db.add(new_user)
         db.commit()
         db.refresh(new_user)
-        
+
+        # Create JWT token for the newly created user
+        token = create_jwt_token(new_user.id, new_user.name, new_user.email)
+
         return UserSignupResponse(
             message="User signed up successfully",
             user_id=new_user.id,
-            email=new_user.email
+            email=new_user.email,
+            access_token=token,
         )
         
     except IntegrityError:

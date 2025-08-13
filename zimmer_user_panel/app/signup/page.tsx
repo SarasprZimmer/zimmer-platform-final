@@ -5,6 +5,13 @@ import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import Cookies from 'js-cookie';
 
+interface SignupResponse {
+  message: string;
+  user_id: number;
+  email: string;
+  access_token: string;
+}
+
 export default function SignupPage() {
   const router = useRouter();
   const [name, setName] = useState('');
@@ -34,8 +41,7 @@ export default function SignupPage() {
         const errorData = await response.json();
         throw new Error(errorData.detail || 'خطا در ثبت نام');
       }
-      const data = await response.json();
-      console.log('Signup/Login response:', data);
+      const data: SignupResponse = await response.json();
       Cookies.set('auth-token', data.access_token, { expires: 7 });
       router.push('/dashboard');
     } catch (err: any) {
