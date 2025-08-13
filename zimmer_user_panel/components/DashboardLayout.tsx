@@ -7,7 +7,7 @@ import { User } from '@/lib/auth'
 
 interface DashboardLayoutProps {
   children: React.ReactNode
-  user: User
+  user?: User | null
 }
 
 export default function DashboardLayout({ children, user }: DashboardLayoutProps) {
