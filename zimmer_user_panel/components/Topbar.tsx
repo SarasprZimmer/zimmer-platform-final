@@ -8,7 +8,7 @@ import {
 } from '@heroicons/react/24/outline'
 
 interface TopbarProps {
-  user: User
+  user?: User | null
   onMenuToggle?: () => void
 }
 

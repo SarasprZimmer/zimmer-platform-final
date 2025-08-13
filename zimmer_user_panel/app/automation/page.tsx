@@ -2,9 +2,9 @@ import DashboardLayout from '@/components/DashboardLayout'
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth-server'
 import { redirect } from 'next/navigation'
-import { 
-  RocketLaunchIcon, 
-  StarIcon, 
+import {
+  RocketLaunchIcon,
+  StarIcon,
   SparklesIcon,
   CheckCircleIcon,
   ClockIcon,
@@ -15,10 +15,6 @@ import {
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline'
 import Link from 'next/link'
-
-interface AutomationPageProps {
-  params: { automation_id: string }
-}
 
 interface Automation {
   id: number
@@ -44,7 +40,7 @@ interface UserAutomation {
   created_at: string
 }
 
-export default async function AutomationPage({ params }: AutomationPageProps) {
+export default async function AutomationPage({ params }: any) {
   const cookieStore = await cookies();
   const token = cookieStore.get('auth-token')?.value;
   const tokenData = token ? await verifyToken(token) : null;
