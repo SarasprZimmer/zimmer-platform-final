@@ -10,6 +10,9 @@ export default function SignupPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordHint, setPasswordHint] = useState('');
+  const [passwordError, setPasswordError] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [mounted, setMounted] = useState(false);
@@ -18,8 +21,37 @@ export default function SignupPage() {
     setMounted(true);
   }, []);
 
+  const getPasswordHint = (value: string) => {
+    if (value.length < 8) return 'رمز عبور باید حداقل ۸ کاراکتر باشد';
+    if (!/\d/.test(value)) return 'رمز عبور باید شامل حداقل یک عدد باشد';
+    return 'رمز عبور قوی است';
+  };
+
+  const handlePasswordChange = (value: string) => {
+    setPassword(value);
+    setPasswordHint(getPasswordHint(value));
+    if (confirmPassword && confirmPassword !== value) {
+      setPasswordError('رمز عبور و تکرار آن یکسان نیستند');
+    } else {
+      setPasswordError('');
+    }
+  };
+
+  const handleConfirmPasswordChange = (value: string) => {
+    setConfirmPassword(value);
+    if (password !== value) {
+      setPasswordError('رمز عبور و تکرار آن یکسان نیستند');
+    } else {
+      setPasswordError('');
+    }
+  };
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (password !== confirmPassword) {
+      setPasswordError('رمز عبور و تکرار آن یکسان نیستند');
+      return;
+    }
     setLoading(true);
     setError('');
     try {
@@ -89,11 +121,34 @@ export default function SignupPage() {
               <input
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => handlePasswordChange(e.target.value)}
                 placeholder="••••••••"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 required
               />
+              {passwordHint && (
+                <p
+                  className={`text-xs mt-1 ${
+                    passwordHint === 'رمز عبور قوی است' ? 'text-green-600' : 'text-gray-500'
+                  }`}
+                >
+                  {passwordHint}
+                </p>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">تکرار رمز عبور</label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => handleConfirmPasswordChange(e.target.value)}
+                placeholder="••••••••"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                required
+              />
+              {passwordError && (
+                <p className="text-xs text-red-600 mt-1">{passwordError}</p>
+              )}
             </div>
             {error && (
               <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
