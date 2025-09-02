@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, Enum
+from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, Enum, JSON
 from sqlalchemy.sql import func
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
@@ -30,6 +30,14 @@ class Automation(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     
+    # Health check fields
+    health_check_url = Column(String(500), nullable=True)
+    health_status = Column(String(16), nullable=False, default="unknown", index=True)
+    last_health_at = Column(DateTime(timezone=True), nullable=True)
+    health_details = Column(JSON, nullable=True)
+    is_listed = Column(Boolean, nullable=False, default=False, index=True)
+    
     # Relationships
     kb_status_history = relationship("KBStatusHistory", back_populates="automation")
-    kb_templates = relationship("KBTemplate", back_populates="automation") 
+    kb_templates = relationship("KBTemplate", back_populates="automation")
+    openai_keys = relationship("OpenAIKey", back_populates="automation") 

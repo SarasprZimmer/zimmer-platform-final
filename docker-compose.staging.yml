@@ -1,0 +1,4 @@
+# identical to prod for parity, but you can point NEXT_PUBLIC_API_BASE_URL to staging API domain if used
+version: "3.9"
+services: {}
+# keep empty now; we'll run prod compose for staging to ensure parity

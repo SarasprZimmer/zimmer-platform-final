@@ -4,6 +4,7 @@ from models.automation import Automation
 from models.knowledge import KnowledgeEntry
 from models.ticket import Ticket, TicketStatus
 from database import SessionLocal
+from utils.security import hash_password
 
 def seed_sample_data():
     """
@@ -18,12 +19,13 @@ def seed_sample_data():
                 name="Admin User",
                 email="admin@zimmer.com",
                 phone_number="+1234567890",
-                is_admin=True
+                password_hash=hash_password("admin123"),
+                role="manager"
             )
             db.add(admin_user)
             db.commit()
             db.refresh(admin_user)
-            print("✅ Admin user created")
+            print("✅ Admin user created: admin@zimmer.com / admin123")
         else:
             print("ℹ️ Admin user already exists")
 
@@ -34,14 +36,32 @@ def seed_sample_data():
                 name="John Doe",
                 email="user@example.com",
                 phone_number="+1987654321",
-                is_admin=False
+                password_hash=hash_password("user123"),
+                role="support_staff"
             )
             db.add(regular_user)
             db.commit()
             db.refresh(regular_user)
-            print("✅ Regular user created")
+            print("✅ Regular user created: user@example.com / user123")
         else:
             print("ℹ️ Regular user already exists")
+            
+        # Also create test@example.com for consistency with frontend testing
+        test_user = db.query(User).filter(User.email == "test@example.com").first()
+        if not test_user:
+            test_user = User(
+                name="Test User",
+                email="test@example.com",
+                phone_number="+1555555555",
+                password_hash=hash_password("test123"),
+                role="support_staff"
+            )
+            db.add(test_user)
+            db.commit()
+            db.refresh(test_user)
+            print("✅ Test user created: test@example.com / test123")
+        else:
+            print("ℹ️ Test user already exists")
 
         # Check if automations already exist
         travel_ai = db.query(Automation).filter(Automation.slug == "travel-ai").first()

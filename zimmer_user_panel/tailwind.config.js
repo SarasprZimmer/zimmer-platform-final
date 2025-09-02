@@ -9,6 +9,8 @@ module.exports = {
     extend: {
       fontFamily: {
         'vazir': ['Vazirmatn', 'sans-serif'],
+        'farhang': ['Farhang2', 'Vazirmatn', 'Tahoma', 'Arial', 'sans-serif'],
+        'sans': ['Farhang2', 'Vazirmatn', 'Tahoma', 'Arial', 'sans-serif'],
       },
       colors: {
         primary: {
@@ -35,6 +37,14 @@ module.exports = {
           800: '#1e293b',
           900: '#0f172a',
         },
+      },
+      spacing: {
+        '18': '4.5rem',
+        '88': '22rem',
+        '128': '32rem',
+      },
+      borderRadius: {
+        '4xl': '2rem',
       },
     },
   },

@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import Layout from '../components/Layout';
 import { PlusIcon, PencilIcon, TrashIcon, EyeIcon, KeyIcon } from '@heroicons/react/24/outline';
+import api from '../lib/api';
 
 interface Automation {
   id: number;
   name: string;
   description: string;
-  price: number;
+  price_per_token: number;
   pricing_type: 'per_message' | 'per_minute' | 'per_session';
   status: boolean;
   api_base_url?: string;
@@ -23,7 +24,7 @@ interface Automation {
 interface AutomationFormData {
   name: string;
   description: string;
-  price: number;
+  price_per_token: number;
   pricing_type: 'per_message' | 'per_minute' | 'per_session';
   status: boolean;
   api_base_url: string;
@@ -51,7 +52,7 @@ export default function Automations() {
   const [formData, setFormData] = useState<AutomationFormData>({
     name: '',
     description: '',
-    price: 0,
+    price_per_token: 0,
     pricing_type: 'per_message',
     status: true,
     api_base_url: '',
@@ -70,11 +71,8 @@ export default function Automations() {
 
   const fetchAutomations = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/admin/automations`);
-      if (response.ok) {
-        const data = await response.json();
-        setAutomations(data);
-      }
+      const response = await api.get('/api/admin/automations');
+      setAutomations(response.data);
     } catch (error) {
       console.error('Error fetching automations:', error);
     } finally {
@@ -85,27 +83,16 @@ export default function Automations() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const url = editingAutomation 
-        ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/admin/automations/${editingAutomation.id}`
-        : `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/admin/automations`;
-      
-      const method = editingAutomation ? 'PUT' : 'POST';
-      
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(formData)
-      });
-
-      if (response.ok) {
-        setShowForm(false);
-        setEditingAutomation(null);
-        resetForm();
-        fetchAutomations();
+      if (editingAutomation) {
+        await api.put(`/api/admin/automations/${editingAutomation.id}`, formData);
+      } else {
+        await api.post('/api/admin/automations', formData);
       }
+      
+      setShowForm(false);
+      setEditingAutomation(null);
+      resetForm();
+      fetchAutomations();
     } catch (error) {
       console.error('Error saving automation:', error);
     }
@@ -115,18 +102,10 @@ export default function Automations() {
     if (!selectedAutomation) return;
     
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/admin/automations/${selectedAutomation.id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-
-      if (response.ok) {
-        setShowDeleteConfirm(false);
-        setSelectedAutomation(null);
-        fetchAutomations();
-      }
+      await api.delete(`/api/admin/automations/${selectedAutomation.id}`);
+      setShowDeleteConfirm(false);
+      setSelectedAutomation(null);
+      fetchAutomations();
     } catch (error) {
       console.error('Error deleting automation:', error);
     }
@@ -136,19 +115,10 @@ export default function Automations() {
     if (!selectedAutomation) return;
     
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/admin/automations/${selectedAutomation.id}/rotate-token`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setNewToken(data.new_token);
-        setShowRotateToken(true);
-        fetchAutomations();
-      }
+      const response = await api.post(`/api/admin/automations/${selectedAutomation.id}/rotate-token`);
+      setNewToken(response.data.new_token);
+      setShowRotateToken(true);
+      fetchAutomations();
     } catch (error) {
       console.error('Error rotating token:', error);
     }
@@ -158,7 +128,7 @@ export default function Automations() {
     setFormData({
       name: '',
       description: '',
-      price: 0,
+              price_per_token: 0,
       pricing_type: 'per_message',
       status: true,
       api_base_url: '',
@@ -174,7 +144,7 @@ export default function Automations() {
     setFormData({
       name: automation.name,
       description: automation.description,
-      price: automation.price,
+              price_per_token: automation.price_per_token,
       pricing_type: automation.pricing_type,
       status: automation.status,
       api_base_url: automation.api_base_url || '',
@@ -286,7 +256,7 @@ export default function Automations() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
-                        {automation.price.toLocaleString()} تومان
+                        {automation.price_per_token ? automation.price_per_token.toLocaleString() : '0'} تومان
                       </div>
                       <div className="text-sm text-gray-500">
                         {pricingTypeLabels[automation.pricing_type]}
@@ -396,8 +366,8 @@ export default function Automations() {
                       type="number"
                       required
                       min="0"
-                      value={formData.price}
-                      onChange={(e) => setFormData({...formData, price: Number(e.target.value)})}
+                                              value={formData.price_per_token}
+                      onChange={(e) => setFormData({...formData, price_per_token: Number(e.target.value)})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>

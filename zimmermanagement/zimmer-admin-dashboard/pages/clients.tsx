@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import ProtectedRoute from '../components/ProtectedRoute';
 import ClientCard from '../components/ClientCard';
-import { authenticatedFetch } from '../lib/auth';
+import { adminAPI } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
+import { CardSkeleton } from '../components/LoadingSkeletons';
 
 interface User {
   id: number;
@@ -32,7 +33,6 @@ export default function Clients() {
   const [userAutomations, setUserAutomations] = useState<UserAutomation[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [showDemoOnly, setShowDemoOnly] = useState(false);
   const { user } = useAuth();
@@ -63,35 +63,19 @@ export default function Clients() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      setError(null);
       if (!user) return;
       
-      const [usersResponse, automationsResponse] = await Promise.all([
-        authenticatedFetch(`/api/admin/users`),
-        authenticatedFetch(`/api/admin/user-automations`)
+      const [usersData, automationsData] = await Promise.all([
+        adminAPI.getUsers(),
+        adminAPI.getUserAutomations()
       ]);
       
-      if (usersResponse.status === 404) {
-        setError('Client management feature is not yet implemented on the backend. Please contact your administrator.');
-        setUsers([]);
-        return;
-      }
-      
-      if (!usersResponse.ok) {
-        throw new Error(`HTTP ${usersResponse.status}: ${usersResponse.statusText}`);
-      }
-      
-      const usersData = await usersResponse.json();
-      setUsers(Array.isArray(usersData.users) ? usersData.users : []);
-      
-      if (automationsResponse.ok) {
-        const automationsData = await automationsResponse.json();
-        setUserAutomations(Array.isArray(automationsData) ? automationsData : []);
-      }
+      setUsers(Array.isArray(usersData) ? usersData : []);
+      setUserAutomations(Array.isArray(automationsData) ? automationsData : []);
     } catch (err) {
       console.error('Error fetching users:', err);
-      setError('Failed to load clients. Please try again later.');
       setUsers([]); // Defensive: set to empty array on error
+      setUserAutomations([]);
     } finally {
       setLoading(false);
     }
@@ -120,9 +104,10 @@ export default function Clients() {
             </div>
             
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                <span className="ml-3 text-gray-600">Loading clients...</span>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <CardSkeleton key={index} />
+                ))}
               </div>
             </div>
           </div>
@@ -131,36 +116,7 @@ export default function Clients() {
     );
   }
 
-  if (error) {
-    return (
-      <Layout title="Clients">
-        <div className="space-y-6">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">Client Management</h2>
-            <p className="text-gray-600 mt-2">Manage your clients and their automations</p>
-          </div>
-          
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div className="text-center py-12">
-              <div className="text-red-600 mb-4">
-                <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Error Loading Clients</h3>
-              <p className="text-gray-600 mb-4">{error}</p>
-              <button
-                onClick={fetchUsers}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                Try Again
-              </button>
-            </div>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
+
 
   return (
     <ProtectedRoute>

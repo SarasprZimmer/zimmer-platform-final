@@ -28,6 +28,23 @@ async def create_knowledge_entry(
     Create a new knowledge base entry (admin only)
     """
     try:
+        # Validate and sanitize input
+        if not knowledge_data.category or len(knowledge_data.category.strip()) == 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Category cannot be empty"
+            )
+        
+        if not knowledge_data.answer or len(knowledge_data.answer.strip()) == 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Answer cannot be empty"
+            )
+        
+        # Sanitize inputs
+        category = knowledge_data.category.strip()[:100]  # Limit length
+        answer = knowledge_data.answer.strip()[:5000]     # Limit length
+        
         # Verify client exists
         client = db.query(User).filter(User.id == knowledge_data.client_id).first()
         if not client:
@@ -39,8 +56,8 @@ async def create_knowledge_entry(
         # Create new knowledge entry
         new_entry = KnowledgeEntry(
             client_id=knowledge_data.client_id,
-            category=knowledge_data.category,
-            answer=knowledge_data.answer
+            category=category,
+            answer=answer
         )
         
         db.add(new_entry)

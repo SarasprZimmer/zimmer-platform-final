@@ -1,0 +1,20 @@
+services:
+  db:
+    image: postgres:15
+    container_name: zimmer_pg_test
+    environment:
+      POSTGRES_USER: zimmer
+      POSTGRES_PASSWORD: zimmer
+      POSTGRES_DB: zimmer
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U zimmer -d zimmer"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - pgdata_zimmer:/var/lib/postgresql/data
+
+volumes:
+  pgdata_zimmer:

@@ -7,18 +7,11 @@ from models.payment import Payment
 from models.token_usage import TokenUsage
 from models.user_automation import UserAutomation
 from models.automation import Automation
+from models.ticket import Ticket
 from schemas.admin import UserListResponse, PaymentListResponse, UserTokenUsageResponse, UserAutomationAdminResponse
 from utils.auth_dependency import get_current_admin_user, get_db
 
 router = APIRouter()
-
-def get_db():
-    """Database session dependency"""
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 @router.get("/users", response_model=UserListResponse)
 async def get_users(
@@ -247,4 +240,101 @@ async def get_user_automations_admin(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to retrieve user automations: {str(e)}"
+        )
+
+@router.get("/tickets")
+async def get_tickets(
+    status: Optional[str] = Query(None, description="Filter by ticket status"),
+    priority: Optional[str] = Query(None, description="Filter by priority"),
+    db: Session = Depends(get_db),
+    current_admin: User = Depends(get_current_admin_user)
+):
+    """
+    Get all support tickets (admin only)
+    """
+    try:
+        # Build base query with user join
+        query = db.query(
+            Ticket,
+            User.name.label('user_name')
+        ).join(
+            User, Ticket.user_id == User.id
+        )
+        
+        # Apply filters if provided
+        if status is not None:
+            query = query.filter(Ticket.status == status)
+        
+        if priority is not None:
+            query = query.filter(Ticket.priority == priority)
+        
+        # Get total count
+        total_count = query.count()
+        
+        # Get tickets ordered by newest first
+        ticket_records = query.order_by(Ticket.created_at.desc()).all()
+        
+        # Format response
+        formatted_tickets = []
+        for ticket, user_name in ticket_records:
+            formatted_tickets.append({
+                "id": ticket.id,
+                "user_id": ticket.user_id,
+                "user_name": user_name,
+                "subject": ticket.subject,
+                "status": ticket.status,
+                "priority": ticket.priority,
+                "created_at": ticket.created_at,
+                "updated_at": ticket.updated_at
+            })
+        
+        return {
+            "total_count": total_count,
+            "tickets": formatted_tickets
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve tickets: {str(e)}"
+        )
+
+@router.get("/automations")
+async def get_automations(
+    db: Session = Depends(get_db),
+    current_admin: User = Depends(get_current_admin_user)
+):
+    """
+    Get all available automations (admin only)
+    """
+    try:
+        # Get all automations with only the columns we need
+        automations = db.query(
+            Automation.id,
+            Automation.name,
+            Automation.description,
+            Automation.status,
+            Automation.created_at
+        ).order_by(Automation.name).all()
+        
+        # Format response
+        formatted_automations = []
+        for automation in automations:
+            formatted_automations.append({
+                "id": automation.id,
+                "name": automation.name,
+                "description": automation.description,
+                "is_active": automation.status,
+                "created_at": automation.created_at
+            })
+        
+        return {
+            "total_count": len(formatted_automations),
+            "automations": formatted_automations
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve automations: {str(e)}"
         ) 

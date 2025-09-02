@@ -1,7 +1,13 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Enum
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from database import Base
+import enum
+
+class UserRole(str, enum.Enum):
+    manager = "manager"
+    technical_team = "technical_team"
+    support_staff = "support_staff"
 
 class User(Base):
     __tablename__ = "users"
@@ -10,7 +16,8 @@ class User(Base):
     email = Column(String, unique=True, nullable=False)
     phone_number = Column(String, nullable=True)
     password_hash = Column(String, nullable=False)
-    is_admin = Column(Boolean, default=False)
+    role = Column(Enum(UserRole), default=UserRole.support_staff)
+    is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     # Relationships
@@ -18,4 +25,16 @@ class User(Base):
     tickets = relationship("Ticket", foreign_keys="Ticket.user_id", back_populates="user")
     ticket_messages = relationship("TicketMessage", back_populates="user")
     password_reset_tokens = relationship("PasswordResetToken", back_populates="user")
-    kb_status_history = relationship("KBStatusHistory", back_populates="user") 
+    kb_status_history = relationship("KBStatusHistory", back_populates="user")
+    
+    # Token adjustment relationships
+    token_adjustments = relationship("TokenAdjustment", foreign_keys="TokenAdjustment.user_id", back_populates="user")
+    admin_token_adjustments = relationship("TokenAdjustment", foreign_keys="TokenAdjustment.admin_id", back_populates="admin")
+    
+    # Session relationships
+    sessions = relationship("Session", back_populates="user")
+    
+    @property
+    def is_admin(self) -> bool:
+        """Check if user has admin privileges based on role"""
+        return self.role in [UserRole.manager, UserRole.technical_team] 

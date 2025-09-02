@@ -1,8 +1,11 @@
+# Import Base first
+from database import Base
+
 # Import all models to ensure they're registered with SQLAlchemy Base
 # Import order matters for relationships
 
 # First, import models without relationships
-from .user import User
+from .user import User, UserRole
 from .automation import Automation
 from .user_automation import UserAutomation
 from .payment import Payment
@@ -15,10 +18,16 @@ from .ticket_message import TicketMessage
 from .password_reset_token import PasswordResetToken
 from .kb_status_history import KBStatusHistory
 from .backup import BackupLog
+from .openai_key import OpenAIKey, OpenAIKeyStatus
+from .openai_key_usage import OpenAIKeyUsage, UsageStatus
+from .token_adjustment import TokenAdjustment
+from .session import Session
+from .notification import Notification
 
 # Export all models
 __all__ = [
     'User',
+    'UserRole',
     'Automation', 
     'UserAutomation',
     'Payment',
@@ -30,5 +39,12 @@ __all__ = [
     'TicketMessage',
     'PasswordResetToken',
     'KBStatusHistory',
-    'BackupLog'
+    'BackupLog',
+    'OpenAIKey',
+    'OpenAIKeyStatus',
+    'OpenAIKeyUsage',
+    'UsageStatus',
+    'TokenAdjustment',
+    'Session',
+    'Notification'
 ] 

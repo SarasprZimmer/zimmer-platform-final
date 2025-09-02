@@ -51,8 +51,8 @@ const KBTemplatesPage = () => {
     try {
       setLoading(true);
       const [templatesRes, automationsRes] = await Promise.all([
-        api.get('/admin/kb-templates'),
-        api.get('/admin/automations')
+        api.get('/api/admin/kb-templates'),
+        api.get('/api/admin/automations')
       ]);
       
       setTemplates(templatesRes.data.templates);
@@ -112,10 +112,10 @@ const KBTemplatesPage = () => {
       setSubmitting(true);
       
       if (editingTemplate) {
-        await api.put(`/admin/kb-templates/${editingTemplate.id}`, formData);
+        await api.put(`/api/admin/kb-templates/${editingTemplate.id}`, formData);
         setNotification({type: 'success', message: 'قالب با موفقیت ویرایش شد'});
       } else {
-        await api.post('/admin/kb-templates', formData);
+        await api.post('/api/admin/kb-templates', formData);
         setNotification({type: 'success', message: 'قالب جدید با موفقیت ایجاد شد'});
       }
       
@@ -135,7 +135,7 @@ const KBTemplatesPage = () => {
     }
 
     try {
-      await api.delete(`/admin/kb-templates/${templateId}`);
+      await api.delete(`/api/admin/kb-templates/${templateId}`);
       setNotification({type: 'success', message: 'قالب با موفقیت حذف شد'});
       loadData();
     } catch (error) {

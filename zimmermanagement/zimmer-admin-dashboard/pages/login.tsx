@@ -1,33 +1,57 @@
-import React, { useState } from 'react';
-import { useRouter } from 'next/router';
-import { useAuth } from '../contexts/AuthContext';
+import React, { useState, useEffect } from 'react'
+import { useRouter } from 'next/router'
+import { useAuth } from '../contexts/AuthContext'
 
 export default function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const { login } = useAuth();
-  const router = useRouter();
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [mounted, setMounted] = useState(false)
+  const { login, isAuthenticated } = useAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+    setMounted(true)
+    if (isAuthenticated) {
+      router.push('/')
+    }
+  }, [isAuthenticated, router])
+
+  // Check for expired session message
+  const expiredReason = router.query.reason
+  const showExpiredMessage = expiredReason === 'expired'
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
+    e.preventDefault()
+    setLoading(true)
+    setError('')
 
     try {
-      await login(email, password);
-      router.push('/');
-    } catch (err) {
-      setError('ایمیل یا رمز عبور اشتباه است');
+      await login(email, password)
+      // Login successful, redirect handled by AuthContext
+    } catch (err: any) {
+      setError(err.message || 'ایمیل یا رمز عبور اشتباه است')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
+
+  if (!mounted) return null
 
   return (
     <div className="rtl min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
+        {/* Expired Session Message */}
+        {showExpiredMessage && (
+          <div className="bg-red-50 border border-red-200 rounded-md p-4">
+            <div className="flex items-center gap-2">
+              <span className="text-red-600">⚠️</span>
+              <p className="text-sm text-red-800">نشست شما منقضی شده است. لطفاً دوباره وارد شوید.</p>
+            </div>
+          </div>
+        )}
+
         <div>
           <div className="mx-auto h-12 w-12 bg-blue-600 rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-xl">ز</span>
@@ -96,15 +120,12 @@ export default function Login() {
             >
               فراموشی رمز عبور
             </a>
-            <a
-              href="/signup"
-              className="font-medium text-gray-600 hover:text-gray-500 block text-sm"
-            >
-              حساب کاربری ندارید؟ ثبت نام کنید
-            </a>
+            <p className="text-gray-600 text-sm">
+              برای ایجاد حساب کاربری با مدیر سیستم تماس بگیرید
+            </p>
           </div>
         </form>
       </div>
     </div>
-  );
+  )
 } 

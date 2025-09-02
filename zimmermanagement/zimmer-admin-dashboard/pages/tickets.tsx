@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import Layout from '../components/Layout';
 import TicketForm from '../components/TicketForm';
-import { authenticatedFetch } from '../lib/auth';
+import { adminAPI } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
+import { TableSkeleton } from '../components/LoadingSkeletons';
+import ResponsiveTable from '../components/ResponsiveTable';
 
 interface Ticket {
   id: number;
@@ -37,7 +39,6 @@ export default function Tickets() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [filterUser, setFilterUser] = useState('');
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
@@ -59,24 +60,9 @@ export default function Tickets() {
   const fetchUsers = async () => {
     try {
       console.log('Fetching users...');
-      const res = await authenticatedFetch('/api/admin/users');
-      console.log('Users response status:', res.status);
-      
-      if (res.status === 404) {
-        console.log('Users endpoint not implemented, using empty list');
-        setUsers([]);
-        return;
-      }
-      
-      if (!res.ok) {
-        const errorText = await res.text();
-        console.error('Users API Error:', errorText);
-        throw new Error(`Failed to fetch users: ${res.status} ${errorText}`);
-      }
-      
-      const data = await res.json();
-      console.log('Users data received:', data);
-      setUsers(Array.isArray(data.users) ? data.users : []);
+      const usersData = await adminAPI.getUsers();
+      console.log('Users data received:', usersData);
+      setUsers(Array.isArray(usersData) ? usersData : []);
     } catch (err) {
       console.error('Error fetching users:', err);
       setUsers([]);
@@ -85,31 +71,17 @@ export default function Tickets() {
 
   const fetchTickets = async () => {
     setLoading(true);
-    setError('');
     try {
       const params: any = {};
       if (filterStatus) params.status = filterStatus;
       if (filterUser) params.user_id = filterUser;
       
-      const query = new URLSearchParams(params).toString();
-      const url = '/api/tickets' + (query ? `?${query}` : '');
-      console.log('Fetching tickets from:', url);
-      
-      const res = await authenticatedFetch(url);
-      console.log('Tickets response status:', res.status);
-      
-      if (!res.ok) {
-        const errorText = await res.text();
-        console.error('Tickets API Error:', errorText);
-        throw new Error(`Failed to fetch tickets: ${res.status} ${errorText}`);
-      }
-      
-      const data = await res.json();
-      console.log('Tickets data received:', data);
-      setTickets(data.tickets || []);
+      const ticketsData = await adminAPI.getTickets(params);
+      console.log('Tickets data received:', ticketsData);
+      setTickets(ticketsData.tickets || []);
     } catch (err) {
       console.error('Error fetching tickets:', err);
-      setError('خطا در بارگذاری تیکت‌ها.');
+      setTickets([]);
     } finally {
       setLoading(false);
     }
@@ -126,19 +98,11 @@ export default function Tickets() {
   const handleStatusUpdate = async (ticketId: number, newStatus: string) => {
     setUpdating(true);
     try {
-      const res = await authenticatedFetch(`/api/tickets/${ticketId}`, {
-        method: 'PUT',
-        body: JSON.stringify({ status: newStatus }),
-      });
-      
-      if (!res.ok) {
-        throw new Error('Failed to update ticket status');
-      }
-      
+      await adminAPI.updateTicket(ticketId, { status: newStatus });
       fetchTickets(); // Refresh the list
     } catch (err) {
       console.error('Error updating ticket status:', err);
-      setError('خطا در بروزرسانی وضعیت تیکت.');
+      // Error is handled by API client
     } finally {
       setUpdating(false);
     }
@@ -147,19 +111,11 @@ export default function Tickets() {
   const handleAssignTicket = async (ticketId: number, adminId: number) => {
     setUpdating(true);
     try {
-      const res = await authenticatedFetch(`/api/tickets/${ticketId}`, {
-        method: 'PUT',
-        body: JSON.stringify({ assigned_to: adminId }),
-      });
-      
-      if (!res.ok) {
-        throw new Error('Failed to assign ticket');
-      }
-      
+      await adminAPI.updateTicket(ticketId, { assigned_to: adminId });
       fetchTickets(); // Refresh the list
     } catch (err) {
       console.error('Error assigning ticket:', err);
-      setError('خطا در تخصیص تیکت.');
+      // Error is handled by API client
     } finally {
       setUpdating(false);
     }
@@ -170,21 +126,13 @@ export default function Tickets() {
     
     setUpdating(true);
     try {
-      const res = await authenticatedFetch(`/api/tickets/${ticketId}`, {
-        method: 'PUT',
-        body: JSON.stringify({ message: replyMessage }),
-      });
-      
-      if (!res.ok) {
-        throw new Error('Failed to add reply');
-      }
-      
+      await adminAPI.updateTicket(ticketId, { message: replyMessage });
       setReplyMessage('');
       setSelectedTicket(null);
       fetchTickets(); // Refresh the list
     } catch (err) {
       console.error('Error adding reply:', err);
-      setError('خطا در افزودن پاسخ.');
+      // Error is handled by API client
     } finally {
       setUpdating(false);
     }
@@ -195,18 +143,11 @@ export default function Tickets() {
     
     setUpdating(true);
     try {
-      const res = await authenticatedFetch(`/api/tickets/${ticketId}`, {
-        method: 'DELETE',
-      });
-      
-      if (!res.ok) {
-        throw new Error('Failed to delete ticket');
-      }
-      
+      await adminAPI.deleteTicket(ticketId);
       fetchTickets(); // Refresh the list
     } catch (err) {
       console.error('Error deleting ticket:', err);
-      setError('خطا در حذف تیکت.');
+      // Error is handled by API client
     } finally {
       setUpdating(false);
     }
@@ -299,6 +240,22 @@ export default function Tickets() {
     }
   };
 
+  if (loading) {
+    return (
+      <Layout title="تیکت‌های پشتیبانی">
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">تیکت‌های پشتیبانی</h2>
+              <p className="text-gray-600 mt-2">مدیریت و پاسخ به تیکت‌های پشتیبانی</p>
+            </div>
+          </div>
+          <TableSkeleton rows={5} columns={7} />
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout title="تیکت‌های پشتیبانی">
       <div className="space-y-6">
@@ -366,86 +323,101 @@ export default function Tickets() {
 
         {/* Tickets Table */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              <span className="mr-3 text-gray-600">در حال بارگذاری تیکت‌ها...</span>
-            </div>
-          ) : error ? (
-            <div className="text-center py-12 text-red-600">{error}</div>
-          ) : tickets.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">تیکتی یافت نشد.</div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">شماره</th>
-                    <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">کاربر</th>
-                    <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">موضوع</th>
-                    <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">وضعیت</th>
-                    <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">تخصیص یافته به</th>
-                    <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">تاریخ ایجاد</th>
-                    <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">عملیات</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {tickets.map((ticket, idx) => (
-                    <tr key={ticket.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">#{ticket.id}</td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{ticket.user_name}</td>
-                      <td className="px-4 py-2 text-sm text-gray-900 max-w-xs truncate">{ticket.subject}</td>
-                      <td className="px-4 py-2 whitespace-nowrap">
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(ticket.status)}`}>
-                          {getStatusText(ticket.status)}
-                        </span>
-                      </td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
-                        {ticket.assigned_admin_name || 'تخصیص نیافته'}
-                      </td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatDate(ticket.created_at)}</td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm font-medium space-x-2">
-                        <button
-                          onClick={() => setSelectedTicket(ticket)}
-                          className="text-blue-600 hover:text-blue-900"
-                        >
-                          مشاهده
-                        </button>
-                        <select
-                          className="text-xs border-gray-300 rounded"
-                          value={ticket.status}
-                          onChange={(e) => handleStatusUpdate(ticket.id, e.target.value)}
-                          disabled={updating}
-                        >
-                          <option value="open">باز</option>
-                          <option value="pending">در انتظار</option>
-                          <option value="resolved">حل شده</option>
-                        </select>
-                        <select
-                          className="text-xs border-gray-300 rounded"
-                          value={ticket.assigned_to || ''}
-                          onChange={(e) => handleAssignTicket(ticket.id, parseInt(e.target.value))}
-                          disabled={updating}
-                        >
-                          <option value="">تخصیص نیافته</option>
-                          {users.filter(u => u.is_admin).map(admin => (
-                            <option key={admin.id} value={admin.id}>{admin.name}</option>
-                          ))}
-                        </select>
-                        <button
-                          onClick={() => handleDeleteTicket(ticket.id)}
-                          className="text-red-600 hover:text-red-900"
-                          disabled={updating}
-                        >
-                          حذف
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+          <ResponsiveTable
+            columns={[
+              {
+                key: 'id',
+                label: 'شماره',
+                mobilePriority: true,
+                render: (value: number) => `#${value}`,
+                className: 'whitespace-nowrap text-sm text-gray-900'
+              },
+              {
+                key: 'user_name',
+                label: 'کاربر',
+                mobilePriority: true,
+                className: 'whitespace-nowrap text-sm text-gray-900'
+              },
+              {
+                key: 'subject',
+                label: 'موضوع',
+                mobilePriority: true,
+                truncate: true,
+                className: 'text-sm text-gray-900 max-w-xs'
+              },
+              {
+                key: 'status',
+                label: 'وضعیت',
+                mobilePriority: true,
+                render: (value: string) => (
+                  <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(value)}`}>
+                    {getStatusText(value)}
+                  </span>
+                ),
+                className: 'whitespace-nowrap'
+              },
+              {
+                key: 'assigned_admin_name',
+                label: 'تخصیص یافته به',
+                mobilePriority: false,
+                render: (value: string) => value || 'تخصیص نیافته',
+                className: 'whitespace-nowrap text-sm text-gray-900'
+              },
+              {
+                key: 'created_at',
+                label: 'تاریخ ایجاد',
+                mobilePriority: false,
+                render: (value: string) => formatDate(value),
+                className: 'whitespace-nowrap text-sm text-gray-500'
+              },
+              {
+                key: 'actions',
+                label: 'عملیات',
+                mobilePriority: true,
+                render: (value: any, row: Ticket) => (
+                  <div className="space-x-2 space-x-reverse">
+                    <button
+                      onClick={() => setSelectedTicket(row)}
+                      className="text-blue-600 hover:text-blue-900 text-sm font-medium"
+                    >
+                      مشاهده
+                    </button>
+                    <select
+                      className="text-xs border-gray-300 rounded"
+                      value={row.status}
+                      onChange={(e) => handleStatusUpdate(row.id, e.target.value)}
+                      disabled={updating}
+                    >
+                      <option value="open">باز</option>
+                      <option value="pending">در انتظار</option>
+                      <option value="resolved">حل شده</option>
+                    </select>
+                    <select
+                      className="text-xs border-gray-300 rounded"
+                      value={row.assigned_to || ''}
+                      onChange={(e) => handleAssignTicket(row.id, parseInt(e.target.value))}
+                      disabled={updating}
+                    >
+                      <option value="">تخصیص نیافته</option>
+                      {users.filter(u => u.is_admin).map(admin => (
+                        <option key={admin.id} value={admin.id}>{admin.name}</option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={() => handleDeleteTicket(row.id)}
+                      className="text-red-600 hover:text-red-900 text-sm font-medium"
+                      disabled={updating}
+                    >
+                      حذف
+                    </button>
+                  </div>
+                ),
+                className: 'whitespace-nowrap text-sm font-medium'
+              }
+            ]}
+            data={tickets}
+            emptyMessage="تیکتی یافت نشد."
+          />
         </div>
 
         {/* Ticket Detail Modal */}

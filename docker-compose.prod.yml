@@ -1,0 +1,114 @@
+version: "3.9"
+
+networks:
+  zimmer_net:
+
+volumes:
+  pgdata:
+  nginx_logs:
+
+services:
+  postgres:
+    image: postgres:15
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-zimmer}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-zimmer}
+      POSTGRES_DB: ${POSTGRES_DB:-zimmer}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-zimmer} -d ${POSTGRES_DB:-zimmer}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - zimmer_net
+
+  backend:
+    build:
+      context: ./zimmer-backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - ./zimmer-backend/env.production
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg2://zimmer:zimmer@postgres:5432/zimmer}
+      UVICORN_WORKERS: 3
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    networks:
+      - zimmer_net
+
+  alembic:
+    build:
+      context: ./zimmer-backend
+      dockerfile: Dockerfile
+    command: >
+      sh -c "alembic -c alembic.ini upgrade head && echo 'Migrations applied' && sleep 2"
+    env_file:
+      - ./zimmer-backend/env.production
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg2://zimmer:zimmer@postgres:5432/zimmer}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - zimmer_net
+    restart: "no"
+
+  user_panel:
+    build:
+      context: ./zimmer_user_panel
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      # Points UI to backend
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-https://api.zimmerai.com}
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - zimmer_net
+
+  admin_dashboard:
+    build:
+      context: ./zimmermanagement/zimmer-admin-dashboard
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-https://api.zimmerai.com}
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - zimmer_net
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+      user_panel:
+        condition: service_started
+      admin_dashboard:
+        condition: service_started
+    ports:
+      - "80:80"
+      # For TLS, map 443 and mount certs (see note below)
+      # - "443:443"
+    volumes:
+      - ./ops/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - nginx_logs:/var/log/nginx
+    networks:
+      - zimmer_net

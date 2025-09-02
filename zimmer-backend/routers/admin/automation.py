@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Path
+from fastapi import APIRouter, Depends, HTTPException, status, Path, Query
 from sqlalchemy.orm import Session
+from typing import Optional
 import httpx
 import os
 from database import SessionLocal
@@ -7,13 +8,178 @@ from models.automation import Automation
 from models.user_automation import UserAutomation
 from models.user import User
 from schemas.automation import ProvisionRequest, ProvisionResponse
-from utils.auth_dependency import get_current_user, get_db
+from utils.auth_dependency import get_current_admin_user, get_current_user, get_db
 from utils.service_tokens import verify_token
-from datetime import datetime
+from datetime import datetime, timezone
+from services.automation_health import probe, classify
 import logging
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
+@router.get("/automations")
+async def get_automations(
+    status: Optional[bool] = Query(None, description="Filter by status"),
+    db: Session = Depends(get_db),
+    current_admin: User = Depends(get_current_admin_user)
+):
+    """
+    Get all automations (admin only)
+    """
+    try:
+        query = db.query(Automation)
+        
+        # Apply filters if provided
+        if status is not None:
+            query = query.filter(Automation.status == status)
+        
+        # Get automations ordered by newest first
+        automations = query.order_by(Automation.created_at.desc()).all()
+        
+        # Format response
+        formatted_automations = []
+        for automation in automations:
+            formatted_automations.append({
+                "id": automation.id,
+                "name": automation.name,
+                "description": automation.description,
+                "pricing_type": automation.pricing_type,
+                "price_per_token": automation.price_per_token,
+                "status": automation.status,
+                "api_base_url": automation.api_base_url,
+                "api_provision_url": automation.api_provision_url,
+                "api_usage_url": automation.api_usage_url,
+                "api_kb_status_url": automation.api_kb_status_url,
+                "api_kb_reset_url": automation.api_kb_reset_url,
+                "has_service_token": bool(automation.service_token_hash),
+                "service_token_masked": automation.service_token_hash[:8] + "..." if automation.service_token_hash else None,
+                "health_check_url": automation.health_check_url,
+                "health_status": automation.health_status,
+                "last_health_at": automation.last_health_at,
+                "is_listed": automation.is_listed,
+                "created_at": automation.created_at,
+                "updated_at": automation.updated_at
+            })
+        
+        return formatted_automations
+        
+    except Exception as e:
+        logger.error(f"Failed to retrieve automations: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve automations: {str(e)}"
+        )
+
+@router.post("/automations")
+async def create_automation(
+    automation_data: dict,
+    db: Session = Depends(get_db),
+    current_admin: User = Depends(get_current_admin_user)
+):
+    """
+    Create a new automation (admin only)
+    """
+    try:
+        automation = Automation(**automation_data)
+        db.add(automation)
+        db.commit()
+        db.refresh(automation)
+        
+        # Run health check if health_check_url is provided
+        if automation.health_check_url:
+            result = await probe(automation.health_check_url)
+            automation.health_status = classify(result)
+            automation.last_health_at = datetime.now(timezone.utc)
+            automation.health_details = result
+            automation.is_listed = (automation.health_status == "healthy")
+        else:
+            automation.health_status = "unknown"
+            automation.is_listed = False
+        
+        db.commit()
+        db.refresh(automation)
+        return automation
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Failed to create automation: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create automation: {str(e)}"
+        )
+
+@router.put("/automations/{automation_id}")
+async def update_automation(
+    automation_id: int = Path(...),
+    automation_data: dict = None,
+    db: Session = Depends(get_db),
+    current_admin: User = Depends(get_current_admin_user)
+):
+    """
+    Update an existing automation (admin only)
+    """
+    try:
+        automation = db.query(Automation).filter(Automation.id == automation_id).first()
+        if not automation:
+            raise HTTPException(status_code=404, detail="Automation not found")
+        
+        # Update fields if provided
+        if automation_data:
+            for field, value in automation_data.items():
+                if hasattr(automation, field):
+                    setattr(automation, field, value)
+            automation.updated_at = datetime.utcnow()
+            
+            # Run health check if health_check_url was provided or changed
+            if automation.health_check_url:
+                result = await probe(automation.health_check_url)
+                automation.health_status = classify(result)
+                automation.last_health_at = datetime.now(timezone.utc)
+                automation.health_details = result
+                automation.is_listed = (automation.health_status == "healthy")
+            else:
+                automation.health_status = "unknown"
+                automation.is_listed = False
+            
+            db.commit()
+            db.refresh(automation)
+        
+        return automation
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Failed to update automation: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update automation: {str(e)}"
+        )
+
+@router.delete("/automations/{automation_id}")
+async def delete_automation(
+    automation_id: int = Path(...),
+    db: Session = Depends(get_db),
+    current_admin: User = Depends(get_current_admin_user)
+):
+    """
+    Delete an automation (admin only)
+    """
+    try:
+        automation = db.query(Automation).filter(Automation.id == automation_id).first()
+        if not automation:
+            raise HTTPException(status_code=404, detail="Automation not found")
+        
+        db.delete(automation)
+        db.commit()
+        return {"message": "Automation deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Failed to delete automation: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete automation: {str(e)}"
+        )
 
 @router.post("/automations/{automation_id}/provision", response_model=ProvisionResponse)
 async def provision_automation(

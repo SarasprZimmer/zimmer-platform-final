@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ResponsiveTable from './ResponsiveTable';
 
 interface KnowledgeEntry {
   id: number;
@@ -14,7 +15,7 @@ interface KnowledgeTableProps {
 
 function formatDate(dateStr: string) {
   const date = new Date(dateStr);
-  return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+  return date.toLocaleDateString('fa-IR') + ' ' + date.toLocaleTimeString('fa-IR');
 }
 
 const MAX_ANSWER_LENGTH = 60;
@@ -26,53 +27,70 @@ const KnowledgeTable: React.FC<KnowledgeTableProps> = ({ entries }) => {
     setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
+  const renderAnswer = (answer: string, row: KnowledgeEntry) => {
+    if (answer.length > MAX_ANSWER_LENGTH && !expanded[row.id]) {
+      return (
+        <div className="break-words">
+          {answer.slice(0, MAX_ANSWER_LENGTH)}...
+          <button 
+            className="mr-2 text-blue-600 text-xs underline hover:text-blue-800 transition-colors"
+            onClick={() => toggleExpand(row.id)}
+          >
+            نمایش بیشتر
+          </button>
+        </div>
+      );
+    } else if (answer.length > MAX_ANSWER_LENGTH && expanded[row.id]) {
+      return (
+        <div className="break-words">
+          {answer}
+          <button 
+            className="mr-2 text-blue-600 text-xs underline hover:text-blue-800 transition-colors"
+            onClick={() => toggleExpand(row.id)}
+          >
+            نمایش کمتر
+          </button>
+        </div>
+      );
+    }
+    return <div className="break-words">{answer}</div>;
+  };
+
+  const columns = [
+    {
+      key: 'client_name',
+      label: 'مشتری',
+      mobilePriority: true,
+      className: 'whitespace-nowrap'
+    },
+    {
+      key: 'category',
+      label: 'دسته‌بندی',
+      mobilePriority: true,
+      className: 'whitespace-nowrap'
+    },
+    {
+      key: 'answer',
+      label: 'پاسخ',
+      mobilePriority: true,
+      render: (value: string, row: KnowledgeEntry) => renderAnswer(value, row),
+      className: 'max-w-xs'
+    },
+    {
+      key: 'created_at',
+      label: 'تاریخ ایجاد',
+      mobilePriority: false,
+      render: (value: string) => formatDate(value),
+      className: 'whitespace-nowrap'
+    }
+  ];
+
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
-          <tr>
-            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
-            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Answer</th>
-            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created At</th>
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {entries.length === 0 ? (
-            <tr>
-              <td colSpan={4} className="px-4 py-4 text-center text-gray-400">No knowledge entries found.</td>
-            </tr>
-          ) : (
-            entries.map((entry, idx) => (
-              <tr key={entry.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                <td className="px-4 py-2 whitespace-nowrap">{entry.client_name}</td>
-                <td className="px-4 py-2 whitespace-nowrap">{entry.category}</td>
-                <td className="px-4 py-2 whitespace-pre-line max-w-xs">
-                  {entry.answer.length > MAX_ANSWER_LENGTH && !expanded[entry.id] ? (
-                    <>
-                      {entry.answer.slice(0, MAX_ANSWER_LENGTH)}...
-                      <button className="ml-2 text-blue-600 text-xs underline" onClick={() => toggleExpand(entry.id)}>
-                        Show more
-                      </button>
-                    </>
-                  ) : entry.answer.length > MAX_ANSWER_LENGTH && expanded[entry.id] ? (
-                    <>
-                      {entry.answer}
-                      <button className="ml-2 text-blue-600 text-xs underline" onClick={() => toggleExpand(entry.id)}>
-                        Show less
-                      </button>
-                    </>
-                  ) : (
-                    entry.answer
-                  )}
-                </td>
-                <td className="px-4 py-2 whitespace-nowrap">{formatDate(entry.created_at)}</td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
-    </div>
+    <ResponsiveTable
+      columns={columns}
+      data={entries}
+      emptyMessage="هیچ ورودی دانشی یافت نشد."
+    />
   );
 };
 

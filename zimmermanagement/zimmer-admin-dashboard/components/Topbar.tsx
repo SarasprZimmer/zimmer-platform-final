@@ -1,12 +1,20 @@
-import React from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import React from 'react'
+import { useAuth } from '../contexts/AuthContext'
 
 interface TopbarProps {
-  title: string;
+  title: string
 }
 
 const Topbar: React.FC<TopbarProps> = ({ title }) => {
-  const { user, logout } = useAuth();
+  const { user, logout } = useAuth()
+
+  const handleLogout = async () => {
+    try {
+      await logout()
+    } catch (error) {
+      console.error('Logout error:', error)
+    }
+  }
 
   return (
     <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
@@ -18,15 +26,15 @@ const Topbar: React.FC<TopbarProps> = ({ title }) => {
             خوش آمدید، {user?.name || 'کاربر'}
           </span>
           <button
-            onClick={logout}
-            className="text-sm text-red-600 hover:text-red-800"
+            onClick={handleLogout}
+            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200"
           >
             خروج
           </button>
         </div>
       </div>
     </header>
-  );
-};
+  )
+}
 
-export default Topbar; 
+export default Topbar 

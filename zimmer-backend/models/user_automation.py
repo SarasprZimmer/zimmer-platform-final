@@ -24,4 +24,5 @@ class UserAutomation(Base):
     )
     
     # Relationships
-    kb_status_history = relationship("KBStatusHistory", back_populates="user_automation") 
+    kb_status_history = relationship("KBStatusHistory", back_populates="user_automation")
+    token_adjustments = relationship("TokenAdjustment", back_populates="user_automation") 

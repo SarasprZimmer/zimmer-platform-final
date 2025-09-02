@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import Layout from '../components/Layout';
 import KnowledgeForm from '../components/KnowledgeForm';
 import KnowledgeTable from '../components/KnowledgeTable';
-import { authenticatedFetch } from '../lib/auth';
+import { adminAPI } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
+import { TableSkeleton } from '../components/LoadingSkeletons';
 
 interface Client {
   id: number;
@@ -23,7 +24,6 @@ export default function Knowledge() {
   const [clients, setClients] = useState<Client[]>([]);
   const [entries, setEntries] = useState<KnowledgeEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [filterClient, setFilterClient] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const { user } = useAuth();
@@ -42,24 +42,9 @@ export default function Knowledge() {
   const fetchClients = async () => {
     try {
       console.log('Fetching clients...');
-      const res = await authenticatedFetch('/api/admin/users');
-      console.log('Clients response status:', res.status);
-      
-      if (res.status === 404) {
-        console.log('Clients endpoint not implemented, using empty list');
-        setClients([]);
-        return;
-      }
-      
-      if (!res.ok) {
-        const errorText = await res.text();
-        console.error('Clients API Error:', errorText);
-        throw new Error(`Failed to fetch clients: ${res.status} ${errorText}`);
-      }
-      
-      const data = await res.json();
-      console.log('Clients data received:', data);
-      setClients(Array.isArray(data.users) ? data.users : []);
+      const usersData = await adminAPI.getUsers();
+      console.log('Clients data received:', usersData);
+      setClients(Array.isArray(usersData) ? usersData : []);
     } catch (err) {
       console.error('Error fetching clients:', err);
       setClients([]); // Defensive: set to empty array on error
@@ -68,26 +53,12 @@ export default function Knowledge() {
 
   const fetchEntries = async () => {
     setLoading(true);
-    setError('');
     try {
       const params: any = {};
       if (filterClient) params.client_id = filterClient;
       if (filterCategory) params.category = filterCategory;
-      // Build query string
-      const query = new URLSearchParams(params).toString();
-      const url = '/api/admin/knowledge' + (query ? `?${query}` : '');
-      console.log('Fetching knowledge entries from:', url);
       
-      const res = await authenticatedFetch(url);
-      console.log('Response status:', res.status);
-      
-      if (!res.ok) {
-        const errorText = await res.text();
-        console.error('API Error:', errorText);
-        throw new Error(`Failed to fetch knowledge entries: ${res.status} ${errorText}`);
-      }
-      
-      const data = await res.json();
+      const data = await adminAPI.getKnowledgeBases(params);
       console.log('Knowledge data received:', data);
       
       // Map client_id to client_name
@@ -102,7 +73,7 @@ export default function Knowledge() {
       setEntries(mapped);
     } catch (err) {
       console.error('Error fetching knowledge entries:', err);
-      setError('Failed to load knowledge entries.');
+      setEntries([]);
     } finally {
       setLoading(false);
     }
@@ -160,12 +131,7 @@ export default function Knowledge() {
             </div>
           </div>
           {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              <span className="ml-3 text-gray-600">Loading knowledge entries...</span>
-            </div>
-          ) : error ? (
-            <div className="text-center py-12 text-red-600">{error}</div>
+            <TableSkeleton rows={5} columns={4} />
           ) : (
             <KnowledgeTable entries={entries} />
           )}

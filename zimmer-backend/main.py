@@ -1,11 +1,17 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from database import Base, engine
 import os
 from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
+
+# Import security middleware
+from utils.security_headers import SecurityHeadersMiddleware, configure_cors
+from utils.csrf import CSRFMiddleware
+from utils.rate_limit import RateLimitMiddleware
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -16,20 +22,29 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# Configure CORS for frontend integration
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000", 
-        "http://127.0.0.1:3000", 
-        "http://localhost:3001", 
-        "http://127.0.0.1:3001", 
-        "http://zimmerai.com"
-    ],  # Configure specific origins
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# Add security middleware in order (last added = first executed)
+# 1. Security headers (adds headers to all responses)
+app.add_middleware(SecurityHeadersMiddleware)
+
+# 2. Rate limiting (checks limits before processing)
+# TEMPORARILY DISABLED FOR DEBUGGING
+# app.add_middleware(RateLimitMiddleware)
+
+# 3. CSRF protection (checks CSRF tokens for unsafe methods)
+app.add_middleware(CSRFMiddleware)
+
+# 4. Trusted host middleware
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])  # Configure appropriately for production
+
+# Configure CORS with tight security settings
+configure_cors(app, allowed_origins=[
+    "http://localhost:3000",  # User panel dev
+    "http://127.0.0.1:3000", 
+    "http://localhost:3001",  # Admin panel dev
+    "http://127.0.0.1:3001", 
+    "https://zimmerai.com",   # Production
+    "https://admin.zimmerai.com",  # Production admin
+])
 
 @app.get("/test-cors")
 async def test_cors():
@@ -38,6 +53,10 @@ async def test_cors():
 # Import and include routers
 from routers import users, admin, fallback, knowledge, telegram, ticket, ticket_message
 app.include_router(users.router, prefix="/api", tags=["users"])
+
+# Import and include auth sessions router
+from routers.auth_sessions import router as auth_sessions_router
+app.include_router(auth_sessions_router, prefix="/api/auth", tags=["auth-sessions"])
 from routers.admin import router as admin_router
 app.include_router(admin_router, prefix="/api/admin", tags=["admin"])
 app.include_router(fallback.router, prefix="/api/admin", tags=["fallback"])
@@ -65,16 +84,80 @@ from routers.automations import router as automations_router
 app.include_router(automations_router, prefix="/api", tags=["automations"])
 from routers.automation_usage import router as automation_usage_router
 app.include_router(automation_usage_router, prefix="/api", tags=["automation-usage"])
+from routers.admin.openai_keys import router as openai_keys_router
+app.include_router(openai_keys_router, prefix="/api/admin", tags=["openai-keys"])
+from routers.admin.user_management import router as user_management_router
+app.include_router(user_management_router, prefix="/api/admin", tags=["user-management"])
+
+# Import system status router
+from routers.admin.system_status import router as system_status_router
+app.include_router(system_status_router, prefix="/api/admin/system", tags=["system-status"])
+
+# Import payment router
+from routers.payments_zarinpal import router as payments_zarinpal_router
+app.include_router(payments_zarinpal_router, prefix="/api/payments", tags=["payments"])
+
+# Import token adjustments router
+from routers.admin.token_adjustments import router as token_adjustments_router
+app.include_router(token_adjustments_router, prefix="/api/admin/tokens", tags=["token-adjustments"])
+
+# Import notifications router
+from routers.notifications import router as notifications_router
+app.include_router(notifications_router, tags=["notifications"])
+
+# Import admin notifications router
+from routers.admin_notifications import router as admin_notifications_router
+app.include_router(admin_notifications_router, tags=["admin:notifications"])
+
+# Import admin automation health router
+from routers.admin_automation_health import router as admin_automation_health_router
+app.include_router(admin_automation_health_router, tags=["admin:automation-health"])
 
 # Import all models to ensure they're registered with Base
-from models import *
+from models.user import User
+from models.automation import Automation
+from models.ticket import Ticket
+from models.ticket_message import TicketMessage
+from models.payment import Payment
+from models.knowledge import KnowledgeEntry
+from models.kb_template import KBTemplate
+from models.kb_status_history import KBStatusHistory
+from models.openai_key import OpenAIKey
+from models.openai_key_usage import OpenAIKeyUsage
+from models.password_reset_token import PasswordResetToken
+from models.backup import BackupLog
+from models.fallback_log import FallbackLog
+from models.token_usage import TokenUsage
+from models.user_automation import UserAutomation
+from models.token_adjustment import TokenAdjustment
+from models.session import Session
+from models.notification import Notification
 
-# Create all tables (development mode only) - after all models are imported
-Base.metadata.create_all(bind=engine)
+# Note: Database tables are now managed by Alembic migrations
+# Run 'alembic upgrade head' to create/update tables
 
-# Start backup scheduler
+# Import backup scheduler (will be started in startup event)
 from scheduler import backup_scheduler
-backup_scheduler.start()
+
+@app.on_event("startup")
+async def startup_event():
+    """Startup event handler"""
+    try:
+        # Start the backup scheduler
+        backup_scheduler.start()
+        print("✅ Backup scheduler started successfully")
+    except Exception as e:
+        print(f"❌ Failed to start backup scheduler: {e}")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Shutdown event handler"""
+    try:
+        # Stop the backup scheduler
+        backup_scheduler.stop()
+        print("✅ Backup scheduler stopped successfully")
+    except Exception as e:
+        print(f"❌ Failed to stop backup scheduler: {e}")
 
 @app.get("/")
 async def root():
@@ -102,21 +185,26 @@ async def seed_data():
     except Exception as e:
         return {"error": f"Failed to seed data: {str(e)}"}
 
+from pydantic import BaseModel
+
+class TestGPTRequest(BaseModel):
+    message: str
+
 @app.post("/dev/test-gpt")
-async def test_gpt(message: str):
+async def test_gpt(request: TestGPTRequest):
     """Development endpoint to test GPT service"""
     try:
         from services.gpt import generate_gpt_response, count_tokens, get_response_cost
         
         # Generate response
-        response = generate_gpt_response(message)
+        response = generate_gpt_response(None, request.message)
         
         if response is None:
             return {
                 "message": "Fallback triggered",
                 "reason": "Complex keywords or long message detected",
-                "input_message": message,
-                "word_count": len(message.split())
+                "input_message": request.message,
+                "word_count": len(request.message.split())
             }
         else:
             tokens = count_tokens(response)
@@ -126,8 +214,8 @@ async def test_gpt(message: str):
                 "response": response,
                 "tokens_used": tokens,
                 "estimated_cost": f"${cost:.4f}",
-                "input_message": message,
-                "word_count": len(message.split())
+                "input_message": request.message,
+                "word_count": len(request.message.split())
             }
     except Exception as e:
         return {"error": f"GPT test failed: {str(e)}"} 

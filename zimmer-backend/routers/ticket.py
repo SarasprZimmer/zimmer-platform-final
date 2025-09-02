@@ -55,23 +55,57 @@ def save_uploaded_file(file: UploadFile) -> Optional[str]:
             detail=f"File type not allowed. Allowed types: {', '.join(ALLOWED_EXTENSIONS)}"
         )
     
-    # Generate unique filename
+    # Validate filename for path traversal attempts
+    filename = file.filename
+    if not filename or '..' in filename or '/' in filename or '\\' in filename:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid filename detected"
+        )
+    
+    # Generate unique filename with secure random UUID
     import uuid
-    unique_filename = f"{uuid.uuid4()}{file_extension}"
-    file_path = os.path.join(UPLOAD_DIR, unique_filename)
+    import secrets
+    unique_filename = f"{secrets.token_urlsafe(16)}_{uuid.uuid4()}{file_extension}"
     
-    # Save file
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    # Ensure upload directory exists and is secure
+    upload_path = PathLib(UPLOAD_DIR)
+    upload_path.mkdir(parents=True, exist_ok=True)
     
-    return file_path
+    # Create absolute file path and validate it's within upload directory
+    file_path = upload_path / unique_filename
+    try:
+        file_path = file_path.resolve()
+        upload_path_resolved = upload_path.resolve()
+        if not str(file_path).startswith(str(upload_path_resolved)):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid file path"
+            )
+    except (RuntimeError, OSError):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid file path"
+        )
+    
+    # Save file with secure handling
+    try:
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+    except (OSError, IOError) as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to save file: {str(e)}"
+        )
+    
+    return str(file_path)
 
 @router.post("/tickets", response_model=TicketOut)
 async def create_ticket(
-    user_id: int = Form(...),
-    subject: str = Form(...),
-    message: str = Form(...),
-    importance: str = Form("medium"),
+    user_id: int = Form(..., gt=0, description="User ID for ticket creation"),
+    subject: str = Form(..., min_length=1, max_length=200, description="Ticket subject"),
+    message: str = Form(..., min_length=1, max_length=5000, description="Ticket message"),
+    importance: str = Form("medium", description="Ticket importance level"),
     file: Optional[UploadFile] = File(None),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)

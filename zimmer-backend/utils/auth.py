@@ -5,7 +5,13 @@ from typing import Optional
 
 from database import SessionLocal
 from models.user import User
-from utils.jwt import verify_jwt_token, get_current_user_id
+from utils.jwt import (
+    verify_jwt_token, 
+    get_current_user_id,
+    decode_access_token,
+    get_user_id_from_access_token,
+    is_admin_from_access_token
+)
 
 # Security scheme for Bearer token
 security = HTTPBearer(auto_error=False)
@@ -23,30 +29,35 @@ async def get_current_user(
     db: Session = Depends(get_db)
 ) -> User:
     """
-    Get current user from JWT token (development mode defaults to admin user)
+    Get current user from JWT access token
     """
     try:
-        # Development mode: if no credentials, use admin user (ID 1)
+        # Require credentials - no development mode bypass
         if credentials is None:
-            user = db.query(User).filter(User.id == 1).first()
-            if not user:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="No default admin user found"
-                )
-            return user
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Authentication required",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
         
-        # Production mode: parse JWT token
+        # Parse JWT token
         token = credentials.credentials
         
-        # Verify JWT token
+        # Verify JWT access token using new system
         try:
-            user_id = get_current_user_id(token)
-            user = db.query(User).filter(User.id == user_id).first()
-            if not user:
+            user_id = get_user_id_from_access_token(token)
+            if user_id is None:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="User not found"
+                    detail="Invalid or expired access token",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+            
+            user = db.query(User).filter(User.id == user_id).first()
+            if not user or not user.is_active:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="User not found or inactive"
                 )
             return user
         except HTTPException:
@@ -74,4 +85,72 @@ async def require_admin(current_user: User = Depends(get_current_user)) -> User:
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Admin privileges required"
         )
-    return current_user 
+    return current_user
+
+
+async def get_current_admin_user(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+    db: Session = Depends(get_db)
+) -> User:
+    """
+    Get current admin user from JWT access token
+    """
+    try:
+        # Require credentials
+        if credentials is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Authentication required",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        # Parse JWT token
+        token = credentials.credentials
+        
+        # Verify JWT access token and check admin privileges
+        try:
+            user_id = get_user_id_from_access_token(token)
+            if user_id is None:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid or expired access token",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+            
+            # Check admin privileges directly from token
+            if not is_admin_from_access_token(token):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Admin privileges required"
+                )
+            
+            user = db.query(User).filter(User.id == user_id).first()
+            if not user or not user.is_active:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="User not found or inactive"
+                )
+            
+            # Double-check admin privileges from database
+            if not user.is_admin:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Admin privileges required"
+                )
+                
+            return user
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=f"Invalid token: {str(e)}"
+            )
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Authentication failed: {str(e)}"
+        ) 

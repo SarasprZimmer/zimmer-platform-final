@@ -1,4 +1,5 @@
 import React from 'react';
+import ResponsiveTable from './ResponsiveTable';
 
 interface PaymentRecord {
   id: number;
@@ -9,20 +10,23 @@ interface PaymentRecord {
   method: string;
   status: string;
   transaction_id: string;
+  automation_id?: number;
+  automation_name?: string;
 }
 
 interface PaymentTableProps {
   records: PaymentRecord[];
+  onViewTokens?: (payment: PaymentRecord) => void;
+  onReportIssue?: (payment: PaymentRecord) => void;
 }
 
 function formatDate(dateStr: string) {
   const date = new Date(dateStr);
-  return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+  return date.toLocaleDateString('fa-IR') + ' ' + date.toLocaleTimeString('fa-IR');
 }
 
 function formatCurrency(amount: number) {
-  // Assuming IRR for now
-  return amount.toLocaleString('fa-IR') + ' IRR';
+  return amount.toLocaleString('fa-IR') + ' ریال';
 }
 
 function statusBadge(status: string) {
@@ -30,47 +34,129 @@ function statusBadge(status: string) {
   if (status === 'completed') color = 'bg-green-100 text-green-800';
   else if (status === 'pending') color = 'bg-yellow-100 text-yellow-800';
   else if (status === 'failed') color = 'bg-red-100 text-red-800';
+  else if (status === 'cancelled') color = 'bg-gray-100 text-gray-800';
+  
   return (
-    <span className={`px-2 py-1 rounded text-xs font-semibold ${color}`}>{status.charAt(0).toUpperCase() + status.slice(1)}</span>
+    <span className={`px-2 py-1 rounded text-xs font-semibold ${color}`}>
+      {status === 'completed' ? 'موفق' : 
+       status === 'pending' ? 'در انتظار' : 
+       status === 'failed' ? 'ناموفق' : 
+       status === 'cancelled' ? 'لغو' : status}
+    </span>
   );
 }
 
-const PaymentTable: React.FC<PaymentTableProps> = ({ records }) => {
-  return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
-          <tr>
-            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-            <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-            <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Tokens</th>
-            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Method</th>
-            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transaction ID</th>
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {records.length === 0 ? (
-            <tr>
-              <td colSpan={7} className="px-4 py-4 text-center text-gray-400">No payments found.</td>
-            </tr>
-          ) : (
-            records.map((record, idx) => (
-              <tr key={record.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                <td className="px-4 py-2 whitespace-nowrap">{formatDate(record.date)}</td>
-                <td className="px-4 py-2 whitespace-nowrap">{record.user_name}</td>
-                <td className="px-4 py-2 whitespace-nowrap text-right">{formatCurrency(record.amount)}</td>
-                <td className="px-4 py-2 whitespace-nowrap text-right">{record.tokens_purchased}</td>
-                <td className="px-4 py-2 whitespace-nowrap">{record.method}</td>
-                <td className="px-4 py-2 whitespace-nowrap">{statusBadge(record.status)}</td>
-                <td className="px-4 py-2 whitespace-nowrap">{record.transaction_id}</td>
-              </tr>
-            ))
+const PaymentTable: React.FC<PaymentTableProps> = ({ 
+  records, 
+  onViewTokens, 
+  onReportIssue 
+}) => {
+  const columns = [
+    {
+      key: 'date',
+      label: 'تاریخ',
+      mobilePriority: true,
+      render: (value: string) => formatDate(value),
+      className: 'whitespace-nowrap'
+    },
+    {
+      key: 'user_name',
+      label: 'کاربر',
+      mobilePriority: true,
+      className: 'whitespace-nowrap'
+    },
+    {
+      key: 'amount',
+      label: 'مبلغ',
+      mobilePriority: true,
+      render: (value: number) => formatCurrency(value),
+      className: 'text-left whitespace-nowrap'
+    },
+    {
+      key: 'tokens_purchased',
+      label: 'توکن‌ها',
+      mobilePriority: true,
+      className: 'text-left whitespace-nowrap'
+    },
+    {
+      key: 'automation_name',
+      label: 'اتوماسیون',
+      mobilePriority: false,
+      render: (value: string, row: PaymentRecord) => {
+        if (row.automation_id && row.automation_name) {
+          return (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-900">{row.automation_name}</span>
+              {onViewTokens && (
+                <button
+                  onClick={() => onViewTokens(row)}
+                  className="text-xs text-blue-600 hover:text-blue-800 underline"
+                  title="مشاهده توکن‌های افزوده‌شده"
+                >
+                  مشاهده توکن‌ها
+                </button>
+              )}
+            </div>
+          );
+        }
+        return <span className="text-sm text-gray-500">-</span>;
+      },
+      className: 'whitespace-nowrap'
+    },
+    {
+      key: 'method',
+      label: 'روش پرداخت',
+      mobilePriority: false,
+      className: 'whitespace-nowrap'
+    },
+    {
+      key: 'status',
+      label: 'وضعیت',
+      mobilePriority: true,
+      render: (value: string) => statusBadge(value),
+      className: 'whitespace-nowrap'
+    },
+    {
+      key: 'transaction_id',
+      label: 'شناسه تراکنش',
+      mobilePriority: false,
+      copyable: true,
+      className: 'whitespace-nowrap'
+    },
+    {
+      key: 'actions',
+      label: 'عملیات',
+      mobilePriority: true,
+      render: (value: any, row: PaymentRecord) => (
+        <div className="flex flex-col sm:flex-row gap-2">
+          {onViewTokens && row.automation_id && (
+            <button
+              onClick={() => onViewTokens(row)}
+              className="text-xs text-blue-600 hover:text-blue-800 underline"
+            >
+              مشاهده توکن‌ها
+            </button>
           )}
-        </tbody>
-      </table>
-    </div>
+          {onReportIssue && (
+            <button
+              onClick={() => onReportIssue(row)}
+              className="text-xs text-red-600 hover:text-red-800 underline"
+            >
+              گزارش مشکل
+            </button>
+          )}
+        </div>
+      ),
+      className: 'whitespace-nowrap text-sm font-medium'
+    }
+  ];
+
+  return (
+    <ResponsiveTable
+      columns={columns}
+      data={records}
+      emptyMessage="هیچ پرداختی یافت نشد."
+    />
   );
 };
 

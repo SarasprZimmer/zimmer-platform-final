@@ -2,6 +2,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from database import SessionLocal
 from services.backup_service import BackupService
+from services.openai_key_manager import OpenAIKeyManager
 import logging
 
 logger = logging.getLogger(__name__)
@@ -28,6 +29,15 @@ class BackupScheduler:
             CronTrigger(hour=3, minute=0),  # Run cleanup at 3 AM
             id='backup_cleanup',
             name='Backup Cleanup',
+            replace_existing=True
+        )
+        
+        # Reset daily OpenAI key usage at midnight
+        self.scheduler.add_job(
+            self.reset_openai_daily_usage,
+            CronTrigger(hour=0, minute=0),  # Run at midnight
+            id='openai_daily_reset',
+            name='OpenAI Daily Usage Reset',
             replace_existing=True
         )
     
@@ -65,6 +75,23 @@ class BackupScheduler:
             
         except Exception as e:
             logger.error(f"Scheduled cleanup error: {e}")
+        finally:
+            db.close()
+    
+    async def reset_openai_daily_usage(self):
+        """Reset daily token usage for all OpenAI keys"""
+        logger.info("Starting OpenAI daily usage reset...")
+        
+        try:
+            db = SessionLocal()
+            key_manager = OpenAIKeyManager(db)
+            
+            reset_count = key_manager.reset_daily_usage()
+            
+            logger.info(f"OpenAI daily usage reset completed: {reset_count} keys reset")
+            
+        except Exception as e:
+            logger.error(f"OpenAI daily usage reset error: {e}")
         finally:
             db.close()
     

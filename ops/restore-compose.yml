@@ -1,0 +1,21 @@
+version: "3.9"
+services:
+  postgres-restore:
+    image: postgres:15
+    container_name: zimmer_postgres_restore
+    environment:
+      POSTGRES_USER: zimmer
+      POSTGRES_PASSWORD: zimmer
+      POSTGRES_DB: zimmer_restore
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U zimmer -d zimmer_restore"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    volumes:
+      - restore_pgdata:/var/lib/postgresql/data
+
+volumes:
+  restore_pgdata:

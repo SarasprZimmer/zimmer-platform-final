@@ -25,63 +25,7 @@ def get_db():
     finally:
         db.close()
 
-@router.post("/signup", response_model=UserSignupResponse)
-async def signup_user(
-    user_data: UserSignupRequest,
-    db: Session = Depends(get_db)
-):
-    """
-    Create a new user signup with password hashing
-    """
-    try:
-        # Check if user already exists
-        existing_user = db.query(User).filter(User.email == user_data.email).first()
-        if existing_user:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="User with this email already exists"
-            )
-        
-        # Hash the password
-        hashed_password = hash_password(user_data.password)
-        
-        # Create new user
-        new_user = User(
-            name=user_data.name,
-            email=user_data.email,
-            phone_number=user_data.phone_number,
-            password_hash=hashed_password,
-            is_admin=False  # Default to non-admin
-        )
-        
-        db.add(new_user)
-        db.commit()
-        db.refresh(new_user)
-
-        # Create JWT token for the newly created user
-        token = create_jwt_token(new_user.id, new_user.name, new_user.email)
-
-        return UserSignupResponse(
-            message="User signed up successfully",
-            user_id=new_user.id,
-            email=new_user.email,
-            access_token=token,
-        )
-        
-    except IntegrityError:
-        db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Database constraint violation"
-        )
-    except HTTPException:
-        raise
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to create user: {str(e)}"
-        )
+# Signup endpoint removed - only managers can create users via /api/admin/users
 
 @router.post("/login", response_model=UserLoginResponse)
 async def login_user(
@@ -107,15 +51,23 @@ async def login_user(
                 detail="Invalid email or password"
             )
         
+        # Check if user is active
+        if not user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Account is deactivated. Please contact your manager."
+            )
+        
         # Create JWT token with user information
-        token = create_jwt_token(user.id, user.name, user.email)
+        token = create_jwt_token(user.id, user.name, user.email, user.role.value)
         
         return UserLoginResponse(
             message="Login successful",
             access_token=token,
             user_id=user.id,
             email=user.email,
-            name=user.name
+            name=user.name,
+            role=user.role
         )
         
     except HTTPException:
@@ -147,6 +99,21 @@ async def get_user_profile(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to retrieve user profile: {str(e)}"
+        )
+
+@router.get("/me", response_model=UserResponse)
+async def get_current_user_info(
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get current user's basic information
+    """
+    try:
+        return current_user
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve user info: {str(e)}"
         )
 
 @router.put("/user/profile", response_model=UserResponse)
@@ -565,9 +532,11 @@ async def get_available_automations(
     Get automations available for purchase
     """
     try:
-        # Get all active automations
+        # Get all active, healthy, and listed automations
         automations = db.query(Automation).filter(
-            Automation.status == True
+            Automation.status == True,
+            Automation.is_listed == True,
+            Automation.health_status == "healthy"
         ).order_by(Automation.created_at.desc()).all()
         
         # Format response
@@ -654,22 +623,31 @@ async def get_user_payments(
     Get current user's payment history
     """
     try:
-        # Get user's payments
-        payments = db.query(Payment).filter(
+        # Get user's payments with automation details
+        payments = db.query(Payment, Automation).join(
+            Automation, Payment.automation_id == Automation.id
+        ).filter(
             Payment.user_id == current_user.id
         ).order_by(Payment.created_at.desc()).all()
         
         # Format response
         formatted_payments = []
-        for payment in payments:
+        for payment, automation in payments:
             formatted_payments.append({
                 "id": payment.id,
                 "amount": payment.amount,
                 "tokens_purchased": payment.tokens_purchased,
                 "method": payment.method,
+                "gateway": payment.gateway or "zarinpal",
                 "transaction_id": payment.transaction_id,
+                "ref_id": payment.ref_id,
                 "status": payment.status,
-                "created_at": payment.created_at
+                "created_at": payment.created_at,
+                "automation": {
+                    "id": automation.id,
+                    "name": automation.name,
+                    "price_per_token": automation.price_per_token
+                }
             })
         
         return formatted_payments
