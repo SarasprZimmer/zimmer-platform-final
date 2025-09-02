@@ -46,20 +46,47 @@ const KBTemplatesPage = () => {
   useEffect(() => {
     loadData();
   }, []);
+  
+  // Safety check: ensure state is always arrays
+  useEffect(() => {
+    if (!Array.isArray(automations)) {
+      console.warn('⚠️ Automations is not an array, resetting to empty array');
+      setAutomations([]);
+    }
+    if (!Array.isArray(templates)) {
+      console.warn('⚠️ Templates is not an array, resetting to empty array');
+      setTemplates([]);
+    }
+  }, [automations, templates]);
 
   const loadData = async () => {
     try {
       setLoading(true);
+      console.log('🔍 Loading KB templates and automations...');
+      
       const [templatesRes, automationsRes] = await Promise.all([
         api.get('/api/admin/kb-templates'),
         api.get('/api/admin/automations')
       ]);
       
-      setTemplates(templatesRes.data.templates);
-      setAutomations(automationsRes.data);
+      console.log('📊 Templates response:', templatesRes.data);
+      console.log('🤖 Automations response:', automationsRes.data);
+      
+      // Ensure we always set arrays, even if the API returns unexpected data
+      const templates = templatesRes.data?.templates || [];
+      const automations = automationsRes.data?.automations || [];
+      
+      console.log('✅ Setting templates:', templates);
+      console.log('✅ Setting automations:', automations);
+      
+      setTemplates(templates);
+      setAutomations(automations);
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error('❌ Error loading data:', error);
       setNotification({type: 'error', message: 'خطا در بارگذاری اطلاعات'});
+      // Ensure state remains as arrays even on error
+      setTemplates([]);
+      setAutomations([]);
     } finally {
       setLoading(false);
     }
@@ -202,9 +229,10 @@ const KBTemplatesPage = () => {
               value={selectedAutomation}
               onChange={(e) => setSelectedAutomation(e.target.value ? Number(e.target.value) : '')}
               className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={loading}
             >
               <option value="">همه اتوماسیون‌ها</option>
-              {automations.map((automation) => (
+              {(automations || []).map((automation) => (
                 <option key={automation.id} value={automation.id}>
                   {automation.name}
                 </option>
@@ -240,7 +268,7 @@ const KBTemplatesPage = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredTemplates.map((template) => (
+                {(filteredTemplates || []).map((template) => (
                   <tr key={template.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {template.category || '-'}
@@ -281,7 +309,7 @@ const KBTemplatesPage = () => {
             </table>
           </div>
           
-          {filteredTemplates.length === 0 && (
+          {(filteredTemplates || []).length === 0 && (
             <div className="text-center py-8 text-gray-500">
               هیچ قالبی یافت نشد
             </div>

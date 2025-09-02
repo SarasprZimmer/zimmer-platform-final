@@ -37,14 +37,30 @@ def must_pass(stmt, desc):
         print(f"❌ Unexpected fail [{desc}]: {type(e).__name__} {e}")
         return False
 
+def cleanup_test_data():
+    """Clean up any test data from previous runs"""
+    with engine.begin() as conn:
+        try:
+            # Delete test data in reverse dependency order
+            conn.execute(text("DELETE FROM payments WHERE transaction_id LIKE 'tx%'"))
+            conn.execute(text("DELETE FROM user_automations WHERE telegram_bot_token LIKE '%ABC%'"))
+            conn.execute(text("DELETE FROM automations WHERE name = 'Travel AI'"))
+            conn.execute(text("DELETE FROM users WHERE email = 'admin@test.local'"))
+            print("🧹 Cleaned up previous test data")
+        except Exception as e:
+            print(f"⚠️ Cleanup warning: {e}")
+
 # Minimal smoke based on your models; adjust table/columns to match actual schema.
 # Assumptions: users(id PK, email UNIQUE NOT NULL, role, password_hash NOT NULL)
 #              sessions(user_id FK users.id)
-#              automations(id PK, name, pricing_type)
+#              automations(id PK, name, pricing_type, health_status NOT NULL, is_listed NOT NULL)
 #              user_automations(user_id FK, automation_id FK, telegram_bot_token UNIQUE, tokens_remaining NOT NULL)
 #              payments(user_id FK, automation_id FK, amount NOT NULL)
 
 tests = [
+    # Clean up first
+    ("", "cleanup", "cleanup"),
+    
     # Insert a valid user
     ("INSERT INTO users (name, email, password_hash, role, is_active, created_at) "
      "VALUES ('Admin','admin@test.local','x', 'manager', 1, CURRENT_TIMESTAMP)",
@@ -60,9 +76,9 @@ tests = [
      "VALUES ('NoPass','nopass@test.local','support_staff', 1, CURRENT_TIMESTAMP)",
      "missing password_hash (should fail)", True),
 
-    # Valid automation
-    ("INSERT INTO automations (name, description, pricing_type, price_per_token, status, api_endpoint, service_token_hash, created_at) "
-     "VALUES ('Travel AI','desc','token_per_session', 10.0, 1, '/x','hash', CURRENT_TIMESTAMP)",
+    # Valid automation with required health_status and is_listed fields
+    ("INSERT INTO automations (name, description, pricing_type, price_per_token, status, api_endpoint, service_token_hash, health_status, is_listed, created_at) "
+     "VALUES ('Travel AI','desc','token_per_session', 10.0, 1, '/x','hash', 'unknown', 0, CURRENT_TIMESTAMP)",
      "insert automation"),
 
     # Valid FK pair (user_automations)
@@ -93,12 +109,18 @@ tests = [
 
 all_ok = True
 for stmt, desc, *should_fail in tests:
+    if desc == "cleanup":
+        cleanup_test_data()
+        continue
+        
     if should_fail:
         ok = must_fail(stmt, desc)
     else:
         ok = must_pass(stmt, desc)
     all_ok = all_ok and ok
 
-if not all_ok:
-    raise SystemExit(1)
-print("🎉 Constraint validation passed.")
+if all_ok:
+    print("\n🎉 All constraint validations passed!")
+else:
+    print("\n❌ Some constraint validations failed!")
+    exit(1)

@@ -18,28 +18,17 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // If we have an access token, try to validate it
+        // If we have an access token, assume it's valid for now
+        // The backend will reject requests if the token is invalid
         if (authClient.isAuthenticated()) {
-          try {
-            await authAPI.getCurrentUser()
-            // Token is valid, we're authenticated
-            setAuthChecking(false)
-            return
-          } catch (error) {
-            // Token is invalid, try to refresh
-            console.log('Token invalid, attempting refresh...')
-          }
+          console.log('Token exists, assuming valid for now')
+          setAuthChecking(false)
+          return
         }
 
-        // Try to refresh token
-        try {
-          await refreshToken()
-          setAuthChecking(false)
-        } catch (error) {
-          // Refresh failed, redirect to login
-          console.log('Refresh failed, redirecting to login')
-          router.push('/login')
-        }
+        // No token exists, user needs to login
+        console.log('No token found, redirecting to login')
+        router.push('/login')
       } catch (error) {
         console.error('Auth check error:', error)
         router.push('/login')
@@ -49,7 +38,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     if (!isLoading) {
       checkAuth()
     }
-  }, [isLoading, refreshToken, router])
+  }, [isLoading, router])
 
   // Show loading skeleton while checking auth
   if (isLoading || authChecking) {

@@ -72,9 +72,12 @@ export default function Automations() {
   const fetchAutomations = async () => {
     try {
       const response = await api.get('/api/admin/automations');
-      setAutomations(response.data);
+      // Extract automations array from response data
+      const automations = response.data?.automations || response.data || [];
+      setAutomations(Array.isArray(automations) ? automations : []);
     } catch (error) {
       console.error('Error fetching automations:', error);
+      setAutomations([]);
     } finally {
       setLoading(false);
     }
@@ -161,7 +164,7 @@ export default function Automations() {
     setShowIntegration(true);
   };
 
-  const filteredAutomations = automations.filter(automation => {
+  const filteredAutomations = (automations || []).filter(automation => {
     const matchesSearch = automation.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          automation.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || 
@@ -246,7 +249,7 @@ export default function Automations() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredAutomations.map((automation) => (
+                {(filteredAutomations || []).map((automation) => (
                   <tr key={automation.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { getToken, getUser } from '../lib/auth';
-import { authenticatedFetch } from '../lib/auth';
+import { authClient } from '../lib/auth-client';
+import api from '../lib/api';
 
 export default function Debug() {
   const { user, isAuthenticated, logout } = useAuth();
@@ -10,17 +10,16 @@ export default function Debug() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    setToken(getToken());
+    setToken(authClient.getAccessToken());
   }, []);
 
   const testApi = async () => {
     setLoading(true);
     try {
-      const response = await authenticatedFetch('/api/admin/users');
-      const data = await response.text();
-      setApiTest(`Status: ${response.status}\nData: ${data}`);
-    } catch (error) {
-      setApiTest(`Error: ${error}`);
+      const response = await api.get('/api/admin/users');
+      setApiTest(`Status: ${response.status}\nData: ${JSON.stringify(response.data, null, 2)}`);
+    } catch (error: any) {
+      setApiTest(`Error: ${error.message}`);
     } finally {
       setLoading(false);
     }

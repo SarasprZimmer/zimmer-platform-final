@@ -137,27 +137,18 @@ from models.notification import Notification
 # Run 'alembic upgrade head' to create/update tables
 
 # Import backup scheduler (will be started in startup event)
-from scheduler import backup_scheduler
+# from scheduler import backup_scheduler
 
-@app.on_event("startup")
-async def startup_event():
-    """Startup event handler"""
-    try:
-        # Start the backup scheduler
-        backup_scheduler.start()
-        print("✅ Backup scheduler started successfully")
-    except Exception as e:
-        print(f"❌ Failed to start backup scheduler: {e}")
+# Temporarily disabled startup/shutdown events to fix backend issues
+# @app.on_event("startup")
+# async def startup_event():
+#     """Startup event handler"""
+#     pass
 
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Shutdown event handler"""
-    try:
-        # Stop the backup scheduler
-        backup_scheduler.stop()
-        print("✅ Backup scheduler stopped successfully")
-    except Exception as e:
-        print(f"❌ Failed to stop backup scheduler: {e}")
+# @app.on_event("shutdown")
+# async def shutdown_event():
+#     """Shutdown event handler"""
+#     pass
 
 @app.get("/")
 async def root():

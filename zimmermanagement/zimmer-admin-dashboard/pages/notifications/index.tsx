@@ -1,10 +1,13 @@
 import { useState } from "react";
 import axios from "axios";
 import Layout from "../../components/Layout";
+import { useAuth } from "../../contexts/AuthContext";
+import { authClient } from "../../lib/auth-client";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL!;
+const API_BASE = process.env.NEXT_PUBLIC_API_URL!;
 
 export default function AdminNotificationsPage() {
+  const { user } = useAuth();
   const [mode, setMode] = useState<"direct"|"broadcast">("direct");
   const [userIds, setUserIds] = useState<string>("");
   const [type, setType] = useState("system");
@@ -47,20 +50,40 @@ export default function AdminNotificationsPage() {
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
+    
+    if (!user || !authClient.isAuthenticated()) {
+      setMsg("You must be logged in to send notifications");
+      return;
+    }
+    
+    console.log('API_BASE:', API_BASE);
+    console.log('Auth token:', authClient.getAccessToken());
+    console.log('User:', user);
+    
     setSubmitting(true);
     setMsg("");
     try {
       if (mode === "direct") {
         const ids = userIds.split(",").map(s => s.trim()).filter(Boolean).map(Number);
+        if (ids.length === 0) {
+          setMsg("Please enter at least one user ID");
+          return;
+        }
         const payload: any = { user_ids: ids, type, title, body };
         if (data) payload.data = JSON.parse(data);
-        const res = await axios.post(`${API_BASE}/api/admin/notifications`, payload, { withCredentials: true });
+        console.log('Sending direct notification:', payload);
+        const res = await axios.post(`${API_BASE}/api/admin/notifications`, payload, { 
+          headers: { 'Authorization': `Bearer ${authClient.getAccessToken()}` }
+        });
         setMsg(`Sent to ${res.data.created} user(s).`);
       } else {
         const payload: any = { type, title, body };
         if (role) payload.role = role;
         if (data) payload.data = JSON.parse(data);
-        const res = await axios.post(`${API_BASE}/api/admin/notifications/broadcast`, payload, { withCredentials: true });
+        console.log('Sending broadcast notification:', payload);
+        const res = await axios.post(`${API_BASE}/api/admin/notifications/broadcast`, payload, { 
+          headers: { 'Authorization': `Bearer ${authClient.getAccessToken()}` }
+        });
         setMsg(`Broadcast created for ${res.data.created} user(s).`);
       }
       setTitle(""); setBody(""); setUserIds(""); setData(""); setRole("");

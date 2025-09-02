@@ -49,19 +49,16 @@ export default function Tickets() {
 
   useEffect(() => {
     if (user) {
-      console.log('User authenticated, fetching tickets...');
       fetchUsers();
       fetchTickets();
     } else {
-      console.log('No user found, skipping data fetch');
+      // No user found, skipping data fetch
     }
   }, [user]);
 
   const fetchUsers = async () => {
     try {
-      console.log('Fetching users...');
       const usersData = await adminAPI.getUsers();
-      console.log('Users data received:', usersData);
       setUsers(Array.isArray(usersData) ? usersData : []);
     } catch (err) {
       console.error('Error fetching users:', err);
@@ -77,7 +74,6 @@ export default function Tickets() {
       if (filterUser) params.user_id = filterUser;
       
       const ticketsData = await adminAPI.getTickets(params);
-      console.log('Tickets data received:', ticketsData);
       setTickets(ticketsData.tickets || []);
     } catch (err) {
       console.error('Error fetching tickets:', err);

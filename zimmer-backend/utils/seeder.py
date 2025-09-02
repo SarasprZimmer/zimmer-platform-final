@@ -69,7 +69,9 @@ def seed_sample_data():
             travel_ai = Automation(
                 name="TravelAI Assistant",
                 slug="travel-ai",
-                description="AI-powered travel planning and visa assistance"
+                description="AI-powered travel planning and visa assistance",
+                health_status="unknown",  # Add required field
+                is_listed=False  # Add required field
             )
             db.add(travel_ai)
             db.commit()
@@ -83,7 +85,9 @@ def seed_sample_data():
             seo_agent = Automation(
                 name="SEO Agent",
                 slug="seo-agent",
-                description="Automated SEO optimization and content analysis"
+                description="Automated SEO optimization and content analysis",
+                health_status="unknown",  # Add required field
+                is_listed=False  # Add required field
             )
             db.add(seo_agent)
             db.commit()

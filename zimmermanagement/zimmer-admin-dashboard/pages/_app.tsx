@@ -12,7 +12,7 @@ export default function App({ Component, pageProps }: AppProps) {
         <ToastProvider>
           <Component {...pageProps} />
         </ToastProvider>
-      </AuthProvider>
+              </AuthProvider>
     </AppErrorBoundary>
   );
 } 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { getToken } from '../lib/auth';
+import { authClient } from '../lib/auth-client';
 import Layout from '../components/Layout';
 import { 
   PlusIcon, 
@@ -61,7 +61,7 @@ interface TestResponse {
 
 const APIKeysPage: React.FC = () => {
   const { user } = useAuth();
-  const token = getToken();
+  const token = authClient.getAccessToken();
   const [keys, setKeys] = useState<OpenAIKey[]>([]);
   const [automations, setAutomations] = useState<Automation[]>([]);
   const [loading, setLoading] = useState(true);

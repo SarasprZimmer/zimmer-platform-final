@@ -30,20 +30,17 @@ export default function Knowledge() {
 
   useEffect(() => {
     if (user) {
-      console.log('User authenticated, fetching data...');
       fetchClients();
       fetchEntries();
     } else {
-      console.log('No user found, skipping data fetch');
+      // No user found, skipping data fetch
     }
     // eslint-disable-next-line
   }, [user]);
 
   const fetchClients = async () => {
     try {
-      console.log('Fetching clients...');
       const usersData = await adminAPI.getUsers();
-      console.log('Clients data received:', usersData);
       setClients(Array.isArray(usersData) ? usersData : []);
     } catch (err) {
       console.error('Error fetching clients:', err);
@@ -59,7 +56,6 @@ export default function Knowledge() {
       if (filterCategory) params.category = filterCategory;
       
       const data = await adminAPI.getKnowledgeBases(params);
-      console.log('Knowledge data received:', data);
       
       // Map client_id to client_name
       const clientMap: Record<number, string> = {};
@@ -69,7 +65,6 @@ export default function Knowledge() {
         ...k,
         client_name: k.client_name || clientMap[k.client_id] || `Client ${k.client_id}`,
       }));
-      console.log('Mapped entries:', mapped);
       setEntries(mapped);
     } catch (err) {
       console.error('Error fetching knowledge entries:', err);

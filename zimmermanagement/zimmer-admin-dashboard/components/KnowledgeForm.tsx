@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { authenticatedFetch } from '../lib/auth';
+import { adminAPI } from '../lib/api';
 
 interface Client {
   id: number;
@@ -25,21 +25,10 @@ const KnowledgeForm: React.FC<KnowledgeFormProps> = ({ onAdd }) => {
 
   const fetchClients = async () => {
     try {
-      const res = await authenticatedFetch('/api/admin/users');
-      
-      if (res.status === 404) {
-        console.log('Users endpoint not implemented, using empty list');
-        setClients([]);
-        return;
-      }
-      
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-      }
-      
-      const data = await res.json();
+      const data = await adminAPI.getUsers();
       setClients(Array.isArray(data.users) ? data.users : []);
-    } catch {
+    } catch (error) {
+      console.log('Failed to fetch users, using empty list:', error);
       setClients([]);
     }
   };
@@ -50,18 +39,11 @@ const KnowledgeForm: React.FC<KnowledgeFormProps> = ({ onAdd }) => {
     setSuccess('');
     setError('');
     try {
-      const res = await authenticatedFetch('/api/admin/knowledge', {
-        method: 'POST',
-        body: JSON.stringify({
-          client_id: clientId,
-          category,
-          answer,
-        }),
+      await adminAPI.createKnowledge({
+        client_id: clientId,
+        category,
+        answer,
       });
-      
-      if (!res.ok) {
-        throw new Error('Failed to add knowledge entry');
-      }
       
       setSuccess('Knowledge entry added!');
       setClientId('');

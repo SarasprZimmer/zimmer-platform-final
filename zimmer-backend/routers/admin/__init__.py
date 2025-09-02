@@ -8,7 +8,7 @@ from models.token_usage import TokenUsage
 from models.user_automation import UserAutomation
 from models.automation import Automation
 from models.ticket import Ticket
-from schemas.admin import UserListResponse, PaymentListResponse, UserTokenUsageResponse, UserAutomationAdminResponse
+from schemas.admin import UserListResponse, PaymentListResponse, UserTokenUsageResponse, UserAutomationAdminResponse, PaymentResponse
 from utils.auth_dependency import get_current_admin_user, get_db
 
 router = APIRouter()

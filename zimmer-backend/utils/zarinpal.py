@@ -109,17 +109,17 @@ class ZarinpalClient:
     ) -> Dict[str, str]:
         """Real Zarinpal payment request"""
         payload = {
-            "merchant_id": self.merchant_id,
-            "amount": amount_rial,
-            "description": description,
-            "callback_url": callback_url,
-            "metadata": {}
+            "MerchantID": self.merchant_id,
+            "Amount": amount_rial,
+            "Description": description,
+            "CallbackURL": callback_url,
+            "Metadata": {}
         }
         
         if email:
-            payload["metadata"]["email"] = email
+            payload["Metadata"]["email"] = email
         if mobile:
-            payload["metadata"]["mobile"] = mobile
+            payload["Metadata"]["mobile"] = mobile
         
         try:
             async with httpx.AsyncClient(timeout=30.0) as client:
@@ -154,9 +154,9 @@ class ZarinpalClient:
     async def _real_verify_payment(self, authority: str, amount_rial: int) -> Dict[str, Union[bool, str, int]]:
         """Real Zarinpal payment verification"""
         payload = {
-            "merchant_id": self.merchant_id,
-            "authority": authority,
-            "amount": amount_rial
+            "MerchantID": self.merchant_id,
+            "Authority": authority,
+            "Amount": amount_rial
         }
         
         try:

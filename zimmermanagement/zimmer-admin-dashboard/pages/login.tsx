@@ -62,6 +62,7 @@ export default function Login() {
           <p className="mt-2 text-center text-sm text-gray-600">
             پنل مدیریت زیمر
           </p>
+
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm -space-y-px">

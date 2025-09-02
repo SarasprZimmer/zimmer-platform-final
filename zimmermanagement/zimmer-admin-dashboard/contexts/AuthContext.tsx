@@ -79,7 +79,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const data = await authAPI.refreshToken()
       setUser(data.user)
-      return data
     } catch (error) {
       console.error('Token refresh error:', error)
       // Clear auth state on refresh failure
@@ -111,21 +110,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       try {
         // Check if we have an access token
         if (authClient.isAuthenticated()) {
-          // Try to get current user to validate token
-          const userData = await authAPI.getCurrentUser()
-          setUser(userData)
-          // Start keep-alive when authenticated
-          startKeepAlive()
+          // Don't try to validate token on startup - just assume it's valid
+          // The user will be redirected to login if the token is invalid
+          console.log('Token exists, skipping validation on startup')
         } else {
-          // Try to refresh token once
-          try {
-            await refreshToken()
-            // Start keep-alive after successful refresh
-            startKeepAlive()
-          } catch (error) {
-            // Refresh failed, user needs to login
-            console.log('No valid session found')
-          }
+          // No token exists, user needs to login
+          console.log('No token found, user needs to login')
         }
       } catch (error) {
         console.error('Auth initialization error:', error)
