@@ -358,9 +358,22 @@ async def get_usage_stats(
         if type == "tokens":
             # Get token usage statistics
             try:
+                # Check if table has any records first
+                total_requests = db.query(TokenUsage).count()
+                
+                if total_requests == 0:
+                    return {
+                        "type": "token_usage",
+                        "total_tokens_used": 0,
+                        "total_requests": 0,
+                        "average_tokens_per_request": 0,
+                        "estimated_cost_usd": 0,
+                        "message": "No token usage data available"
+                    }
+                
+                # Only query if we have data
                 query = db.query(
                     func.sum(TokenUsage.tokens_used).label('total_tokens'),
-                    func.count(TokenUsage.id).label('total_requests'),
                     func.avg(TokenUsage.tokens_used).label('avg_tokens_per_request')
                 )
                 
@@ -369,7 +382,7 @@ async def get_usage_stats(
                 return {
                     "type": "token_usage",
                     "total_tokens_used": result.total_tokens or 0,
-                    "total_requests": result.total_requests or 0,
+                    "total_requests": total_requests,
                     "average_tokens_per_request": round(result.avg_tokens_per_request or 0, 2),
                     "estimated_cost_usd": round((result.total_tokens or 0) / 1000 * 0.002, 4)
                 }
@@ -402,14 +415,22 @@ async def get_usage_stats(
         else:
             # General usage overview
             try:
-                # Token usage
-                total_tokens = db.query(func.sum(TokenUsage.tokens_used)).scalar() or 0
+                # Token usage - handle empty table
+                token_count = db.query(TokenUsage).count()
+                if token_count > 0:
+                    total_tokens = db.query(func.sum(TokenUsage.tokens_used)).scalar() or 0
+                else:
+                    total_tokens = 0
                 
                 # User count (simple count)
                 total_users = db.query(func.count(User.id)).scalar() or 0
                 
                 # Automation count (simple count)
-                active_automations = db.query(func.count(func.distinct(UserAutomation.automation_id))).scalar() or 0
+                automation_count = db.query(UserAutomation).count()
+                if automation_count > 0:
+                    active_automations = db.query(func.count(func.distinct(UserAutomation.automation_id))).scalar() or 0
+                else:
+                    active_automations = 0
                 
                 return {
                     "type": "general_overview",
@@ -457,6 +478,17 @@ async def get_kb_monitoring(
     Get KB monitoring status (admin only)
     """
     try:
+        # Check if KBStatusHistory table has any records first
+        total_records = db.query(KBStatusHistory).count()
+        
+        if total_records == 0:
+            return {
+                "total_records": 0,
+                "health_summary": {},
+                "statuses": [],
+                "message": "No KB monitoring data available"
+            }
+        
         # Build base query with joins
         query = db.query(
             KBStatusHistory,
@@ -477,9 +509,6 @@ async def get_kb_monitoring(
         
         if health_status:
             query = query.filter(KBStatusHistory.kb_health == health_status)
-        
-        # Get total count
-        total_count = query.count()
         
         # Get latest status for each user-automation combination
         latest_statuses = []
