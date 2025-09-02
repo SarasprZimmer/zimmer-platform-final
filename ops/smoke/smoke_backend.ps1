@@ -1,7 +1,7 @@
 ﻿$ErrorActionPreference = "Stop"
 
 Write-Host "== Zimmer Backend Smoke =="
-Push-Location zimmer-backend
+Push-Location ../../zimmer-backend
 
 # 0) Python env sanity
 python -V; pip -V

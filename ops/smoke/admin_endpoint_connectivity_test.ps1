@@ -136,7 +136,7 @@ Test-AuthenticatedEndpoint -Name "Get Knowledge Base" -Method "GET" -Endpoint "/
 Test-AuthenticatedEndpoint -Name "Get Token Adjustments" -Method "GET" -Endpoint "/api/admin/tokens/adjustments"
 
 # Usage Statistics
-Test-AuthenticatedEndpoint -Name "Get Usage Stats" -Method "GET" -Endpoint "/api/admin/usage"
+Test-AuthenticatedEndpoint -Name "Get Usage Stats" -Method "GET" -Endpoint "/api/admin/usage/stats"
 
 # System Status
 Test-AuthenticatedEndpoint -Name "Get System Status" -Method "GET" -Endpoint "/api/admin/system/status"
@@ -159,13 +159,13 @@ Write-Host "-------------------------------"
 
 # Notifications (the one you mentioned)
 Test-AuthenticatedEndpoint -Name "Send Notification" -Method "POST" -Endpoint "/api/admin/notifications/broadcast" -Data @{
-    message = "Test notification from connectivity test"
-    type = "info"
-    target_users = "all"
+    type = "system"
+    title = "Test notification from connectivity test"
+    body = "This is a test notification to verify the system is working"
 }
 
 # Token Usage (the one you mentioned)
-Test-AuthenticatedEndpoint -Name "Get Token Usage" -Method "GET" -Endpoint "/api/admin/usage?type=tokens"
+Test-AuthenticatedEndpoint -Name "Get Token Usage" -Method "GET" -Endpoint "/api/admin/usage/stats?type=tokens"
 
 # Step 5: Test Frontend-Backend Integration
 Write-Host "`nStep 5: Testing Frontend-Backend Integration"

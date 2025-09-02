@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Path
 from sqlalchemy.orm import Session
+from sqlalchemy import func, and_
 from typing import Optional, List
+from datetime import datetime, timedelta
 from database import SessionLocal
 from models.user import User
 from models.payment import Payment
@@ -8,6 +10,8 @@ from models.token_usage import TokenUsage
 from models.user_automation import UserAutomation
 from models.automation import Automation
 from models.ticket import Ticket
+from models.kb_status_history import KBStatusHistory
+from models.kb_template import KBTemplate
 from schemas.admin import UserListResponse, PaymentListResponse, UserTokenUsageResponse, UserAutomationAdminResponse, PaymentResponse
 from utils.auth_dependency import get_current_admin_user, get_db
 
@@ -337,4 +341,183 @@ async def get_automations(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to retrieve automations: {str(e)}"
+        ) 
+
+@router.get("/usage/stats")
+async def get_usage_stats(
+    type: Optional[str] = Query(None, description="Type of usage: 'tokens', 'kb', 'general'"),
+    db: Session = Depends(get_db),
+    current_admin: User = Depends(get_current_admin_user)
+):
+    """
+    Get usage statistics (admin only)
+    """
+    try:
+        # Simplified version without date filtering for now
+        
+        if type == "tokens":
+            # Get token usage statistics
+            try:
+                query = db.query(
+                    func.sum(TokenUsage.tokens_used).label('total_tokens'),
+                    func.count(TokenUsage.id).label('total_requests'),
+                    func.avg(TokenUsage.tokens_used).label('avg_tokens_per_request')
+                )
+                
+                result = query.first()
+                
+                return {
+                    "type": "token_usage",
+                    "total_tokens_used": result.total_tokens or 0,
+                    "total_requests": result.total_requests or 0,
+                    "average_tokens_per_request": round(result.avg_tokens_per_request or 0, 2),
+                    "estimated_cost_usd": round((result.total_tokens or 0) / 1000 * 0.002, 4)
+                }
+            except Exception as e:
+                # Return safe defaults if there's an error
+                return {
+                    "type": "token_usage",
+                    "total_tokens_used": 0,
+                    "total_requests": 0,
+                    "average_tokens_per_request": 0,
+                    "estimated_cost_usd": 0,
+                    "error": "Could not retrieve token usage data"
+                }
+        
+        elif type == "kb":
+            # Get KB usage statistics
+            query = db.query(
+                func.count(KBTemplate.id).label('total_entries'),
+                func.count(func.distinct(KBTemplate.automation_id)).label('unique_automations')
+            )
+            
+            result = query.first()
+            
+            return {
+                "type": "knowledge_base",
+                "total_entries": result.total_entries or 0,
+                "unique_automations": result.unique_automations or 0
+            }
+        
+        else:
+            # General usage overview
+            try:
+                # Token usage
+                total_tokens = db.query(func.sum(TokenUsage.tokens_used)).scalar() or 0
+                
+                # User count (simple count)
+                total_users = db.query(func.count(User.id)).scalar() or 0
+                
+                # Automation count (simple count)
+                active_automations = db.query(func.count(func.distinct(UserAutomation.automation_id))).scalar() or 0
+                
+                return {
+                    "type": "general_overview",
+                    "total_tokens_used": total_tokens,
+                    "total_users": total_users,
+                    "active_automations": active_automations,
+                    "estimated_cost_usd": round(total_tokens / 1000 * 0.002, 4),
+                    "period": {
+                        "from_date": from_date or (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d"),
+                        "to_date": to_date or datetime.now().strftime("%Y-%m-%d")
+                    }
+                }
+            except Exception as e:
+                # Return safe defaults if there's an error
+                return {
+                    "type": "general_overview",
+                    "total_tokens_used": 0,
+                    "total_users": 0,
+                    "active_automations": 0,
+                    "estimated_cost_usd": 0,
+                    "error": "Could not retrieve usage data",
+                    "period": {
+                        "from_date": from_date or (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d"),
+                        "to_date": to_date or datetime.now().strftime("%Y-%m-%d")
+                    }
+                }
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve usage statistics: {str(e)}"
+        )
+
+@router.get("/kb-monitoring")
+async def get_kb_monitoring(
+    automation_id: Optional[int] = Query(None, description="Filter by automation ID"),
+    user_id: Optional[int] = Query(None, description="Filter by user ID"),
+    health_status: Optional[str] = Query(None, description="Filter by health status"),
+    db: Session = Depends(get_db),
+    current_admin: User = Depends(get_current_admin_user)
+):
+    """
+    Get KB monitoring status (admin only)
+    """
+    try:
+        # Build base query with joins
+        query = db.query(
+            KBStatusHistory,
+            User.name.label('user_name'),
+            Automation.name.label('automation_name')
+        ).join(
+            User, KBStatusHistory.user_id == User.id
+        ).join(
+            Automation, KBStatusHistory.automation_id == Automation.id
+        )
+        
+        # Apply filters
+        if automation_id:
+            query = query.filter(KBStatusHistory.automation_id == automation_id)
+        
+        if user_id:
+            query = query.filter(KBStatusHistory.user_id == user_id)
+        
+        if health_status:
+            query = query.filter(KBStatusHistory.kb_health == health_status)
+        
+        # Get total count
+        total_count = query.count()
+        
+        # Get latest status for each user-automation combination
+        latest_statuses = []
+        seen_combinations = set()
+        
+        # Order by timestamp (newest first) and get unique combinations
+        results = query.order_by(KBStatusHistory.timestamp.desc()).all()
+        
+        for kb_status, user_name, automation_name in results:
+            combination = (kb_status.user_id, kb_status.automation_id)
+            if combination not in seen_combinations:
+                seen_combinations.add(combination)
+                latest_statuses.append({
+                    "id": kb_status.id,
+                    "user_id": kb_status.user_id,
+                    "user_name": user_name,
+                    "automation_id": kb_status.automation_id,
+                    "automation_name": automation_name,
+                    "kb_health": kb_status.kb_health,
+                    "backup_status": kb_status.backup_status,
+                    "error_logs": kb_status.error_logs,
+                    "timestamp": kb_status.timestamp
+                })
+        
+        # Calculate summary statistics
+        health_counts = {}
+        for status in latest_statuses:
+            health = status["kb_health"]
+            health_counts[health] = health_counts.get(health, 0) + 1
+        
+        return {
+            "total_records": len(latest_statuses),
+            "health_summary": health_counts,
+            "statuses": latest_statuses
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve KB monitoring data: {str(e)}"
         ) 
