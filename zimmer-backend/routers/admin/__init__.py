@@ -439,8 +439,8 @@ async def get_usage_stats(
                     "active_automations": active_automations,
                     "estimated_cost_usd": round(total_tokens / 1000 * 0.002, 4),
                     "period": {
-                        "from_date": from_date or (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d"),
-                        "to_date": to_date or datetime.now().strftime("%Y-%m-%d")
+                        "from_date": (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d"),
+                        "to_date": datetime.now().strftime("%Y-%m-%d")
                     }
                 }
             except Exception as e:
@@ -453,8 +453,8 @@ async def get_usage_stats(
                     "estimated_cost_usd": 0,
                     "error": "Could not retrieve usage data",
                     "period": {
-                        "from_date": from_date or (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d"),
-                        "to_date": to_date or datetime.now().strftime("%Y-%m-%d")
+                        "from_date": (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d"),
+                        "to_date": datetime.now().strftime("%Y-%m-%d")
                     }
                 }
             
