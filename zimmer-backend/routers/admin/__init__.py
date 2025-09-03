@@ -362,14 +362,14 @@ async def get_usage_stats(
                 total_requests = db.query(TokenUsage).count()
                 
                 if total_requests == 0:
-                    return {
-                        "type": "token_usage",
-                        "total_tokens_used": 0,
-                        "total_requests": 0,
-                        "average_tokens_per_request": 0,
-                        "estimated_cost_usd": 0,
-                        "message": "No token usage data available"
-                    }
+                    return UsageStatsResponse(
+                        type="token_usage",
+                        total_tokens_used=0,
+                        total_requests=0,
+                        average_tokens_per_request=0,
+                        estimated_cost_usd=0,
+                        message="No token usage data available"
+                    )
                 
                 # Only query if we have data
                 query = db.query(
@@ -379,23 +379,23 @@ async def get_usage_stats(
                 
                 result = query.first()
                 
-                return {
-                    "type": "token_usage",
-                    "total_tokens_used": result.total_tokens or 0,
-                    "total_requests": total_requests,
-                    "average_tokens_per_request": round(result.avg_tokens_per_request or 0, 2),
-                    "estimated_cost_usd": round((result.total_tokens or 0) / 1000 * 0.002, 4)
-                }
+                return UsageStatsResponse(
+                    type="token_usage",
+                    total_tokens_used=result.total_tokens or 0,
+                    total_requests=total_requests,
+                    average_tokens_per_request=round(result.avg_tokens_per_request or 0, 2),
+                    estimated_cost_usd=round((result.total_tokens or 0) / 1000 * 0.002, 4)
+                )
             except Exception as e:
                 # Return safe defaults if there's an error
-                return {
-                    "type": "token_usage",
-                    "total_tokens_used": 0,
-                    "total_requests": 0,
-                    "average_tokens_per_request": 0,
-                    "estimated_cost_usd": 0,
-                    "error": "Could not retrieve token usage data"
-                }
+                return UsageStatsResponse(
+                    type="token_usage",
+                    total_tokens_used=0,
+                    total_requests=0,
+                    average_tokens_per_request=0,
+                    estimated_cost_usd=0,
+                    error="Could not retrieve token usage data"
+                )
         
         elif type == "kb":
             # Get KB usage statistics
@@ -406,11 +406,11 @@ async def get_usage_stats(
             
             result = query.first()
             
-            return {
-                "type": "knowledge_base",
-                "total_entries": result.total_entries or 0,
-                "unique_automations": result.unique_automations or 0
-            }
+            return UsageStatsResponse(
+                type="knowledge_base",
+                total_entries=result.total_entries or 0,
+                unique_automations=result.unique_automations or 0
+            )
         
         else:
             # General usage overview
@@ -432,31 +432,31 @@ async def get_usage_stats(
                 else:
                     active_automations = 0
                 
-                return {
-                    "type": "general_overview",
-                    "total_tokens_used": total_tokens,
-                    "total_users": total_users,
-                    "active_automations": active_automations,
-                    "estimated_cost_usd": round(total_tokens / 1000 * 0.002, 4),
-                    "period": {
+                return UsageStatsResponse(
+                    type="general_overview",
+                    total_tokens_used=total_tokens,
+                    total_users=total_users,
+                    active_automations=active_automations,
+                    estimated_cost_usd=round(total_tokens / 1000 * 0.002, 4),
+                    period={
                         "from_date": (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d"),
                         "to_date": datetime.now().strftime("%Y-%m-%d")
                     }
-                }
+                )
             except Exception as e:
                 # Return safe defaults if there's an error
-                return {
-                    "type": "general_overview",
-                    "total_tokens_used": 0,
-                    "total_users": 0,
-                    "active_automations": 0,
-                    "estimated_cost_usd": 0,
-                    "error": "Could not retrieve usage data",
-                    "period": {
+                return UsageStatsResponse(
+                    type="general_overview",
+                    total_tokens_used=0,
+                    total_users=0,
+                    active_automations=0,
+                    estimated_cost_usd=0,
+                    error="Could not retrieve usage data",
+                    period={
                         "from_date": (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d"),
                         "to_date": datetime.now().strftime("%Y-%m-%d")
                     }
-                }
+                )
             
     except HTTPException:
         raise
