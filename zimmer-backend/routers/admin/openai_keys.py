@@ -282,44 +282,45 @@ async def test_openai_key(
             error_message=str(e)
         )
 
-@router.get("/usage", response_model=List[OpenAIKeyUsageOut])
-async def get_key_usage(
-    automation_id: Optional[int] = Query(None, description="Filter by automation ID"),
-    key_id: Optional[int] = Query(None, description="Filter by key ID"),
-    status: Optional[UsageStatus] = Query(None, description="Filter by status"),
-    date_from: Optional[datetime] = Query(None, description="Filter from date"),
-    date_to: Optional[datetime] = Query(None, description="Filter to date"),
-    limit: int = Query(100, le=1000, description="Number of records to return"),
-    offset: int = Query(0, ge=0, description="Number of records to skip"),
-    db: Session = Depends(get_db),
-    current_admin: User = Depends(get_current_admin_user)
-):
-    """Get OpenAI key usage audit records"""
-    
-    query = db.query(OpenAIKeyUsage)
-    
-    if automation_id:
-        query = query.filter(OpenAIKeyUsage.automation_id == automation_id)
-    
-    if key_id:
-        query = query.filter(OpenAIKeyUsage.openai_key_id == key_id)
-    
-    if status:
-        query = query.filter(OpenAIKeyUsage.status == status)
-    
-    if date_from:
-        query = query.filter(OpenAIKeyUsage.created_at >= date_from)
-    
-    if date_to:
-        query = query.filter(OpenAIKeyUsage.created_at <= date_to)
-    
-    # Order by newest first
-    query = query.order_by(OpenAIKeyUsage.created_at.desc())
-    
-    # Pagination
-    query = query.offset(offset).limit(limit)
-    
-    return query.all()
+# TEMPORARILY COMMENTED OUT TO RESOLVE ROUTE CONFLICT WITH /usage/stats
+# @router.get("/usage", response_model=List[OpenAIKeyUsageOut])
+# async def get_key_usage(
+#     automation_id: Optional[int] = Query(None, description="Filter by automation ID"),
+#     key_id: Optional[int] = Query(None, description="Filter by key ID"),
+#     status: Optional[UsageStatus] = Query(None, description="Filter by status"),
+#     date_from: Optional[datetime] = Query(None, description="Filter from date"),
+#     date_to: Optional[datetime] = Query(None, description="Filter to date"),
+#     limit: int = Query(100, le=1000, description="Number of records to return"),
+#     offset: int = Query(0, ge=0, description="Number of records to skip"),
+#     db: Session = Depends(get_db),
+#     current_admin: User = Depends(get_current_admin_user)
+# ):
+#     """Get OpenAI key usage audit records"""
+#     
+#     query = db.query(OpenAIKeyUsage)
+#     
+#     if automation_id:
+#         query = query.filter(OpenAIKeyUsage.automation_id == automation_id)
+#     
+#     if key_id:
+#         query = query.filter(OpenAIKeyUsage.openai_key_id == key_id)
+#     
+#     if status:
+#         query = query.filter(OpenAIKeyUsage.status == status)
+#     
+#     if date_from:
+#         query = query.filter(OpenAIKeyUsage.created_at >= date_from)
+#     
+#     if date_to:
+#         query = query.filter(OpenAIKeyUsage.created_at <= date_to)
+#     
+#     # Order by newest first
+#     query = query.order_by(OpenAIKeyUsage.created_at.desc())
+#     
+#     # Pagination
+#     query = query.offset(offset).limit(limit)
+#     
+#     return query.all()
 
 @router.post("/reset-daily")
 async def reset_daily_usage(

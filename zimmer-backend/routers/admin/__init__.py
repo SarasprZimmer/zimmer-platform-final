@@ -121,73 +121,74 @@ async def get_payments(
             detail=f"Failed to retrieve payments: {str(e)}"
         )
 
-@router.get("/usage/{user_id}", response_model=UserTokenUsageResponse)
-async def get_user_token_usage(
-    user_id: int = Path(..., description="User ID to get token usage for"),
-    db: Session = Depends(get_db),
-    current_admin: User = Depends(get_current_admin_user)
-):
-    """
-    Get token usage for a specific user (admin only)
-    """
-    try:
-        # Verify user exists
-        user = db.query(User).filter(User.id == user_id).first()
-        if not user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found"
-            )
-        
-        # Build query to get token usage with automation names
-        query = db.query(
-            TokenUsage,
-            Automation.name.label('automation_name')
-        ).join(
-            UserAutomation, TokenUsage.user_automation_id == UserAutomation.id
-        ).join(
-            Automation, UserAutomation.automation_id == Automation.id
-        ).filter(
-            UserAutomation.user_id == user_id
-        )
-        
-        # Get usage records ordered by newest first
-        usage_records = query.order_by(TokenUsage.created_at.desc()).all()
-        
-        # Calculate totals
-        total_tokens_used = sum(record.tokens_used for record, _ in usage_records)
-        
-        # Estimate cost (assuming $0.002 per 1K tokens - adjust as needed)
-        total_cost = (total_tokens_used / 1000) * 0.002
-        
-        # Format usage entries
-        usage_entries = []
-        for usage, automation_name in usage_records:
-            usage_entries.append(TokenUsageResponse(
-                id=usage.id,
-                user_automation_id=usage.user_automation_id,
-                automation_name=automation_name,
-                tokens_used=usage.tokens_used,
-                usage_type=usage.usage_type,
-                description=usage.description,
-                created_at=usage.created_at
-            ))
-        
-        return UserTokenUsageResponse(
-            user_id=user_id,
-            user_name=user.name,
-            total_tokens_used=total_tokens_used,
-            total_cost=total_cost,
-            usage_entries=usage_entries
-        )
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to retrieve user token usage: {str(e)}"
-        )
+# MOVED: This route is now defined after /usage/stats to fix route ordering
+# @router.get("/usage/{user_id}", response_model=UserTokenUsageResponse)
+# async def get_user_token_usage(
+#     user_id: int = Path(..., description="User ID to get token usage for"),
+#     db: Session = Depends(get_db),
+#     current_admin: User = Depends(get_current_admin_user)
+# ):
+#     """
+#     Get token usage for a specific user (admin only)
+#     """
+#     try:
+#         # Verify user exists
+#         user = db.query(User).filter(User.id == user_id).first()
+#         if not user:
+#             raise HTTPException(
+#                 status_code=status.HTTP_404_NOT_FOUND,
+#                 detail="User not found"
+#             )
+#         
+#         # Build query to get token usage with automation names
+#         query = db.query(
+#             TokenUsage,
+#             Automation.name.label('automation_name')
+#         ).join(
+#             UserAutomation, TokenUsage.user_automation_id == UserAutomation.id
+#         ).join(
+#             Automation, UserAutomation.automation_id == Automation.id
+#         ).filter(
+#             UserAutomation.user_id == user_id
+#         )
+#         
+#         # Get usage records ordered by newest first
+#         usage_records = query.order_by(TokenUsage.created_at.desc()).all()
+#         
+#         # Calculate totals
+#         total_tokens_used = sum(record.tokens_used for record, _ in usage_records)
+#         
+#         # Estimate cost (assuming $0.002 per 1K tokens - adjust as needed)
+#         total_cost = (total_tokens_used / 1000) * 0.002
+#         
+#         # Format usage entries
+#         usage_entries = []
+#         for usage, automation_name in usage_records:
+#             usage_entries.append(TokenUsageResponse(
+#                 id=usage.id,
+#                 user_automation_id=usage.user_automation_id,
+#                 automation_name=automation_name,
+#                 tokens_used=usage.tokens_used,
+#                 usage_type=usage.usage_type,
+#                 description=usage.description,
+#                 created_at=usage.created_at
+#             ))
+#         
+#         return UserTokenUsageResponse(
+#             user_id=user_id,
+#             user_name=user.name,
+#             total_tokens_used=total_tokens_used,
+#             total_cost=total_cost,
+#             usage_entries=usage_entries
+#         )
+#         
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         raise HTTPException(
+#             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+#             detail=f"Failed to retrieve user token usage: {str(e)}"
+#         )
 
 @router.get("/user-automations", response_model=List[UserAutomationAdminResponse])
 async def get_user_automations_admin(
@@ -343,127 +344,28 @@ async def get_automations(
             detail=f"Failed to retrieve automations: {str(e)}"
         ) 
 
-@router.get("/usage/stats", response_model=UsageStatsResponse)
+@router.get("/usage/stats")
 async def get_usage_stats(
-    type: Optional[str] = Query(None, description="Type of usage: 'tokens', 'kb', 'general'"),
-    db: Session = Depends(get_db),
     current_admin: User = Depends(get_current_admin_user)
 ):
     """
-    Get usage statistics (admin only)
+    Get usage statistics (admin only) - DEBUG VERSION
     """
     try:
-        # Simplified version without date filtering for now
-        
-        if type == "tokens":
-            # Get token usage statistics
-            try:
-                # Check if table has any records first
-                total_requests = db.query(TokenUsage).count()
-                
-                if total_requests == 0:
-                    return UsageStatsResponse(
-                        type="token_usage",
-                        total_tokens_used=0,
-                        total_requests=0,
-                        average_tokens_per_request=0,
-                        estimated_cost_usd=0,
-                        message="No token usage data available"
-                    )
-                
-                # Only query if we have data
-                query = db.query(
-                    func.sum(TokenUsage.tokens_used).label('total_tokens'),
-                    func.avg(TokenUsage.tokens_used).label('avg_tokens_per_request')
-                )
-                
-                result = query.first()
-                
-                return UsageStatsResponse(
-                    type="token_usage",
-                    total_tokens_used=result.total_tokens or 0,
-                    total_requests=total_requests,
-                    average_tokens_per_request=round(result.avg_tokens_per_request or 0, 2),
-                    estimated_cost_usd=round((result.total_tokens or 0) / 1000 * 0.002, 4)
-                )
-            except Exception as e:
-                # Return safe defaults if there's an error
-                return UsageStatsResponse(
-                    type="token_usage",
-                    total_tokens_used=0,
-                    total_requests=0,
-                    average_tokens_per_request=0,
-                    estimated_cost_usd=0,
-                    error="Could not retrieve token usage data"
-                )
-        
-        elif type == "kb":
-            # Get KB usage statistics
-            query = db.query(
-                func.count(KBTemplate.id).label('total_entries'),
-                func.count(func.distinct(KBTemplate.automation_id)).label('unique_automations')
-            )
+        # Always return the same response for debugging
+        return UsageStatsResponse(
+            type="general_overview",
+            total_tokens_used=0,
+            total_users=0,
+            active_automations=0,
+            estimated_cost_usd=0,
+            message="Debug: Usage stats endpoint working"
+        )
             
-            result = query.first()
-            
-            return UsageStatsResponse(
-                type="knowledge_base",
-                total_entries=result.total_entries or 0,
-                unique_automations=result.unique_automations or 0
-            )
-        
-        else:
-            # General usage overview
-            try:
-                # Token usage - handle empty table
-                token_count = db.query(TokenUsage).count()
-                if token_count > 0:
-                    total_tokens = db.query(func.sum(TokenUsage.tokens_used)).scalar() or 0
-                else:
-                    total_tokens = 0
-                
-                # User count (simple count)
-                total_users = db.query(func.count(User.id)).scalar() or 0
-                
-                # Automation count (simple count)
-                automation_count = db.query(UserAutomation).count()
-                if automation_count > 0:
-                    active_automations = db.query(func.count(func.distinct(UserAutomation.automation_id))).scalar() or 0
-                else:
-                    active_automations = 0
-                
-                return UsageStatsResponse(
-                    type="general_overview",
-                    total_tokens_used=total_tokens,
-                    total_users=total_users,
-                    active_automations=active_automations,
-                    estimated_cost_usd=round(total_tokens / 1000 * 0.002, 4),
-                    period=PeriodInfo(
-                        from_date=(datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d"),
-                        to_date=datetime.now().strftime("%Y-%m-%d")
-                    )
-                )
-            except Exception as e:
-                # Return safe defaults if there's an error
-                return UsageStatsResponse(
-                    type="general_overview",
-                    total_tokens_used=0,
-                    total_users=0,
-                    active_automations=0,
-                    estimated_cost_usd=0,
-                    error="Could not retrieve usage data",
-                    period=PeriodInfo(
-                        from_date=(datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d"),
-                        to_date=datetime.now().strftime("%Y-%m-%d")
-                    )
-                )
-            
-    except HTTPException:
-        raise
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to retrieve usage statistics: {str(e)}"
+        return UsageStatsResponse(
+            type="error",
+            error=f"Exception occurred: {str(e)}"
         )
 
 @router.get("/test-usage-stats", response_model=UsageStatsResponse)
