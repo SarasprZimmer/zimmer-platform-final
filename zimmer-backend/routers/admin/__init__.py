@@ -12,7 +12,7 @@ from models.automation import Automation
 from models.ticket import Ticket
 from models.kb_status_history import KBStatusHistory
 from models.kb_template import KBTemplate
-from schemas.admin import UserListResponse, PaymentListResponse, UserTokenUsageResponse, UserAutomationAdminResponse, PaymentResponse
+from schemas.admin import UserListResponse, PaymentListResponse, UserTokenUsageResponse, UserAutomationAdminResponse, PaymentResponse, UsageStatsResponse
 from utils.auth_dependency import get_current_admin_user, get_db
 
 router = APIRouter()
@@ -343,7 +343,7 @@ async def get_automations(
             detail=f"Failed to retrieve automations: {str(e)}"
         ) 
 
-@router.get("/usage/stats")
+@router.get("/usage/stats", response_model=UsageStatsResponse)
 async def get_usage_stats(
     type: Optional[str] = Query(None, description="Type of usage: 'tokens', 'kb', 'general'"),
     db: Session = Depends(get_db),

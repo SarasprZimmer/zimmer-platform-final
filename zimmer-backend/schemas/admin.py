@@ -57,4 +57,18 @@ class UserTokenUsageResponse(BaseModel):
     user_name: str
     total_tokens_used: int
     total_cost: float
-    usage_entries: List[TokenUsageResponse] 
+    usage_entries: List[TokenUsageResponse]
+
+class UsageStatsResponse(BaseModel):
+    type: str
+    total_tokens_used: Optional[int] = None
+    total_requests: Optional[int] = None
+    average_tokens_per_request: Optional[float] = None
+    estimated_cost_usd: Optional[float] = None
+    total_entries: Optional[int] = None
+    unique_automations: Optional[int] = None
+    total_users: Optional[int] = None
+    active_automations: Optional[int] = None
+    period: Optional[dict] = None
+    message: Optional[str] = None
+    error: Optional[str] = None 
