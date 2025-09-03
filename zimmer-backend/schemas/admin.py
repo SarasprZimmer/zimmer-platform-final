@@ -59,6 +59,10 @@ class UserTokenUsageResponse(BaseModel):
     total_cost: float
     usage_entries: List[TokenUsageResponse]
 
+class PeriodInfo(BaseModel):
+    from_date: str
+    to_date: str
+
 class UsageStatsResponse(BaseModel):
     type: str
     total_tokens_used: Optional[int] = None
@@ -69,7 +73,7 @@ class UsageStatsResponse(BaseModel):
     unique_automations: Optional[int] = None
     total_users: Optional[int] = None
     active_automations: Optional[int] = None
-    period: Optional[dict] = None
+    period: Optional[PeriodInfo] = None
     message: Optional[str] = None
     error: Optional[str] = None
 

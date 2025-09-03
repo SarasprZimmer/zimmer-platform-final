@@ -12,7 +12,7 @@ from models.automation import Automation
 from models.ticket import Ticket
 from models.kb_status_history import KBStatusHistory
 from models.kb_template import KBTemplate
-from schemas.admin import UserListResponse, PaymentListResponse, UserTokenUsageResponse, UserAutomationAdminResponse, PaymentResponse, UsageStatsResponse
+from schemas.admin import UserListResponse, PaymentListResponse, UserTokenUsageResponse, UserAutomationAdminResponse, PaymentResponse, UsageStatsResponse, PeriodInfo
 from utils.auth_dependency import get_current_admin_user, get_db
 
 router = APIRouter()
@@ -438,10 +438,10 @@ async def get_usage_stats(
                     total_users=total_users,
                     active_automations=active_automations,
                     estimated_cost_usd=round(total_tokens / 1000 * 0.002, 4),
-                    period={
-                        "from_date": (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d"),
-                        "to_date": datetime.now().strftime("%Y-%m-%d")
-                    }
+                    period=PeriodInfo(
+                        from_date=(datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d"),
+                        to_date=datetime.now().strftime("%Y-%m-%d")
+                    )
                 )
             except Exception as e:
                 # Return safe defaults if there's an error
@@ -452,10 +452,10 @@ async def get_usage_stats(
                     active_automations=0,
                     estimated_cost_usd=0,
                     error="Could not retrieve usage data",
-                    period={
-                        "from_date": (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d"),
-                        "to_date": datetime.now().strftime("%Y-%m-%d")
-                    }
+                    period=PeriodInfo(
+                        from_date=(datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d"),
+                        to_date=datetime.now().strftime("%Y-%m-%d")
+                    )
                 )
             
     except HTTPException:
@@ -465,6 +465,22 @@ async def get_usage_stats(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to retrieve usage statistics: {str(e)}"
         )
+
+@router.get("/test-usage-stats", response_model=UsageStatsResponse)
+async def test_usage_stats(
+    current_admin: User = Depends(get_current_admin_user)
+):
+    """
+    Test endpoint for usage stats validation
+    """
+    return UsageStatsResponse(
+        type="test",
+        total_tokens_used=0,
+        total_requests=0,
+        average_tokens_per_request=0,
+        estimated_cost_usd=0,
+        message="Test response"
+    )
 
 @router.get("/kb-monitoring")
 async def get_kb_monitoring(
