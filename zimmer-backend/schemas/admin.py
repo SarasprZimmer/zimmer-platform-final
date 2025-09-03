@@ -71,4 +71,7 @@ class UsageStatsResponse(BaseModel):
     active_automations: Optional[int] = None
     period: Optional[dict] = None
     message: Optional[str] = None
-    error: Optional[str] = None 
+    error: Optional[str] = None
+
+    class Config:
+        from_attributes = True 
