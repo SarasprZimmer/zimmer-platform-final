@@ -57,6 +57,10 @@ app.include_router(users.router, prefix="/api", tags=["users"])
 # Import and include auth sessions router
 from routers.auth_sessions import router as auth_sessions_router
 app.include_router(auth_sessions_router, prefix="/api/auth", tags=["auth-sessions"])
+
+# Import and include email verification router
+from routers.email_verify import router as email_verify_router
+app.include_router(email_verify_router, tags=["email-verification"])
 from routers.admin import router as admin_router
 app.include_router(admin_router, prefix="/api/admin", tags=["admin"])
 app.include_router(fallback.router, prefix="/api/admin", tags=["fallback"])

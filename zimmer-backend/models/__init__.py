@@ -23,6 +23,7 @@ from .openai_key_usage import OpenAIKeyUsage, UsageStatus
 from .token_adjustment import TokenAdjustment
 from .session import Session
 from .notification import Notification
+from .email_verification import EmailVerificationToken
 
 # Export all models
 __all__ = [
@@ -46,5 +47,6 @@ __all__ = [
     'UsageStatus',
     'TokenAdjustment',
     'Session',
-    'Notification'
+    'Notification',
+    'EmailVerificationToken'
 ] 

@@ -21,7 +21,9 @@ class CSRFMiddleware(BaseHTTPMiddleware):
            request.url.path.startswith("/api/auth/signup") or \
            request.url.path.startswith("/api/auth/refresh") or \
            request.url.path.startswith("/api/auth/logout") or \
-           request.url.path.startswith("/api/auth/csrf"):
+           request.url.path.startswith("/api/auth/csrf") or \
+           request.url.path.startswith("/api/auth/request-email-verify") or \
+           request.url.path.startswith("/api/auth/verify-email"):
             return await call_next(request)
 
         # Skip CSRF check if no cookies (API-only requests)

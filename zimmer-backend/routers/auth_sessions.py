@@ -11,6 +11,7 @@ from sqlalchemy import and_, or_
 
 from database import get_db
 from models.user import User, UserRole
+from settings import settings
 from models.session import Session as UserSession
 from schemas.auth_session import (
     SignupRequest,
@@ -221,6 +222,13 @@ async def login(
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="ایمیل یا رمز عبور اشتباه است"
+            )
+        
+        # Check email verification if required
+        if settings.REQUIRE_VERIFIED_EMAIL_FOR_LOGIN and not user.email_verified_at:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="email_not_verified"
             )
         
         # Get client information
