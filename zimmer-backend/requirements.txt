@@ -10,6 +10,7 @@ python-multipart==0.0.6
 openai==0.28.1
 bcrypt==4.1.2
 pyjwt==2.8.0
+pyotp==2.9.0
 cryptography==41.0.7
 alembic==1.13.2
 httpx==0.25.2

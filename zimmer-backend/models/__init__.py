@@ -24,6 +24,7 @@ from .token_adjustment import TokenAdjustment
 from .session import Session
 from .notification import Notification
 from .email_verification import EmailVerificationToken
+from .twofa import TwoFactorRecoveryCode
 
 # Export all models
 __all__ = [
@@ -48,5 +49,6 @@ __all__ = [
     'TokenAdjustment',
     'Session',
     'Notification',
-    'EmailVerificationToken'
+    'EmailVerificationToken',
+    'TwoFactorRecoveryCode'
 ] 

@@ -231,6 +231,15 @@ async def login(
                 detail="email_not_verified"
             )
         
+        # Check if 2FA is enabled
+        if getattr(user, "twofa_enabled", False):
+            from routers.twofa import create_otp_challenge_token
+            challenge = create_otp_challenge_token(user.id, user.password_hash)
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, 
+                detail={"error":"otp_required","challenge_token":challenge}
+            )
+        
         # Get client information
         user_agent, ip_address = get_client_info(http_request)
         

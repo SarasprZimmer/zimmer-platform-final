@@ -20,6 +20,8 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     email_verified_at = Column(DateTime(timezone=True), nullable=True)
+    twofa_enabled = Column(Boolean, nullable=False, default=False, server_default='0')
+    twofa_secret = Column(String(64), nullable=True)
     
     # Relationships
     knowledge_entries = relationship("KnowledgeEntry", back_populates="client")
