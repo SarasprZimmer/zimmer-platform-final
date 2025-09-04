@@ -16,6 +16,8 @@ class Payment(Base):
     authority = Column(Text, nullable=True, index=True)  # Zarinpal authority
     ref_id = Column(Text, nullable=True)  # Zarinpal reference ID
     status = Column(String, default="pending")  # pending, succeeded, failed, canceled
+    discount_code = Column(String(64), nullable=True)
+    discount_percent = Column(Integer, nullable=True)
     meta = Column(Text, nullable=True)  # JSON string for additional data
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     

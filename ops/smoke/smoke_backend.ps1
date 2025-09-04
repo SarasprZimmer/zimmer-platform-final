@@ -34,7 +34,11 @@ $tests = @(
   "tests/test_payments_sandbox.py",
   "tests/test_notifications.py",
   "tests/test_admin_notifications.py",
-  "tests/test_migrations_guard.py"
+  "tests/test_migrations_guard.py",
+  "tests/test_discounts.py",
+  "tests/test_admin_discounts.py",
+  "tests/test_2fa.py",
+  "tests/test_email_verification.py"
 ) | Where-Object { Test-Path $_ }
 
 if ($tests.Count -eq 0) {

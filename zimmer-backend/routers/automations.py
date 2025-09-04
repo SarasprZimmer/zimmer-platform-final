@@ -15,6 +15,12 @@ import logging
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+@router.get("/automations")
+def list_automations(db: Session = Depends(get_db)):
+    """List all public automations"""
+    automations = db.query(Automation).filter(Automation.is_listed == True).all()
+    return {"automations": automations}
+
 @router.post("/automations/{automation_id}/provision", response_model=ProvisionResponse)
 async def provision_automation(
     automation_id: int = Path(...),

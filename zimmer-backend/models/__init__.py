@@ -25,6 +25,7 @@ from .session import Session
 from .notification import Notification
 from .email_verification import EmailVerificationToken
 from .twofa import TwoFactorRecoveryCode
+from .discount import DiscountCode, DiscountCodeAutomation, DiscountRedemption
 
 # Export all models
 __all__ = [
@@ -50,5 +51,8 @@ __all__ = [
     'Session',
     'Notification',
     'EmailVerificationToken',
-    'TwoFactorRecoveryCode'
+    'TwoFactorRecoveryCode',
+    'DiscountCode',
+    'DiscountCodeAutomation',
+    'DiscountRedemption'
 ] 

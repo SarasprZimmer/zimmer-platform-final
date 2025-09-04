@@ -167,6 +167,101 @@ try {
     Write-TestResult -Component "Payment Gateway" -Test "Zarinpal Config" -Status "ERROR" -Details "Payment gateway check failed"
 }
 
+# 9. Discount System Check
+Write-Host "`n🎫 Testing Discount System..." -ForegroundColor Cyan
+try {
+    Push-Location "zimmer-backend"
+    $discountModels = @("models/discount.py", "schemas/discounts.py", "services/discounts.py", "routers/admin_discounts.py", "routers/discounts.py")
+    $allDiscountFilesExist = $true
+    foreach ($file in $discountModels) {
+        if (-not (Test-Path $file)) {
+            $allDiscountFilesExist = $false
+            break
+        }
+    }
+    if ($allDiscountFilesExist) {
+        Write-TestResult -Component "Discount System" -Test "Backend Files" -Status "PASS" -Details "All discount system files present"
+    } else {
+        Write-TestResult -Component "Discount System" -Test "Backend Files" -Status "FAIL" -Details "Some discount system files missing"
+    }
+    Pop-Location
+} catch {
+    Write-TestResult -Component "Discount System" -Test "Backend Files" -Status "ERROR" -Details "Discount system check failed"
+}
+
+# 10. 2FA System Check
+Write-Host "`n🔒 Testing 2FA System..." -ForegroundColor Cyan
+try {
+    $twofaFiles = @(
+        "zimmer-backend/models/twofa.py",
+        "zimmer-backend/routers/twofa.py",
+        "zimmer_user_panel/components/TwoFADialog.tsx",
+        "zimmer_user_panel/pages/settings/security.tsx"
+    )
+    $all2faFilesExist = $true
+    foreach ($file in $twofaFiles) {
+        if (-not (Test-Path $file)) {
+            $all2faFilesExist = $false
+            break
+        }
+    }
+    if ($all2faFilesExist) {
+        Write-TestResult -Component "2FA System" -Test "Files" -Status "PASS" -Details "All 2FA system files present"
+    } else {
+        Write-TestResult -Component "2FA System" -Test "Files" -Status "FAIL" -Details "Some 2FA system files missing"
+    }
+} catch {
+    Write-TestResult -Component "2FA System" -Test "Files" -Status "ERROR" -Details "2FA system check failed"
+}
+
+# 11. Email Verification System Check
+Write-Host "`n📧 Testing Email Verification System..." -ForegroundColor Cyan
+try {
+    $emailFiles = @(
+        "zimmer-backend/models/email_verification.py",
+        "zimmer_user_panel/pages/verify-email.tsx"
+    )
+    $allEmailFilesExist = $true
+    foreach ($file in $emailFiles) {
+        if (-not (Test-Path $file)) {
+            $allEmailFilesExist = $false
+            break
+        }
+    }
+    if ($allEmailFilesExist) {
+        Write-TestResult -Component "Email Verification" -Test "Files" -Status "PASS" -Details "All email verification files present"
+    } else {
+        Write-TestResult -Component "Email Verification" -Test "Files" -Status "FAIL" -Details "Some email verification files missing"
+    }
+} catch {
+    Write-TestResult -Component "Email Verification" -Test "Files" -Status "ERROR" -Details "Email verification check failed"
+}
+
+# 12. Purchase System Check
+Write-Host "`n🛒 Testing Purchase System..." -ForegroundColor Cyan
+try {
+    $purchaseFiles = @(
+        "zimmer_user_panel/components/DiscountCodeField.tsx",
+        "zimmer_user_panel/components/PriceSummary.tsx",
+        "zimmer_user_panel/lib/money.ts",
+        "zimmer_user_panel/pages/automations/[id]/purchase.tsx"
+    )
+    $allPurchaseFilesExist = $true
+    foreach ($file in $purchaseFiles) {
+        if (-not (Test-Path $file)) {
+            $allPurchaseFilesExist = $false
+            break
+        }
+    }
+    if ($allPurchaseFilesExist) {
+        Write-TestResult -Component "Purchase System" -Test "Files" -Status "PASS" -Details "All purchase system files present"
+    } else {
+        Write-TestResult -Component "Purchase System" -Test "Files" -Status "FAIL" -Details "Some purchase system files missing"
+    }
+} catch {
+    Write-TestResult -Component "Purchase System" -Test "Files" -Status "ERROR" -Details "Purchase system check failed"
+}
+
 # Generate Summary Report
 Write-Host "`n📊 E2E Test Results Summary" -ForegroundColor Yellow
 Write-Host "=============================" -ForegroundColor Yellow

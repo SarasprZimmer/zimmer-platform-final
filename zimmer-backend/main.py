@@ -92,6 +92,15 @@ from routers.automations import router as automations_router
 app.include_router(automations_router, prefix="/api", tags=["automations"])
 from routers.automation_usage import router as automation_usage_router
 app.include_router(automation_usage_router, prefix="/api", tags=["automation-usage"])
+
+# Import admin discounts router (MUST be before openai_keys to avoid routing conflict)
+from routers.admin_discounts import router as admin_discounts_router
+app.include_router(admin_discounts_router, prefix="/api/admin", tags=["admin-discounts"])
+
+# Import public discounts router
+from routers.discounts import router as discounts_router
+app.include_router(discounts_router, prefix="/api", tags=["discounts"])
+
 from routers.admin.openai_keys import router as openai_keys_router
 app.include_router(openai_keys_router, prefix="/api/admin", tags=["openai-keys"])
 from routers.admin.user_management import router as user_management_router
@@ -121,6 +130,10 @@ app.include_router(admin_notifications_router, tags=["admin:notifications"])
 from routers.admin_automation_health import router as admin_automation_health_router
 app.include_router(admin_automation_health_router, tags=["admin:automation-health"])
 
+# Import admin dashboard router
+from routers.admin_dashboard import router as admin_dashboard_router
+app.include_router(admin_dashboard_router, prefix="/api", tags=["admin-dashboard"])
+
 # Import all models to ensure they're registered with Base
 from models.user import User
 from models.automation import Automation
@@ -140,6 +153,7 @@ from models.user_automation import UserAutomation
 from models.token_adjustment import TokenAdjustment
 from models.session import Session
 from models.notification import Notification
+from models.discount import DiscountCode, DiscountCodeAutomation, DiscountRedemption
 
 # Note: Database tables are now managed by Alembic migrations
 # Run 'alembic upgrade head' to create/update tables

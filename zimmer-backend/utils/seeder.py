@@ -64,12 +64,13 @@ def seed_sample_data():
             print("ℹ️ Test user already exists")
 
         # Check if automations already exist
-        travel_ai = db.query(Automation).filter(Automation.slug == "travel-ai").first()
+        travel_ai = db.query(Automation).filter(Automation.name == "TravelAI Assistant").first()
         if not travel_ai:
             travel_ai = Automation(
                 name="TravelAI Assistant",
-                slug="travel-ai",
                 description="AI-powered travel planning and visa assistance",
+                pricing_type="token_per_session",
+                price_per_token=100.0,
                 health_status="unknown",  # Add required field
                 is_listed=False  # Add required field
             )
@@ -80,12 +81,13 @@ def seed_sample_data():
         else:
             print("ℹ️ TravelAI automation already exists")
 
-        seo_agent = db.query(Automation).filter(Automation.slug == "seo-agent").first()
+        seo_agent = db.query(Automation).filter(Automation.name == "SEO Agent").first()
         if not seo_agent:
             seo_agent = Automation(
                 name="SEO Agent",
-                slug="seo-agent",
                 description="Automated SEO optimization and content analysis",
+                pricing_type="token_per_session",
+                price_per_token=150.0,
                 health_status="unknown",  # Add required field
                 is_listed=False  # Add required field
             )

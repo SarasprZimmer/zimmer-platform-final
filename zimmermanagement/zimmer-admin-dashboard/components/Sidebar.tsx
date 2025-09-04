@@ -17,6 +17,7 @@ const navigation = [
   { name: 'کلیدهای OpenAI', href: '/api-keys', icon: '🔑' },
   { name: 'استفاده از توکن', href: '/usage', icon: '🔢' },
   { name: 'پرداخت‌ها', href: '/payments', icon: '💳' },
+  { name: 'کدهای تخفیف', href: '/discounts', icon: '🎫', managerOnly: true },
   { name: 'لاگ‌های خطا', href: '/fallbacks', icon: '⚠️' },
   { name: 'اعلان‌ها', href: '/notifications', icon: '🔔', managerOnly: true },
 ];

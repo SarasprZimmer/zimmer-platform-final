@@ -11,6 +11,7 @@ class PaymentInitRequest(BaseModel):
     automation_id: int = Field(..., description="ID of the automation to purchase")
     tokens: int = Field(..., ge=1, le=100000, description="Number of tokens to purchase")
     return_path: str = Field(..., description="Client route appended to PAYMENTS_RETURN_BASE")
+    discount_code: Optional[str] = Field(None, description="Optional discount code to apply")
 
     @validator('return_path')
     def validate_return_path(cls, v):
@@ -22,6 +23,7 @@ class PaymentInitResponse(BaseModel):
     payment_id: int = Field(..., description="ID of the created payment record")
     authority: str = Field(..., description="Zarinpal payment authority")
     redirect_url: str = Field(..., description="URL to redirect user for payment")
+    amount: int = Field(..., description="Final amount after discount (in Rial)")
 
 
 class PaymentVerifyResponse(BaseModel):
@@ -45,3 +47,14 @@ class PaymentCallbackRequest(BaseModel):
     @validator('Status')
     def validate_status(cls, v):
         return validate_string_field(v, max_length=10)
+
+
+class PaymentOut(BaseModel):
+    """Payment record output"""
+    id: int
+    amount: int
+    tokens_purchased: int
+    status: str
+    discount_code: Optional[str] = None
+    discount_percent: Optional[int] = None
+    class Config: orm_mode = True

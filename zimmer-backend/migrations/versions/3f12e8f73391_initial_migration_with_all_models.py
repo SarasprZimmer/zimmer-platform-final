@@ -1,8 +1,8 @@
-"""Initial migration
+"""Initial migration with all models
 
-Revision ID: a9b90e0973ef
+Revision ID: 3f12e8f73391
 Revises: 
-Create Date: 2025-08-27 20:29:33.682171
+Create Date: 2025-09-04 15:52:13.149368
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'a9b90e0973ef'
+revision: str = '3f12e8f73391'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -36,10 +36,17 @@ def upgrade() -> None:
     sa.Column('service_token_hash', sa.String(), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=True),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=True),
+    sa.Column('health_check_url', sa.String(length=500), nullable=True),
+    sa.Column('health_status', sa.String(length=16), nullable=False),
+    sa.Column('last_health_at', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('health_details', sa.JSON(), nullable=True),
+    sa.Column('is_listed', sa.Boolean(), nullable=False),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_automations'))
     )
     with op.batch_alter_table('automations', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_automations_health_status'), ['health_status'], unique=False)
         batch_op.create_index(batch_op.f('ix_automations_id'), ['id'], unique=False)
+        batch_op.create_index(batch_op.f('ix_automations_is_listed'), ['is_listed'], unique=False)
 
     op.create_table('backup_logs',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -55,6 +62,22 @@ def upgrade() -> None:
     with op.batch_alter_table('backup_logs', schema=None) as batch_op:
         batch_op.create_index(batch_op.f('ix_backup_logs_id'), ['id'], unique=False)
 
+    op.create_table('discount_codes',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('code', sa.String(length=64), nullable=False),
+    sa.Column('percent_off', sa.Integer(), nullable=False),
+    sa.Column('active', sa.Boolean(), nullable=False),
+    sa.Column('starts_at', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('ends_at', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('max_redemptions', sa.Integer(), nullable=True),
+    sa.Column('per_user_limit', sa.Integer(), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
+    sa.CheckConstraint('percent_off >= 0 AND percent_off <= 100', name=op.f('ck_discount_codes_ck_discount_percent_range')),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_discount_codes'))
+    )
+    with op.batch_alter_table('discount_codes', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_discount_codes_code'), ['code'], unique=True)
+
     op.create_table('users',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
@@ -64,11 +87,41 @@ def upgrade() -> None:
     sa.Column('role', sa.Enum('manager', 'technical_team', 'support_staff', name='userrole'), nullable=True),
     sa.Column('is_active', sa.Boolean(), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=True),
+    sa.Column('email_verified_at', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('twofa_enabled', sa.Boolean(), server_default='0', nullable=False),
+    sa.Column('twofa_secret', sa.String(length=64), nullable=True),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_users')),
     sa.UniqueConstraint('email', name=op.f('uq_users_email'))
     )
     with op.batch_alter_table('users', schema=None) as batch_op:
         batch_op.create_index(batch_op.f('ix_users_id'), ['id'], unique=False)
+
+    op.create_table('discount_code_automations',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('discount_id', sa.Integer(), nullable=False),
+    sa.Column('automation_id', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['automation_id'], ['automations.id'], name=op.f('fk_discount_code_automations_automation_id_automations'), ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['discount_id'], ['discount_codes.id'], name=op.f('fk_discount_code_automations_discount_id_discount_codes'), ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_discount_code_automations')),
+    sa.UniqueConstraint('discount_id', 'automation_id', name='uq_discount_automation')
+    )
+    with op.batch_alter_table('discount_code_automations', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_discount_code_automations_automation_id'), ['automation_id'], unique=False)
+        batch_op.create_index(batch_op.f('ix_discount_code_automations_discount_id'), ['discount_id'], unique=False)
+
+    op.create_table('email_verification_tokens',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('token', sa.String(length=128), nullable=False),
+    sa.Column('expires_at', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('used_at', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], name=op.f('fk_email_verification_tokens_user_id_users'), ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_email_verification_tokens'))
+    )
+    with op.batch_alter_table('email_verification_tokens', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_email_verification_tokens_token'), ['token'], unique=True)
+        batch_op.create_index(batch_op.f('ix_email_verification_tokens_user_id'), ['user_id'], unique=False)
 
     op.create_table('kb_templates',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -95,6 +148,23 @@ def upgrade() -> None:
     )
     with op.batch_alter_table('knowledge_entries', schema=None) as batch_op:
         batch_op.create_index(batch_op.f('ix_knowledge_entries_id'), ['id'], unique=False)
+
+    op.create_table('notifications',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('type', sa.String(length=64), nullable=False),
+    sa.Column('title', sa.String(length=200), nullable=False),
+    sa.Column('body', sa.String(length=2000), nullable=True),
+    sa.Column('data', sa.JSON(), nullable=True),
+    sa.Column('is_read', sa.Boolean(), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
+    sa.Column('read_at', sa.DateTime(timezone=True), nullable=True),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], name=op.f('fk_notifications_user_id_users'), ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_notifications'))
+    )
+    with op.batch_alter_table('notifications', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_notifications_id'), ['id'], unique=False)
+        batch_op.create_index(batch_op.f('ix_notifications_user_id'), ['user_id'], unique=False)
 
     op.create_table('openai_keys',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -143,6 +213,8 @@ def upgrade() -> None:
     sa.Column('authority', sa.Text(), nullable=True),
     sa.Column('ref_id', sa.Text(), nullable=True),
     sa.Column('status', sa.String(), nullable=True),
+    sa.Column('discount_code', sa.String(length=64), nullable=True),
+    sa.Column('discount_percent', sa.Integer(), nullable=True),
     sa.Column('meta', sa.Text(), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=True),
     sa.ForeignKeyConstraint(['automation_id'], ['automations.id'], name=op.f('fk_payments_automation_id_automations')),
@@ -194,6 +266,19 @@ def upgrade() -> None:
     with op.batch_alter_table('tickets', schema=None) as batch_op:
         batch_op.create_index(batch_op.f('ix_tickets_id'), ['id'], unique=False)
 
+    op.create_table('twofactor_recovery_codes',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('code_hash', sa.String(length=128), nullable=False),
+    sa.Column('used_at', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], name=op.f('fk_twofactor_recovery_codes_user_id_users'), ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_twofactor_recovery_codes'))
+    )
+    with op.batch_alter_table('twofactor_recovery_codes', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_twofactor_recovery_codes_code_hash'), ['code_hash'], unique=False)
+        batch_op.create_index(batch_op.f('ix_twofactor_recovery_codes_user_id'), ['user_id'], unique=False)
+
     op.create_table('user_automations',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
@@ -214,6 +299,29 @@ def upgrade() -> None:
     )
     with op.batch_alter_table('user_automations', schema=None) as batch_op:
         batch_op.create_index(batch_op.f('ix_user_automations_id'), ['id'], unique=False)
+
+    op.create_table('discount_redemptions',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('discount_id', sa.Integer(), nullable=True),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('automation_id', sa.Integer(), nullable=True),
+    sa.Column('payment_id', sa.Integer(), nullable=True),
+    sa.Column('code', sa.String(length=64), nullable=False),
+    sa.Column('amount_before', sa.Integer(), nullable=False),
+    sa.Column('amount_discount', sa.Integer(), nullable=False),
+    sa.Column('amount_after', sa.Integer(), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
+    sa.ForeignKeyConstraint(['automation_id'], ['automations.id'], name=op.f('fk_discount_redemptions_automation_id_automations'), ondelete='SET NULL'),
+    sa.ForeignKeyConstraint(['discount_id'], ['discount_codes.id'], name=op.f('fk_discount_redemptions_discount_id_discount_codes'), ondelete='SET NULL'),
+    sa.ForeignKeyConstraint(['payment_id'], ['payments.id'], name=op.f('fk_discount_redemptions_payment_id_payments'), ondelete='SET NULL'),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], name=op.f('fk_discount_redemptions_user_id_users'), ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_discount_redemptions'))
+    )
+    with op.batch_alter_table('discount_redemptions', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_discount_redemptions_automation_id'), ['automation_id'], unique=False)
+        batch_op.create_index(batch_op.f('ix_discount_redemptions_discount_id'), ['discount_id'], unique=False)
+        batch_op.create_index(batch_op.f('ix_discount_redemptions_payment_id'), ['payment_id'], unique=False)
+        batch_op.create_index(batch_op.f('ix_discount_redemptions_user_id'), ['user_id'], unique=False)
 
     op.create_table('fallback_logs',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -355,10 +463,22 @@ def downgrade() -> None:
         batch_op.drop_index(batch_op.f('ix_fallback_logs_id'))
 
     op.drop_table('fallback_logs')
+    with op.batch_alter_table('discount_redemptions', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_discount_redemptions_user_id'))
+        batch_op.drop_index(batch_op.f('ix_discount_redemptions_payment_id'))
+        batch_op.drop_index(batch_op.f('ix_discount_redemptions_discount_id'))
+        batch_op.drop_index(batch_op.f('ix_discount_redemptions_automation_id'))
+
+    op.drop_table('discount_redemptions')
     with op.batch_alter_table('user_automations', schema=None) as batch_op:
         batch_op.drop_index(batch_op.f('ix_user_automations_id'))
 
     op.drop_table('user_automations')
+    with op.batch_alter_table('twofactor_recovery_codes', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_twofactor_recovery_codes_user_id'))
+        batch_op.drop_index(batch_op.f('ix_twofactor_recovery_codes_code_hash'))
+
+    op.drop_table('twofactor_recovery_codes')
     with op.batch_alter_table('tickets', schema=None) as batch_op:
         batch_op.drop_index(batch_op.f('ix_tickets_id'))
 
@@ -388,6 +508,11 @@ def downgrade() -> None:
         batch_op.drop_index('idx_openai_keys_automation_status')
 
     op.drop_table('openai_keys')
+    with op.batch_alter_table('notifications', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_notifications_user_id'))
+        batch_op.drop_index(batch_op.f('ix_notifications_id'))
+
+    op.drop_table('notifications')
     with op.batch_alter_table('knowledge_entries', schema=None) as batch_op:
         batch_op.drop_index(batch_op.f('ix_knowledge_entries_id'))
 
@@ -396,16 +521,32 @@ def downgrade() -> None:
         batch_op.drop_index(batch_op.f('ix_kb_templates_id'))
 
     op.drop_table('kb_templates')
+    with op.batch_alter_table('email_verification_tokens', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_email_verification_tokens_user_id'))
+        batch_op.drop_index(batch_op.f('ix_email_verification_tokens_token'))
+
+    op.drop_table('email_verification_tokens')
+    with op.batch_alter_table('discount_code_automations', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_discount_code_automations_discount_id'))
+        batch_op.drop_index(batch_op.f('ix_discount_code_automations_automation_id'))
+
+    op.drop_table('discount_code_automations')
     with op.batch_alter_table('users', schema=None) as batch_op:
         batch_op.drop_index(batch_op.f('ix_users_id'))
 
     op.drop_table('users')
+    with op.batch_alter_table('discount_codes', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_discount_codes_code'))
+
+    op.drop_table('discount_codes')
     with op.batch_alter_table('backup_logs', schema=None) as batch_op:
         batch_op.drop_index(batch_op.f('ix_backup_logs_id'))
 
     op.drop_table('backup_logs')
     with op.batch_alter_table('automations', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_automations_is_listed'))
         batch_op.drop_index(batch_op.f('ix_automations_id'))
+        batch_op.drop_index(batch_op.f('ix_automations_health_status'))
 
     op.drop_table('automations')
     # ### end Alembic commands ###

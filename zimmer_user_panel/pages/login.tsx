@@ -4,6 +4,10 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/router'
+import { login } from '@/lib/apiClient'
+import { fetchCsrf } from '@/lib/csrf'
+import TwoFADialog from '@/components/TwoFADialog'
+import { Toast } from '@/components/Toast'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -11,7 +15,9 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [mounted, setMounted] = useState(false)
-  const { login, isAuthenticated } = useAuth()
+  const [toast, setToast] = useState<string | null>(null)
+  const [challenge, setChallenge] = useState<string | null>(null)
+  const { isAuthenticated } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
@@ -19,6 +25,7 @@ export default function LoginPage() {
     if (isAuthenticated) {
       router.push('/dashboard')
     }
+    fetchCsrf(process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000");
   }, [isAuthenticated, router])
 
 
@@ -30,9 +37,14 @@ export default function LoginPage() {
 
     try {
       await login(email, password)
-      // Login successful, redirect handled by AuthContext
+      setToast("خوش آمدید!")
+      setTimeout(()=> router.push("/dashboard"), 600)
     } catch (err: any) {
-      setError(err.message || 'خطا در اتصال به سرور')
+      if (err?.status === 401 && err?.data?.error === "otp_required" && err?.data?.challenge_token) {
+        setChallenge(err.data.challenge_token);
+      } else {
+        setError(err.message || 'خطا در اتصال به سرور')
+      }
     } finally {
       setLoading(false)
     }
@@ -124,6 +136,14 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
+      {challenge && (
+        <TwoFADialog
+          challengeToken={challenge}
+          onSuccess={() => { setChallenge(null); setToast("ورود موفق!"); setTimeout(()=>router.push("/dashboard"), 400); }}
+          onCancel={() => setChallenge(null)}
+        />
+      )}
+      {toast && <Toast msg={toast} onDone={()=>setToast(null)} />}
     </div>
   )
 }

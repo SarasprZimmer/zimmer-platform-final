@@ -4,7 +4,7 @@ Zarinpal payment router
 import json
 import logging
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 from database import get_db
@@ -13,6 +13,8 @@ from models.user import User
 from models.payment import Payment
 from models.automation import Automation
 from models.user_automation import UserAutomation
+from models.discount import DiscountCode, DiscountRedemption
+from services.twofa import now_utc
 from schemas.payment_zp import (
     PaymentInitRequest, 
     PaymentInitResponse, 
@@ -32,6 +34,9 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+# Import discount service
+from services.discounts import validate_code, record_redemption
+
 # Get configuration from environment
 PAYMENTS_MODE = os.getenv("PAYMENTS_MODE", "mock")
 ZARRINPAL_MERCHANT_ID = os.getenv("ZARRINPAL_MERCHANT_ID", "test-merchant-id")
@@ -50,7 +55,8 @@ zarinpal_client = ZarinpalClient(
 async def init_payment(
     request: PaymentInitRequest,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    request_obj: Request = None
 ):
     """
     Initialize a payment for automation tokens
@@ -91,7 +97,49 @@ async def init_payment(
                 detail=str(e)
             )
         
-        # Create payment record
+        # Apply discount if provided
+        pending_redemption_id = None
+        if getattr(request, "discount_code", None):
+            ok, reason, pack = validate_code(db, request.discount_code, request.automation_id, current_user.id, amount_rial)
+            if not ok:
+                raise HTTPException(status_code=400, detail=f"invalid_discount:{reason}")
+            dc, before, disc, after = pack
+            # create a pending redemption linked later to payment (payment_id set on verify)
+            red = record_redemption(db, dc, current_user.id, request.automation_id, before, disc, after, payment_id=None)
+            amount_rial = after
+            pending_redemption_id = red.id
+        
+        # 100% discount: amount becomes 0 → skip gateway, mark as paid now
+        if amount_rial == 0:
+            payment = Payment(
+                user_id=current_user.id,
+                automation_id=request.automation_id,
+                amount=0,
+                tokens_purchased=request.tokens,
+                method="discount",
+                gateway="none",
+                transaction_id=f"DISCOUNT-{current_user.id}-{automation.id}-{request.tokens}",
+                status="succeeded"
+            )
+            db.add(payment); db.commit(); db.refresh(payment)
+            
+            # attach redemption to payment if existed
+            if pending_redemption_id:
+                red = db.query(DiscountRedemption).get(pending_redemption_id)
+                if red:
+                    red.payment_id = payment.id
+                    db.commit()
+            
+            # credit tokens immediately
+            await _credit_tokens_to_user(db, current_user.id, request.automation_id, request.tokens)
+            return PaymentInitResponse(
+                payment_id=payment.id,
+                authority="discount",
+                redirect_url="",
+                amount=0
+            )
+        
+        # Create payment record for normal payments
         payment = Payment(
             user_id=current_user.id,
             automation_id=request.automation_id,
@@ -132,7 +180,8 @@ async def init_payment(
         return PaymentInitResponse(
             payment_id=payment.id,
             authority=payment.authority,
-            redirect_url=payment_response["url"]
+            redirect_url=payment_response["url"],
+            amount=amount_rial
         )
         
     except HTTPException:
@@ -211,6 +260,15 @@ async def payment_callback(
                 "verification_code": verification_result["code"],
                 "verification_message": verification_result["message"]
             })
+            
+            # If there is a DiscountRedemption without payment_id for this user/automation/amount_after == payment.amount -> attach
+            red = db.query(DiscountRedemption).filter(
+                DiscountRedemption.user_id==payment.user_id,
+                DiscountRedemption.payment_id.is_(None)
+            ).order_by(DiscountRedemption.created_at.desc()).first()
+            if red:
+                red.payment_id = payment.id
+                db.commit()
             
             # Credit tokens to user
             await _credit_tokens_to_user(
