@@ -91,7 +91,7 @@ const APIKeysPage: React.FC = () => {
 
   const fetchKeys = async () => {
     try {
-      let url = `${process.env.NEXT_PUBLIC_API_URL}/admin/openai-keys`;
+      let url = `http://127.0.0.1:8000/api/admin/openai-keys`;
       const params = new URLSearchParams();
       if (filterAutomation) params.append('automation_id', filterAutomation.toString());
       if (filterStatus) params.append('status', filterStatus);
@@ -113,12 +113,14 @@ const APIKeysPage: React.FC = () => {
 
   const fetchAutomations = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/automations`, {
+      const response = await fetch(`http://127.0.0.1:8000/api/admin/automations`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (response.ok) {
         const data = await response.json();
-        setAutomations(data);
+        // Handle both direct array response and object with automations property
+        const automationsArray = Array.isArray(data) ? data : (data?.automations || []);
+        setAutomations(automationsArray);
       }
     } catch (error) {
       console.error('Error fetching automations:', error);
@@ -127,7 +129,7 @@ const APIKeysPage: React.FC = () => {
 
   const handleCreate = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/openai-keys`, {
+      const response = await fetch(`http://127.0.0.1:8000/api/admin/openai-keys`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -154,7 +156,7 @@ const APIKeysPage: React.FC = () => {
     if (!selectedKey) return;
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/openai-keys/${selectedKey.id}`, {
+      const response = await fetch(`http://127.0.0.1:8000/api/admin/openai-keys/${selectedKey.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -182,7 +184,7 @@ const APIKeysPage: React.FC = () => {
     if (!selectedKey) return;
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/openai-keys/${selectedKey.id}`, {
+      const response = await fetch(`http://127.0.0.1:8000/api/admin/openai-keys/${selectedKey.id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -202,7 +204,7 @@ const APIKeysPage: React.FC = () => {
 
   const handleStatusUpdate = async (keyId: number, status: string) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/openai-keys/${keyId}/status`, {
+      const response = await fetch(`http://127.0.0.1:8000/api/admin/openai-keys/${keyId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -227,7 +229,7 @@ const APIKeysPage: React.FC = () => {
     setTestResult(null);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/openai-keys/${keyId}/test`, {
+      const response = await fetch(`http://127.0.0.1:8000/api/admin/openai-keys/${keyId}/test`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -340,7 +342,7 @@ const APIKeysPage: React.FC = () => {
                 className="w-full border border-gray-300 rounded-lg px-3 py-2"
               >
                 <option value="">همه اتوماسیون‌ها</option>
-                {automations.map(automation => (
+                {(automations || []).map(automation => (
                   <option key={automation.id} value={automation.id}>
                     {automation.name}
                   </option>
@@ -506,7 +508,7 @@ const APIKeysPage: React.FC = () => {
                     required
                   >
                     <option value={0}>انتخاب کنید</option>
-                    {automations.map(automation => (
+                    {(automations || []).map(automation => (
                       <option key={automation.id} value={automation.id}>
                         {automation.name}
                       </option>

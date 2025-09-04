@@ -6,6 +6,7 @@ import ProtectedRoute from '../components/ProtectedRoute';
 import AdjustTokensModal from '../components/AdjustTokensModal';
 import { tokenAdjustmentAPI } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
+import { authClient } from '../lib/auth-client';
 
 interface UserAutomation {
   id: number;
@@ -67,9 +68,9 @@ export default function UserAutomations() {
       setLoading(true);
       setError(null);
       
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/user-automations`, {
+      const response = await fetch(`http://127.0.0.1:8000/api/admin/user-automations`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+          'Authorization': `Bearer ${authClient.getAccessToken()}`,
           'Content-Type': 'application/json'
         }
       });

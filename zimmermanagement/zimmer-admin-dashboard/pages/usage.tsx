@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import Layout from '../components/Layout';
 import UsageTable from '../components/UsageTable';
-import { authenticatedFetch } from '../lib/auth';
+// Removed deprecated authenticatedFetch import
 import { useAuth } from '../contexts/AuthContext';
+import { authClient } from '../lib/auth-client';
 
 interface UsageRecord {
   id: number;
@@ -29,24 +30,25 @@ export default function Usage() {
     setError(null);
     try {
       if (!user) return;
-      const response = await authenticatedFetch(`/api/admin/usage/${user.id}`);
+      const response = await fetch(`http://127.0.0.1:8000/api/admin/usage/stats`, {
+        headers: {
+          'Authorization': `Bearer ${authClient.getAccessToken()}`,
+          'Content-Type': 'application/json'
+        }
+      });
       
-      if (response.status === 404) {
-        setError('Token usage tracking is not yet implemented on the backend. Please contact your administrator.');
-        setUsage([]);
-        setTotalUsage(0);
-        return;
-      }
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       
       const data = await response.json();
-      // Sort by newest first
-      const sorted = Array.isArray(data.usage_records) ? data.usage_records.sort((a: UsageRecord, b: UsageRecord) => new Date(b.date).getTime() - new Date(a.date).getTime()) : [];
-      setUsage(sorted);
-      setTotalUsage(typeof data.total_usage === 'number' ? data.total_usage : 0);
+      console.log('Usage stats response:', data);
+      
+      // For now, show the stats data instead of individual records
+      // Since we don't have individual user usage records yet
+      setUsage([]); // No individual records available yet
+      setTotalUsage(data.total_tokens_used || 0);
     } catch (err) {
       setError('Failed to load usage data.');
       setUsage([]); // Defensive: set to empty array on error
@@ -60,8 +62,8 @@ export default function Usage() {
     <Layout title="Token Usage">
       <div className="space-y-6">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Token Usage for User ID: 2</h2>
-          <p className="text-gray-600 mt-2">Monitor AI token consumption and usage patterns</p>
+          <h2 className="text-2xl font-bold text-gray-900">System Usage Statistics</h2>
+          <p className="text-gray-600 mt-2">Monitor overall AI token consumption and system usage patterns</p>
         </div>
         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
           <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">

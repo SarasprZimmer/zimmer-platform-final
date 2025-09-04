@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import Layout from '../components/Layout';
-import { authenticatedFetch } from '../lib/auth';
+// Removed deprecated authenticatedFetch import
 import { useAuth } from '../contexts/AuthContext';
+import { authClient } from '../lib/auth-client';
 
 export default function KBMonitoringDebug() {
   const [debugInfo, setDebugInfo] = useState<any>({});
@@ -25,7 +26,12 @@ export default function KBMonitoringDebug() {
   const testAPI = async () => {
     try {
       console.log('🔍 Testing API call...');
-      const res = await authenticatedFetch('/api/admin/kb-status');
+      const res = await fetch('http://127.0.0.1:8000/api/admin/kb-status', {
+        headers: {
+          'Authorization': `Bearer ${authClient.getAccessToken()}`,
+          'Content-Type': 'application/json'
+        }
+      });
       console.log('API Response:', res);
       
       if (res.ok) {

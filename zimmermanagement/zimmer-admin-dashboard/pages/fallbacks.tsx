@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import Layout from '../components/Layout';
 import FallbackTable from '../components/FallbackTable';
-import { authenticatedFetch } from '../lib/auth';
+// Removed deprecated authenticatedFetch import
 import { useAuth } from '../contexts/AuthContext';
+import { authClient } from '../lib/auth-client';
 
 interface Client {
   id: number;
@@ -35,7 +36,12 @@ export default function Fallbacks() {
 
   const fetchClients = async () => {
     try {
-      const res = await authenticatedFetch('/api/admin/users');
+      const res = await fetch('http://127.0.0.1:8000/api/admin/users', {
+        headers: {
+          'Authorization': `Bearer ${authClient.getAccessToken()}`,
+          'Content-Type': 'application/json'
+        }
+      });
       
       if (res.status === 404) {
         console.log('Users endpoint not implemented, using empty list');
@@ -63,7 +69,12 @@ export default function Fallbacks() {
       // Build query string
       const query = new URLSearchParams(params).toString();
       const url = '/api/admin/fallbacks' + (query ? `?${query}` : '');
-      const res = await authenticatedFetch(url);
+      const res = await fetch(`http://127.0.0.1:8000${url}`, {
+        headers: {
+          'Authorization': `Bearer ${authClient.getAccessToken()}`,
+          'Content-Type': 'application/json'
+        }
+      });
       const data = await res.json();
       // Map client_id to client_name
       const clientMap: Record<number, string> = {};

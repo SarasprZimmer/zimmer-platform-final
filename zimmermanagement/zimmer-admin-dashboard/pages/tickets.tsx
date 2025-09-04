@@ -466,7 +466,7 @@ export default function Tickets() {
                   {selectedTicket.attachment_path && (
                     <div className="mb-4">
                       <a 
-                        href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/tickets/${selectedTicket.id}/attachment`}
+                        href={`http://127.0.0.1:8000/api/tickets/${selectedTicket.id}/attachment`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800"

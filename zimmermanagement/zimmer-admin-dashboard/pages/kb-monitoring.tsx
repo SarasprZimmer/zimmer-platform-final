@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import Layout from '../components/Layout';
-import { authenticatedFetch } from '../lib/auth';
+// Removed deprecated authenticatedFetch import
 import { useAuth } from '../contexts/AuthContext';
+import { authClient } from '../lib/auth-client';
 
 interface Automation {
   id: number;
@@ -118,7 +119,12 @@ export default function KBMonitoring() {
     setLoading(true);
     setError('');
     try {
-      const res = await authenticatedFetch('/api/admin/automations');
+      const res = await fetch('http://127.0.0.1:8000/api/admin/automations', {
+        headers: {
+          'Authorization': `Bearer ${authClient.getAccessToken()}`,
+          'Content-Type': 'application/json'
+        }
+      });
       
       if (!res.ok) {
         const errorText = await res.text();
@@ -126,7 +132,10 @@ export default function KBMonitoring() {
       }
       
       const data = await res.json();
-      setAutomations(data || []);
+      console.log('Automations API response:', data, 'Type:', typeof data, 'Is Array:', Array.isArray(data));
+      // Handle both direct array response and object with automations property
+      const automationsArray = Array.isArray(data) ? data : (data?.automations || []);
+      setAutomations(automationsArray);
     } catch (err) {
       console.error('Error fetching automations:', err);
       setError('خطا در بارگذاری اتوماسیون‌ها.');
@@ -139,7 +148,12 @@ export default function KBMonitoring() {
     setRefreshing(true);
     setError('');
     try {
-      const res = await authenticatedFetch(`/api/admin/kb-status?automation_id=${automationId}`);
+      const res = await fetch(`http://127.0.0.1:8000/api/admin/kb-status?automation_id=${automationId}`, {
+        headers: {
+          'Authorization': `Bearer ${authClient.getAccessToken()}`,
+          'Content-Type': 'application/json'
+        }
+      });
       
       if (!res.ok) {
         const errorText = await res.text();
@@ -163,8 +177,12 @@ export default function KBMonitoring() {
     }
     
     try {
-      const res = await authenticatedFetch(`/api/admin/kb-reset/${userAutomationId}`, {
+      const res = await fetch(`http://127.0.0.1:8000/api/admin/kb-reset/${userAutomationId}`, {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${authClient.getAccessToken()}`,
+          'Content-Type': 'application/json'
+        }
       });
       
       if (!res.ok) {
@@ -208,7 +226,12 @@ export default function KBMonitoring() {
       if (filters.from_date) params.append('from_date', filters.from_date);
       if (filters.to_date) params.append('to_date', filters.to_date);
       
-      const res = await authenticatedFetch(`/api/admin/kb-history?${params}`);
+      const res = await fetch(`http://127.0.0.1:8000/api/admin/kb-history?${params}`, {
+        headers: {
+          'Authorization': `Bearer ${authClient.getAccessToken()}`,
+          'Content-Type': 'application/json'
+        }
+      });
       
       if (!res.ok) {
         const errorText = await res.text();
@@ -241,7 +264,12 @@ export default function KBMonitoring() {
       if (filters.from_date) params.append('from_date', filters.from_date);
       if (filters.to_date) params.append('to_date', filters.to_date);
       
-      const res = await authenticatedFetch(`/api/admin/kb-history/stats?${params}`);
+      const res = await fetch(`http://127.0.0.1:8000/api/admin/kb-history/stats?${params}`, {
+        headers: {
+          'Authorization': `Bearer ${authClient.getAccessToken()}`,
+          'Content-Type': 'application/json'
+        }
+      });
       
       if (res.ok) {
         const stats = await res.json();
@@ -261,7 +289,12 @@ export default function KBMonitoring() {
         days: '7'
       });
       
-      const res = await authenticatedFetch(`/api/admin/kb-history/chart-data?${params}`);
+      const res = await fetch(`http://127.0.0.1:8000/api/admin/kb-history/chart-data?${params}`, {
+        headers: {
+          'Authorization': `Bearer ${authClient.getAccessToken()}`,
+          'Content-Type': 'application/json'
+        }
+      });
       
       if (res.ok) {
         const data = await res.json();
@@ -444,7 +477,7 @@ export default function KBMonitoring() {
         <div className="bg-white shadow rounded-lg p-6">
           <h3 className="text-lg font-medium text-gray-900 mb-4">انتخاب اتوماسیون</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {automations.map((automation) => (
+            {(automations || []).map((automation) => (
               <div
                 key={automation.id}
                 onClick={() => setSelectedAutomation(automation)}
@@ -465,7 +498,7 @@ export default function KBMonitoring() {
               </div>
             ))}
           </div>
-          {automations.length === 0 && (
+          {(!automations || automations.length === 0) && (
             <div className="text-center py-8">
               <span className="text-4xl">🤖</span>
               <h3 className="mt-2 text-sm font-medium text-gray-900">هیچ اتوماسیونی یافت نشد</h3>

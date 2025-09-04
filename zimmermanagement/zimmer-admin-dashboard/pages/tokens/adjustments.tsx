@@ -5,6 +5,7 @@ import Layout from '../../components/Layout';
 import ProtectedRoute from '../../components/ProtectedRoute';
 import { tokenAdjustmentAPI } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
+import { authClient } from '../../lib/auth-client';
 
 interface TokenAdjustment {
   id: number;
@@ -66,9 +67,9 @@ export default function TokenAdjustments() {
 
   const fetchUserAutomations = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/user-automations`, {
+      const response = await fetch(`http://127.0.0.1:8000/api/admin/user-automations`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+          'Authorization': `Bearer ${authClient.getAccessToken()}`,
           'Content-Type': 'application/json'
         }
       });

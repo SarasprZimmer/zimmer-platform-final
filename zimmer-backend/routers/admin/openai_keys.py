@@ -17,7 +17,7 @@ from schemas.openai_key import (
 from utils.crypto import encrypt_secret, mask_secret
 from services.openai_key_manager import OpenAIKeyManager
 
-router = APIRouter(prefix="/api/admin/openai-keys", tags=["admin-openai-keys"])
+router = APIRouter(tags=["admin-openai-keys"])
 
 @router.post("/", response_model=OpenAIKeyOut)
 async def create_openai_key(
@@ -66,6 +66,11 @@ async def create_openai_key(
         **{k: v for k, v in new_key.__dict__.items() if not k.startswith('_')},
         masked_key=mask_secret(key_data.api_key)
     )
+
+@router.get("/test")
+async def test_endpoint():
+    """Test endpoint to verify router is working"""
+    return {"message": "OpenAI keys router is working"}
 
 @router.get("/", response_model=List[OpenAIKeyOut])
 async def list_openai_keys(

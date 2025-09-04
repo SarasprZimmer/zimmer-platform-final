@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { authenticatedFetch } from '../lib/auth';
+// Removed deprecated authenticatedFetch import
+import { authClient } from '../lib/auth-client';
 
 interface TicketFormProps {
   onSuccess?: () => void;
@@ -20,8 +21,12 @@ const TicketForm: React.FC<TicketFormProps> = ({ onSuccess, userId }) => {
     setError('');
     
     try {
-      const res = await authenticatedFetch('/api/tickets', {
+      const res = await fetch('http://127.0.0.1:8000/api/tickets', {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${authClient.getAccessToken()}`,
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({
           user_id: userId || 1, // Default to user ID 1 if not provided
           subject,
