@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/router';
 import DashboardLayout from '@/components/DashboardLayout';
 import { Card } from '@/components/Skeleton';
+import { apiFetch } from '@/lib/apiClient';
 
 type Ticket = {
   id: number;
@@ -30,7 +31,7 @@ type FAQ = {
 };
 
 export default function SupportPage() {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, user } = useAuth();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'tickets' | 'faq' | 'new'>('tickets');
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -150,38 +151,108 @@ export default function SupportPage() {
   }, [isAuthenticated, loading, router]);
 
   useEffect(() => {
-    // Load mock data
-    setTickets(mockTickets);
+    if (user) {
+      fetchTickets();
+    }
+    // Load mock FAQs data
     setFaqs(mockFAQs);
-  }, []);
+  }, [user]);
+
+  const fetchTickets = async () => {
+    if (!user) return;
+    
+    try {
+      const response = await apiFetch('/api/tickets', {
+        method: 'GET'
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Convert backend tickets to frontend format
+        const formattedTickets: Ticket[] = data.tickets.map((ticket: any) => ({
+          id: ticket.id,
+          subject: ticket.subject,
+          category: 'tech', // Default category since backend doesn't store this
+          status: ticket.status,
+          priority: ticket.importance,
+          created_at: ticket.created_at,
+          updated_at: ticket.updated_at,
+          messages: [{
+            id: Date.now(),
+            content: ticket.message,
+            is_from_user: true,
+            created_at: ticket.created_at
+          }]
+        }));
+        setTickets(formattedTickets);
+      } else {
+        console.error('Failed to fetch tickets:', response.status);
+        // Fallback to mock data
+        setTickets(mockTickets);
+      }
+    } catch (error) {
+      console.error('Error fetching tickets:', error);
+      // Fallback to mock data
+      setTickets(mockTickets);
+    }
+  };
 
   const handleCreateTicket = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoadingTickets(true);
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const newTicketData: Ticket = {
-      id: Date.now(),
-      subject: newTicket.subject,
-      category: newTicket.category,
-      status: 'open',
-      priority: newTicket.priority,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      messages: [{
-        id: Date.now(),
-        content: newTicket.description,
-        is_from_user: true,
-        created_at: new Date().toISOString()
-      }]
-    };
-    
-    setTickets(prev => [newTicketData, ...prev]);
-    setNewTicket({ subject: '', category: 'tech', priority: 'medium', description: '' });
-    setActiveTab('tickets');
-    setLoadingTickets(false);
+    try {
+      // Check if user is authenticated
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      // Create form data for the API call
+      const formData = new FormData();
+      formData.append('user_id', user.id.toString());
+      formData.append('subject', newTicket.subject);
+      formData.append('message', newTicket.description);
+      formData.append('importance', newTicket.priority);
+
+      // Make API call to create ticket
+      const response = await apiFetch('/api/tickets', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to create ticket: ${response.status}`);
+      }
+
+      const createdTicket = await response.json();
+      
+      // Convert backend ticket format to frontend format
+      const newTicketData: Ticket = {
+        id: createdTicket.id,
+        subject: createdTicket.subject,
+        category: newTicket.category, // Keep the category from form
+        status: createdTicket.status,
+        priority: createdTicket.importance,
+        created_at: createdTicket.created_at,
+        updated_at: createdTicket.updated_at,
+        messages: [{
+          id: Date.now(),
+          content: createdTicket.message,
+          is_from_user: true,
+          created_at: createdTicket.created_at
+        }]
+      };
+      
+      setTickets(prev => [newTicketData, ...prev]);
+      setNewTicket({ subject: '', category: 'tech', priority: 'medium', description: '' });
+      setActiveTab('tickets');
+      
+    } catch (error) {
+      console.error('Error creating ticket:', error);
+      alert('خطا در ایجاد تیکت. لطفاً دوباره تلاش کنید.');
+    } finally {
+      setLoadingTickets(false);
+    }
   };
 
   const handleSendMessage = async (ticketId: number) => {
@@ -190,20 +261,30 @@ export default function SupportPage() {
     const ticket = tickets.find(t => t.id === ticketId);
     if (!ticket) return;
     
-    const message = {
-      id: Date.now(),
-      content: newMessage,
-      is_from_user: true,
-      created_at: new Date().toISOString()
-    };
-    
-    setTickets(prev => prev.map(t => 
-      t.id === ticketId 
-        ? { ...t, messages: [...t.messages, message], updated_at: new Date().toISOString() }
-        : t
-    ));
-    
-    setNewMessage('');
+    try {
+      // Make API call to update ticket with new message
+      const response = await apiFetch(`/api/tickets/${ticketId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: newMessage
+        })
+      });
+
+      if (response.ok) {
+        // Refresh tickets to get updated data
+        await fetchTickets();
+        setNewMessage('');
+      } else {
+        console.error('Failed to send message:', response.status);
+        alert('خطا در ارسال پیام. لطفاً دوباره تلاش کنید.');
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+      alert('خطا در ارسال پیام. لطفاً دوباره تلاش کنید.');
+    }
   };
 
   const getStatusColor = (status: string) => {

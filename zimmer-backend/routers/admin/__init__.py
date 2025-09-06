@@ -287,10 +287,14 @@ async def get_tickets(
                 "user_id": ticket.user_id,
                 "user_name": user_name,
                 "subject": ticket.subject,
+                "message": ticket.message,
                 "status": ticket.status,
-                "priority": ticket.importance,
+                "importance": ticket.importance,
+                "assigned_to": ticket.assigned_to,
                 "created_at": ticket.created_at,
-                "updated_at": ticket.updated_at
+                "updated_at": ticket.updated_at,
+                "assigned_admin_name": None,  # Will be populated if needed
+                "attachment_path": ticket.attachment_path
             })
         
         return {

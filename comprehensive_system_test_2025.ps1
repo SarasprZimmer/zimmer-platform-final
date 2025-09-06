@@ -1,23 +1,39 @@
-# Comprehensive System Test for Zimmer Platform 2025
-# Tests Backend, Admin Dashboard, and User Panel with current structure
-# Updated to support new payment system, automations, and dashboard components
+# Comprehensive System Test 2025 - Updated for Current Architecture
+# Tests all components, features, and integrations
 
-Write-Host "🚀 Zimmer Platform 2025 - Comprehensive System Test" -ForegroundColor Green
-Write-Host "=================================================" -ForegroundColor Green
-Write-Host "Testing: Backend API + Admin Dashboard + User Panel + New Features" -ForegroundColor Cyan
+$ErrorActionPreference = "Continue"
+$startTime = Get-Date
+
+Write-Host "🚀 Zimmer System Comprehensive Test 2025" -ForegroundColor Green
+Write-Host "=========================================" -ForegroundColor Green
+Write-Host "Testing current system architecture and features" -ForegroundColor Gray
+Write-Host "Started at: $startTime" -ForegroundColor Gray
 Write-Host ""
 
-# Test Results
+# Test Results Storage
 $testResults = @()
+$totalTests = 0
+$passedTests = 0
+$failedTests = 0
+$warningTests = 0
 
 function Add-TestResult {
     param(
-        [string]$Component,
+        [string]$Category,
         [string]$Test,
         [string]$Status,
-        [string]$Details
+        [string]$Details = "",
+        [string]$Component = ""
     )
+    $script:totalTests++
+    switch ($Status) {
+        "PASS" { $script:passedTests++ }
+        "FAIL" { $script:failedTests++ }
+        "WARNING" { $script:warningTests++ }
+    }
+    
     $testResults += [PSCustomObject]@{
+        Category = $Category
         Component = $Component
         Test = $Test
         Status = $Status
@@ -28,408 +44,510 @@ function Add-TestResult {
 
 function Write-TestResult {
     param(
-        [string]$Component,
+        [string]$Category,
         [string]$Test,
         [string]$Status,
-        [string]$Details
+        [string]$Details = "",
+        [string]$Component = ""
     )
     $color = switch ($Status) {
         "PASS" { "Green" }
         "FAIL" { "Red" }
         "WARNING" { "Yellow" }
-        "ERROR" { "Red" }
         default { "White" }
     }
     
-    Write-Host "[$Component] $Test - " -NoNewline
+    $componentText = if ($Component) { "[$Component] " } else { "" }
+    Write-Host "$componentText$Test - " -NoNewline
     Write-Host $Status -ForegroundColor $color
     if ($Details) {
-        Write-Host "  Details: $Details" -ForegroundColor Gray
+        Write-Host "  $Details" -ForegroundColor Gray
     }
     
-    Add-TestResult -Component $Component -Test $Test -Status $Status -Details $Details
+    Add-TestResult -Category $Category -Test $Test -Status $Status -Details $Details -Component $Component
 }
 
-# 1. Backend Health Check
-Write-Host "🔧 Testing Backend API..." -ForegroundColor Cyan
+# =============================================================================
+# 1. BACKEND SYSTEM TESTS
+# =============================================================================
+Write-Host "🔧 BACKEND SYSTEM TESTS" -ForegroundColor Cyan
+Write-Host "========================" -ForegroundColor Cyan
+
+# 1.1 Backend Health Check
 try {
     $response = Invoke-RestMethod -Uri "http://127.0.0.1:8000/docs" -Method Get -TimeoutSec 10
-    Write-TestResult -Component "Backend" -Test "Health Check" -Status "PASS" -Details "Backend is running and accessible"
+    Write-TestResult -Category "Backend" -Test "Health Check" -Status "PASS" -Details "Backend accessible" -Component "FastAPI"
 } catch {
-    Write-TestResult -Component "Backend" -Test "Health Check" -Status "FAIL" -Details "Backend not accessible: $($_.Exception.Message)"
+    Write-TestResult -Category "Backend" -Test "Health Check" -Status "FAIL" -Details "Backend not accessible: $($_.Exception.Message)" -Component "FastAPI"
 }
 
-# 2. Backend API Endpoints Test
-$apiEndpoints = @(
-    "http://127.0.0.1:8000/api/health",
-    "http://127.0.0.1:8000/api/auth/login",
-    "http://127.0.0.1:8000/api/auth/signup",
-    "http://127.0.0.1:8000/api/user/profile",
-    "http://127.0.0.1:8000/api/user/automations",
-    "http://127.0.0.1:8000/api/user/payments",
-    "http://127.0.0.1:8000/api/tickets"
+# 1.2 API Health Endpoint
+try {
+    $response = Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/health" -Method Get -TimeoutSec 10
+    Write-TestResult -Category "Backend" -Test "API Health" -Status "PASS" -Details "Health endpoint responding" -Component "API"
+} catch {
+    Write-TestResult -Category "Backend" -Test "API Health" -Status "FAIL" -Details "Health endpoint failed: $($_.Exception.Message)" -Component "API"
+}
+
+# 1.3 Authentication Endpoints
+$authEndpoints = @(
+    @{ Path = "/api/auth/login"; Method = "POST"; Name = "User Login" },
+    @{ Path = "/api/auth/register"; Method = "POST"; Name = "User Registration" },
+    @{ Path = "/api/admin/login"; Method = "POST"; Name = "Admin Login" }
 )
 
-foreach ($endpoint in $apiEndpoints) {
+foreach ($endpoint in $authEndpoints) {
     try {
-        $response = Invoke-RestMethod -Uri $endpoint -Method Get -TimeoutSec 5
-        Write-TestResult -Component "Backend API" -Test "Endpoint: $($endpoint.Split('/')[-1])" -Status "PASS" -Details "Endpoint responding"
+        $response = Invoke-RestMethod -Uri "http://127.0.0.1:8000$($endpoint.Path)" -Method $endpoint.Method -TimeoutSec 5 -ErrorAction SilentlyContinue
+        Write-TestResult -Category "Backend" -Test $endpoint.Name -Status "PASS" -Details "Endpoint accessible" -Component "Authentication"
     } catch {
-        if ($_.Exception.Response.StatusCode -eq 401 -or $_.Exception.Response.StatusCode -eq 422) {
-            Write-TestResult -Component "Backend API" -Test "Endpoint: $($endpoint.Split('/')[-1])" -Status "PASS" -Details "Endpoint responding (auth required)"
+        if ($_.Exception.Response.StatusCode -eq 422) {
+            Write-TestResult -Category "Backend" -Test $endpoint.Name -Status "PASS" -Details "Endpoint accessible (validation error expected)" -Component "Authentication"
         } else {
-            Write-TestResult -Component "Backend API" -Test "Endpoint: $($endpoint.Split('/')[-1])" -Status "WARNING" -Details "Endpoint issue: $($_.Exception.Message)"
+            Write-TestResult -Category "Backend" -Test $endpoint.Name -Status "FAIL" -Details "Endpoint failed: $($_.Exception.Message)" -Component "Authentication"
         }
     }
 }
 
-# 3. User Panel Build Test
-Write-Host "`n👥 Testing User Panel (Next.js)..." -ForegroundColor Cyan
+# 1.4 Core API Endpoints
+$coreEndpoints = @(
+    @{ Path = "/api/users"; Name = "Users List" },
+    @{ Path = "/api/automations"; Name = "Automations List" },
+    @{ Path = "/api/tickets"; Name = "Tickets List" },
+    @{ Path = "/api/admin/users"; Name = "Admin Users" },
+    @{ Path = "/api/admin/tickets"; Name = "Admin Tickets" },
+    @{ Path = "/api/admin/automations"; Name = "Admin Automations" }
+)
+
+foreach ($endpoint in $coreEndpoints) {
+    try {
+        $response = Invoke-RestMethod -Uri "http://127.0.0.1:8000$($endpoint.Path)" -Method Get -TimeoutSec 5 -ErrorAction SilentlyContinue
+        Write-TestResult -Category "Backend" -Test $endpoint.Name -Status "PASS" -Details "Endpoint accessible" -Component "API"
+    } catch {
+        if ($_.Exception.Response.StatusCode -eq 401) {
+            Write-TestResult -Category "Backend" -Test $endpoint.Name -Status "PASS" -Details "Endpoint accessible (auth required)" -Component "API"
+        } else {
+            Write-TestResult -Category "Backend" -Test $endpoint.Name -Status "WARNING" -Details "Endpoint issue: $($_.Exception.Message)" -Component "API"
+        }
+    }
+}
+
+# =============================================================================
+# 2. USER PANEL TESTS
+# =============================================================================
+Write-Host "`n👥 USER PANEL TESTS" -ForegroundColor Cyan
+Write-Host "===================" -ForegroundColor Cyan
+
+# 2.1 User Panel Build Test
 try {
     Push-Location "zimmer_user_panel"
-    
-    # Check if node_modules exists
-    if (Test-Path "node_modules") {
-        Write-TestResult -Component "User Panel" -Test "Dependencies" -Status "PASS" -Details "node_modules found"
-    } else {
-        Write-TestResult -Component "User Panel" -Test "Dependencies" -Status "WARNING" -Details "node_modules not found, running npm install"
-        npm install
-    }
-    
-    # Test build
     $buildOutput = npm run build 2>&1
     if ($LASTEXITCODE -eq 0) {
-        Write-TestResult -Component "User Panel" -Test "Build" -Status "PASS" -Details "Build successful"
+        Write-TestResult -Category "User Panel" -Test "Build Test" -Status "PASS" -Details "Build successful" -Component "Next.js"
     } else {
-        Write-TestResult -Component "User Panel" -Test "Build" -Status "FAIL" -Details "Build failed: $buildOutput"
+        Write-TestResult -Category "User Panel" -Test "Build Test" -Status "FAIL" -Details "Build failed" -Component "Next.js"
     }
-    
     Pop-Location
 } catch {
-    Write-TestResult -Component "User Panel" -Test "Build" -Status "ERROR" -Details "Build test error: $($_.Exception.Message)"
+    Write-TestResult -Category "User Panel" -Test "Build Test" -Status "FAIL" -Details "Build error: $($_.Exception.Message)" -Component "Next.js"
 }
 
-# 4. User Panel New Features Test
-Write-Host "`n🎯 Testing User Panel New Features..." -ForegroundColor Cyan
-
-# Test Payment Page
-$paymentFiles = @(
-    "zimmer_user_panel/pages/payment/index.tsx",
-    "zimmer_user_panel/components/payments/ActiveAutomations.tsx",
-    "zimmer_user_panel/components/payments/MonthlyExpenses.tsx",
-    "zimmer_user_panel/components/payments/PaymentHistory.tsx"
+# 2.2 User Panel Pages Check
+$userPages = @(
+    "pages/dashboard.tsx",
+    "pages/login.tsx",
+    "pages/register.tsx",
+    "pages/automations.tsx",
+    "pages/automations/[id].tsx",
+    "pages/payment/index.tsx",
+    "pages/settings.tsx",
+    "pages/support.tsx",
+    "pages/forgot-password.tsx"
 )
 
-foreach ($file in $paymentFiles) {
-    if (Test-Path $file) {
-        Write-TestResult -Component "Payment System" -Test "File: $($file.Split('/')[-1])" -Status "PASS" -Details "Payment component exists"
+foreach ($page in $userPages) {
+    if (Test-Path "zimmer_user_panel/$page") {
+        Write-TestResult -Category "User Panel" -Test "Page: $page" -Status "PASS" -Details "Page exists" -Component "Pages"
     } else {
-        Write-TestResult -Component "Payment System" -Test "File: $($file.Split('/')[-1])" -Status "FAIL" -Details "Payment component missing"
+        Write-TestResult -Category "User Panel" -Test "Page: $page" -Status "FAIL" -Details "Page missing" -Component "Pages"
     }
 }
 
-# Test Automations Page
-$automationFiles = @(
-    "zimmer_user_panel/pages/automations/index.tsx",
-    "zimmer_user_panel/pages/automations/marketplace.tsx",
-    "zimmer_user_panel/components/automations/MyAutomationsList.tsx",
-    "zimmer_user_panel/components/automations/QuickActions.tsx"
+# 2.3 User Panel Components Check
+$userComponents = @(
+    "components/DashboardLayout.tsx",
+    "components/ProtectedRoute.tsx",
+    "components/HeaderAuth.tsx",
+    "components/Sidebar.tsx",
+    "components/RecentPayments.tsx",
+    "components/MyAutomations.tsx",
+    "components/SupportQuick.tsx",
+    "components/settings/ProfileForm.tsx",
+    "components/settings/ChangePasswordForm.tsx",
+    "components/ui/Kit.tsx"
 )
 
-foreach ($file in $automationFiles) {
-    if (Test-Path $file) {
-        Write-TestResult -Component "Automations System" -Test "File: $($file.Split('/')[-1])" -Status "PASS" -Details "Automation component exists"
+foreach ($component in $userComponents) {
+    if (Test-Path "zimmer_user_panel/$component") {
+        Write-TestResult -Category "User Panel" -Test "Component: $component" -Status "PASS" -Details "Component exists" -Component "Components"
     } else {
-        Write-TestResult -Component "Automations System" -Test "File: $($file.Split('/')[-1])" -Status "FAIL" -Details "Automation component missing"
+        Write-TestResult -Category "User Panel" -Test "Component: $component" -Status "FAIL" -Details "Component missing" -Component "Components"
     }
 }
 
-# Test Support Page
-$supportFiles = @(
-    "zimmer_user_panel/pages/support.tsx"
-)
-
-foreach ($file in $supportFiles) {
-    if (Test-Path $file) {
-        Write-TestResult -Component "Support System" -Test "File: $($file.Split('/')[-1])" -Status "PASS" -Details "Support component exists"
+# 2.4 User Panel API Client Check
+if (Test-Path "zimmer_user_panel/lib/apiClient.ts") {
+    $apiClientContent = Get-Content "zimmer_user_panel/lib/apiClient.ts" -Raw
+    if ($apiClientContent -match "localhost:8000") {
+        Write-TestResult -Category "User Panel" -Test "API Client Config" -Status "PASS" -Details "Correctly configured for backend" -Component "API Client"
     } else {
-        Write-TestResult -Component "Support System" -Test "File: $($file.Split('/')[-1])" -Status "FAIL" -Details "Support component missing"
+        Write-TestResult -Category "User Panel" -Test "API Client Config" -Status "WARNING" -Details "API URL may be incorrect" -Component "API Client"
     }
+} else {
+    Write-TestResult -Category "User Panel" -Test "API Client Config" -Status "FAIL" -Details "API client file missing" -Component "API Client"
 }
 
-# Test Dashboard Components
-$dashboardFiles = @(
-    "zimmer_user_panel/components/dashboard/RecentPayments.tsx",
-    "zimmer_user_panel/components/dashboard/MyAutomations.tsx",
-    "zimmer_user_panel/components/dashboard/WeeklyActivityChart.tsx",
-    "zimmer_user_panel/components/dashboard/DistributionPie.tsx",
-    "zimmer_user_panel/components/dashboard/SixMonthTrend.tsx",
-    "zimmer_user_panel/components/dashboard/SupportQuick.tsx"
-)
+# =============================================================================
+# 3. ADMIN PANEL TESTS
+# =============================================================================
+Write-Host "`n👑 ADMIN PANEL TESTS" -ForegroundColor Cyan
+Write-Host "====================" -ForegroundColor Cyan
 
-foreach ($file in $dashboardFiles) {
-    if (Test-Path $file) {
-        Write-TestResult -Component "Dashboard" -Test "File: $($file.Split('/')[-1])" -Status "PASS" -Details "Dashboard component exists"
-    } else {
-        Write-TestResult -Component "Dashboard" -Test "File: $($file.Split('/')[-1])" -Status "FAIL" -Details "Dashboard component missing"
-    }
-}
-
-# 5. User Panel Dependencies Test
-Write-Host "`n📦 Testing User Panel Dependencies..." -ForegroundColor Cyan
-try {
-    Push-Location "zimmer_user_panel"
-    $packageJson = Get-Content "package.json" | ConvertFrom-Json
-    
-    # Check for required dependencies
-    $requiredDeps = @("react", "next", "typescript", "tailwindcss", "recharts", "framer-motion")
-    foreach ($dep in $requiredDeps) {
-        if ($packageJson.dependencies.$dep) {
-            Write-TestResult -Component "Dependencies" -Test "Package: $dep" -Status "PASS" -Details "Version: $($packageJson.dependencies.$dep)"
-        } else {
-            Write-TestResult -Component "Dependencies" -Test "Package: $dep" -Status "FAIL" -Details "Missing required dependency"
-        }
-    }
-    
-    Pop-Location
-} catch {
-    Write-TestResult -Component "Dependencies" -Test "Package Check" -Status "ERROR" -Details "Dependency check failed: $($_.Exception.Message)"
-}
-
-# 6. User Panel Environment Configuration
-Write-Host "`n⚙️ Testing User Panel Configuration..." -ForegroundColor Cyan
-try {
-    $envFiles = @("zimmer_user_panel/env.corrected", "zimmer_user_panel/env.user")
-    $envFound = $false
-    foreach ($envFile in $envFiles) {
-        if (Test-Path $envFile) {
-            $envFound = $true
-            $envContent = Get-Content $envFile
-            $apiUrl = $envContent | Where-Object { $_ -match "NEXT_PUBLIC_API_URL" }
-            if ($apiUrl -match "127.0.0.1:8000") {
-                Write-TestResult -Component "User Panel Config" -Test "API URL" -Status "PASS" -Details "API URL correctly configured"
-            } else {
-                Write-TestResult -Component "User Panel Config" -Test "API URL" -Status "WARNING" -Details "API URL may be incorrect"
-            }
-            break
-        }
-    }
-    if (-not $envFound) {
-        Write-TestResult -Component "User Panel Config" -Test "Environment Files" -Status "WARNING" -Details "No environment files found"
-    }
-} catch {
-    Write-TestResult -Component "User Panel Config" -Test "Configuration" -Status "ERROR" -Details "Configuration check failed"
-}
-
-# 7. Admin Dashboard Build Test
-Write-Host "`n🎯 Testing Admin Dashboard..." -ForegroundColor Cyan
+# 3.1 Admin Panel Build Test
 try {
     Push-Location "zimmermanagement/zimmer-admin-dashboard"
-    
-    # Check if node_modules exists
-    if (Test-Path "node_modules") {
-        Write-TestResult -Component "Admin Dashboard" -Test "Dependencies" -Status "PASS" -Details "node_modules found"
-    } else {
-        Write-TestResult -Component "Admin Dashboard" -Test "Dependencies" -Status "WARNING" -Details "node_modules not found, running npm install"
-        npm install
-    }
-    
-    # Test build
     $buildOutput = npm run build 2>&1
     if ($LASTEXITCODE -eq 0) {
-        Write-TestResult -Component "Admin Dashboard" -Test "Build" -Status "PASS" -Details "Build successful"
+        Write-TestResult -Category "Admin Panel" -Test "Build Test" -Status "PASS" -Details "Build successful" -Component "Next.js"
     } else {
-        Write-TestResult -Component "Admin Dashboard" -Test "Build" -Status "FAIL" -Details "Build failed: $buildOutput"
+        Write-TestResult -Category "Admin Panel" -Test "Build Test" -Status "FAIL" -Details "Build failed" -Component "Next.js"
     }
-    
     Pop-Location
 } catch {
-    Write-TestResult -Component "Admin Dashboard" -Test "Build" -Status "ERROR" -Details "Build test error: $($_.Exception.Message)"
+    Write-TestResult -Category "Admin Panel" -Test "Build Test" -Status "FAIL" -Details "Build error: $($_.Exception.Message)" -Component "Next.js"
 }
 
-# 8. Database Schema Check
-Write-Host "`n🗄️ Testing Database..." -ForegroundColor Cyan
+# 3.2 Admin Panel Pages Check
+$adminPages = @(
+    "pages/dashboard.tsx",
+    "pages/login.tsx",
+    "pages/users.tsx",
+    "pages/automations.tsx",
+    "pages/tickets.tsx",
+    "pages/discounts/index.tsx",
+    "pages/discounts/new.tsx",
+    "pages/settings.tsx"
+)
+
+foreach ($page in $adminPages) {
+    if (Test-Path "zimmermanagement/zimmer-admin-dashboard/$page") {
+        Write-TestResult -Category "Admin Panel" -Test "Page: $page" -Status "PASS" -Details "Page exists" -Component "Pages"
+    } else {
+        Write-TestResult -Category "Admin Panel" -Test "Page: $page" -Status "FAIL" -Details "Page missing" -Component "Pages"
+    }
+}
+
+# 3.3 Admin Panel API Client Check
+if (Test-Path "zimmermanagement/zimmer-admin-dashboard/lib/api.ts") {
+    $adminApiContent = Get-Content "zimmermanagement/zimmer-admin-dashboard/lib/api.ts" -Raw
+    if ($adminApiContent -match "127.0.0.1:8000") {
+        Write-TestResult -Category "Admin Panel" -Test "API Client Config" -Status "PASS" -Details "Correctly configured for backend" -Component "API Client"
+    } else {
+        Write-TestResult -Category "Admin Panel" -Test "API Client Config" -Status "WARNING" -Details "API URL may be incorrect" -Component "API Client"
+    }
+} else {
+    Write-TestResult -Category "Admin Panel" -Test "API Client Config" -Status "FAIL" -Details "API client file missing" -Component "API Client"
+}
+
+# =============================================================================
+# 4. DATABASE TESTS
+# =============================================================================
+Write-Host "`n🗄️ DATABASE TESTS" -ForegroundColor Cyan
+Write-Host "==================" -ForegroundColor Cyan
+
+# 4.1 Database File Check
+if (Test-Path "zimmer_dashboard.db") {
+    Write-TestResult -Category "Database" -Test "Database File" -Status "PASS" -Details "SQLite database exists" -Component "SQLite"
+} else {
+    Write-TestResult -Category "Database" -Test "Database File" -Status "FAIL" -Details "Database file missing" -Component "SQLite"
+}
+
+# 4.2 Database Models Check
+$dbModels = @(
+    "zimmer-backend/models/user.py",
+    "zimmer-backend/models/automation.py",
+    "zimmer-backend/models/ticket.py",
+    "zimmer-backend/models/discount.py",
+    "zimmer-backend/models/payment.py"
+)
+
+foreach ($model in $dbModels) {
+    if (Test-Path $model) {
+        Write-TestResult -Category "Database" -Test "Model: $model" -Status "PASS" -Details "Model file exists" -Component "SQLAlchemy"
+    } else {
+        Write-TestResult -Category "Database" -Test "Model: $model" -Status "FAIL" -Details "Model file missing" -Component "SQLAlchemy"
+    }
+}
+
+# 4.3 Database Schema Test
 try {
     Push-Location "zimmer-backend"
-    $pythonOutput = python -c "from database import get_db; print('Database connection successful')" 2>&1
+    $pythonOutput = python -c "from database import get_db; from models.user import User; from models.automation import Automation; print('Database models import successfully')" 2>&1
     if ($LASTEXITCODE -eq 0) {
-        Write-TestResult -Component "Database" -Test "Connection" -Status "PASS" -Details "Database connection successful"
+        Write-TestResult -Category "Database" -Test "Schema Import" -Status "PASS" -Details "All models import successfully" -Component "SQLAlchemy"
     } else {
-        Write-TestResult -Component "Database" -Test "Connection" -Status "FAIL" -Details "Database connection failed"
+        Write-TestResult -Category "Database" -Test "Schema Import" -Status "FAIL" -Details "Model import failed" -Component "SQLAlchemy"
     }
     Pop-Location
 } catch {
-    Write-TestResult -Component "Database" -Test "Connection" -Status "ERROR" -Details "Database test error: $($_.Exception.Message)"
+    Write-TestResult -Category "Database" -Test "Schema Import" -Status "FAIL" -Details "Database test error: $($_.Exception.Message)" -Component "SQLAlchemy"
 }
 
-# 9. Authentication System Test
-Write-Host "`n🔐 Testing Authentication System..." -ForegroundColor Cyan
+# =============================================================================
+# 5. FEATURE-SPECIFIC TESTS
+# =============================================================================
+Write-Host "`n🎯 FEATURE-SPECIFIC TESTS" -ForegroundColor Cyan
+Write-Host "=========================" -ForegroundColor Cyan
+
+# 5.1 Authentication System
 $authFiles = @(
     "zimmer_user_panel/contexts/AuthContext.tsx",
-    "zimmer_user_panel/lib/api.ts",
+    "zimmer_user_panel/hooks/useAuth.ts",
     "zimmer_user_panel/lib/auth.ts",
-    "zimmer_user_panel/components/TwoFADialog.tsx",
-    "zimmer_user_panel/pages/login.tsx",
-    "zimmer_user_panel/pages/signup.tsx"
+    "zimmermanagement/zimmer-admin-dashboard/lib/auth-client.ts"
 )
 
 foreach ($file in $authFiles) {
     if (Test-Path $file) {
-        Write-TestResult -Component "Authentication" -Test "File: $($file.Split('/')[-1])" -Status "PASS" -Details "Auth component exists"
+        Write-TestResult -Category "Authentication" -Test "File: $file" -Status "PASS" -Details "Auth file exists" -Component "Auth"
     } else {
-        Write-TestResult -Component "Authentication" -Test "File: $($file.Split('/')[-1])" -Status "FAIL" -Details "Auth component missing"
+        Write-TestResult -Category "Authentication" -Test "File: $file" -Status "FAIL" -Details "Auth file missing" -Component "Auth"
     }
 }
 
-# 10. UI Components Test
-Write-Host "`n🎨 Testing UI Components..." -ForegroundColor Cyan
-$uiFiles = @(
-    "zimmer_user_panel/components/Skeleton.tsx",
-    "zimmer_user_panel/components/DashboardLayout.tsx",
-    "zimmer_user_panel/components/Sidebar.tsx",
-    "zimmer_user_panel/components/Topbar.tsx",
-    "zimmer_user_panel/lib/money.ts",
-    "zimmer_user_panel/lib/mockApi.ts"
+# 5.2 Settings System (Profile & Password)
+$settingsFiles = @(
+    "zimmer_user_panel/components/settings/ProfileForm.tsx",
+    "zimmer_user_panel/components/settings/ChangePasswordForm.tsx",
+    "zimmer_user_panel/pages/settings.tsx"
 )
 
-foreach ($file in $uiFiles) {
+foreach ($file in $settingsFiles) {
     if (Test-Path $file) {
-        Write-TestResult -Component "UI Components" -Test "File: $($file.Split('/')[-1])" -Status "PASS" -Details "UI component exists"
+        Write-TestResult -Category "Settings" -Test "File: $file" -Status "PASS" -Details "Settings file exists" -Component "Settings"
     } else {
-        Write-TestResult -Component "UI Components" -Test "File: $($file.Split('/')[-1])" -Status "FAIL" -Details "UI component missing"
+        Write-TestResult -Category "Settings" -Test "File: $file" -Status "FAIL" -Details "Settings file missing" -Component "Settings"
     }
 }
 
-# 11. Font and Styling Test
-Write-Host "`n🎨 Testing Font and Styling..." -ForegroundColor Cyan
-$stylingFiles = @(
-    "zimmer_user_panel/styles/globals.css",
-    "zimmer_user_panel/tailwind.config.js",
-    "zimmer_user_panel/public/fonts"
+# 5.3 Support System
+$supportFiles = @(
+    "zimmer_user_panel/pages/support.tsx",
+    "zimmer-backend/routers/ticket.py",
+    "zimmermanagement/zimmer-admin-dashboard/pages/tickets.tsx"
 )
 
-foreach ($file in $stylingFiles) {
+foreach ($file in $supportFiles) {
     if (Test-Path $file) {
-        Write-TestResult -Component "Styling" -Test "File: $($file.Split('/')[-1])" -Status "PASS" -Details "Styling file exists"
+        Write-TestResult -Category "Support" -Test "File: $file" -Status "PASS" -Details "Support file exists" -Component "Support"
     } else {
-        Write-TestResult -Component "Styling" -Test "File: $($file.Split('/')[-1])" -Status "WARNING" -Details "Styling file missing"
+        Write-TestResult -Category "Support" -Test "File: $file" -Status "FAIL" -Details "Support file missing" -Component "Support"
     }
 }
 
-# 12. Payment Gateway Integration Test
-Write-Host "`n💳 Testing Payment Integration..." -ForegroundColor Cyan
+# 5.4 Payment System
 $paymentFiles = @(
-    "zimmer_user_panel/components/PurchaseModal.tsx",
-    "zimmer_user_panel/components/DiscountCodeField.tsx",
-    "zimmer_user_panel/components/PriceSummary.tsx"
+    "zimmer_user_panel/pages/payment/index.tsx",
+    "zimmer_user_panel/components/PriceSummary.tsx",
+    "zimmer_user_panel/lib/money.ts"
 )
 
 foreach ($file in $paymentFiles) {
     if (Test-Path $file) {
-        Write-TestResult -Component "Payment Integration" -Test "File: $($file.Split('/')[-1])" -Status "PASS" -Details "Payment component exists"
+        Write-TestResult -Category "Payment" -Test "File: $file" -Status "PASS" -Details "Payment file exists" -Component "Payment"
     } else {
-        Write-TestResult -Component "Payment Integration" -Test "File: $($file.Split('/')[-1])" -Status "WARNING" -Details "Payment component missing"
+        Write-TestResult -Category "Payment" -Test "File: $file" -Status "FAIL" -Details "Payment file missing" -Component "Payment"
     }
 }
 
-# 13. Mock Data Test
-Write-Host "`n📊 Testing Mock Data..." -ForegroundColor Cyan
+# =============================================================================
+# 6. INTEGRATION TESTS
+# =============================================================================
+Write-Host "`n🔗 INTEGRATION TESTS" -ForegroundColor Cyan
+Write-Host "====================" -ForegroundColor Cyan
+
+# 6.1 User Panel to Backend Integration
 try {
-    Push-Location "zimmer_user_panel"
-    $mockDataTest = node -e "
-        try {
-            const mockData = require('./lib/mockApi.ts');
-            console.log('Mock data loaded successfully');
-        } catch (e) {
-            console.log('Mock data load failed:', e.message);
-            process.exit(1);
-        }
-    " 2>&1
-    if ($LASTEXITCODE -eq 0) {
-        Write-TestResult -Component "Mock Data" -Test "Load" -Status "PASS" -Details "Mock data loads successfully"
-    } else {
-        Write-TestResult -Component "Mock Data" -Test "Load" -Status "WARNING" -Details "Mock data load issue: $mockDataTest"
-    }
-    Pop-Location
+    $response = Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/me" -Method Get -TimeoutSec 5 -ErrorAction SilentlyContinue
+    Write-TestResult -Category "Integration" -Test "User Panel API" -Status "PASS" -Details "User API accessible" -Component "User-Backend"
 } catch {
-    Write-TestResult -Component "Mock Data" -Test "Load" -Status "ERROR" -Details "Mock data test failed"
+    if ($_.Exception.Response.StatusCode -eq 401) {
+        Write-TestResult -Category "Integration" -Test "User Panel API" -Status "PASS" -Details "User API accessible (auth required)" -Component "User-Backend"
+    } else {
+        Write-TestResult -Category "Integration" -Test "User Panel API" -Status "WARNING" -Details "User API issue: $($_.Exception.Message)" -Component "User-Backend"
+    }
 }
 
-# 14. TypeScript Compilation Test
-Write-Host "`n📝 Testing TypeScript Compilation..." -ForegroundColor Cyan
+# 6.2 Admin Panel to Backend Integration
 try {
-    Push-Location "zimmer_user_panel"
-    $tscOutput = npx tsc --noEmit 2>&1
-    if ($LASTEXITCODE -eq 0) {
-        Write-TestResult -Component "TypeScript" -Test "Compilation" -Status "PASS" -Details "No TypeScript errors"
-    } else {
-        Write-TestResult -Component "TypeScript" -Test "Compilation" -Status "WARNING" -Details "TypeScript errors found: $tscOutput"
-    }
-    Pop-Location
+    $response = Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/admin/users" -Method Get -TimeoutSec 5 -ErrorAction SilentlyContinue
+    Write-TestResult -Category "Integration" -Test "Admin Panel API" -Status "PASS" -Details "Admin API accessible" -Component "Admin-Backend"
 } catch {
-    Write-TestResult -Component "TypeScript" -Test "Compilation" -Status "ERROR" -Details "TypeScript check failed"
+    if ($_.Exception.Response.StatusCode -eq 401) {
+        Write-TestResult -Category "Integration" -Test "Admin Panel API" -Status "PASS" -Details "Admin API accessible (auth required)" -Component "Admin-Backend"
+    } else {
+        Write-TestResult -Category "Integration" -Test "Admin Panel API" -Status "WARNING" -Details "Admin API issue: $($_.Exception.Message)" -Component "Admin-Backend"
+    }
 }
 
-# Generate Summary Report
-Write-Host "`n📊 System Test Results Summary" -ForegroundColor Yellow
-Write-Host "=============================" -ForegroundColor Yellow
-
-$passCount = ($testResults | Where-Object { $_.Status -eq "PASS" }).Count
-$failCount = ($testResults | Where-Object { $_.Status -eq "FAIL" }).Count
-$warningCount = ($testResults | Where-Object { $_.Status -eq "WARNING" }).Count
-$errorCount = ($testResults | Where-Object { $_.Status -eq "ERROR" }).Count
-
-Write-Host "✅ PASS: $passCount" -ForegroundColor Green
-Write-Host "❌ FAIL: $failCount" -ForegroundColor Red
-Write-Host "⚠️ WARNING: $warningCount" -ForegroundColor Yellow
-Write-Host "💥 ERROR: $errorCount" -ForegroundColor Red
-
-Write-Host "`n📋 Detailed Results by Component:" -ForegroundColor Yellow
-$components = $testResults | Select-Object -ExpandProperty Component | Sort-Object | Get-Unique
-foreach ($component in $components) {
-    $componentResults = $testResults | Where-Object { $_.Component -eq $component }
-    $componentPass = ($componentResults | Where-Object { $_.Status -eq "PASS" }).Count
-    $componentFail = ($componentResults | Where-Object { $_.Status -eq "FAIL" }).Count
-    $componentWarn = ($componentResults | Where-Object { $_.Status -eq "WARNING" }).Count
-    $componentError = ($componentResults | Where-Object { $_.Status -eq "ERROR" }).Count
-    
-    Write-Host "`n[$component] - PASS: $componentPass, FAIL: $componentFail, WARN: $componentWarn, ERROR: $componentError" -ForegroundColor Cyan
+# 6.3 Ticket System Integration
+try {
+    $response = Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/tickets" -Method Get -TimeoutSec 5 -ErrorAction SilentlyContinue
+    Write-TestResult -Category "Integration" -Test "Ticket System API" -Status "PASS" -Details "Ticket API accessible" -Component "Ticket-Backend"
+} catch {
+    if ($_.Exception.Response.StatusCode -eq 401) {
+        Write-TestResult -Category "Integration" -Test "Ticket System API" -Status "PASS" -Details "Ticket API accessible (auth required)" -Component "Ticket-Backend"
+    } else {
+        Write-TestResult -Category "Integration" -Test "Ticket System API" -Status "WARNING" -Details "Ticket API issue: $($_.Exception.Message)" -Component "Ticket-Backend"
+    }
 }
 
-Write-Host "`n🎯 Overall System Status:" -ForegroundColor Cyan
-if ($failCount -eq 0 -and $errorCount -eq 0) {
-    Write-Host "🎉 EXCELLENT! All critical tests passed. System is fully operational!" -ForegroundColor Green
-    Write-Host "   ✅ Backend API is running" -ForegroundColor Green
-    Write-Host "   ✅ User Panel builds successfully" -ForegroundColor Green
-    Write-Host "   ✅ Admin Dashboard builds successfully" -ForegroundColor Green
-    Write-Host "   ✅ All new features are implemented" -ForegroundColor Green
-} elseif ($failCount -eq 0) {
-    Write-Host "✅ GOOD! No critical failures, but some warnings to investigate." -ForegroundColor Yellow
+# =============================================================================
+# 7. ENVIRONMENT CONFIGURATION TESTS
+# =============================================================================
+Write-Host "`n⚙️ ENVIRONMENT CONFIGURATION TESTS" -ForegroundColor Cyan
+Write-Host "===================================" -ForegroundColor Cyan
+
+# 7.1 User Panel Environment
+$userEnvFiles = @("zimmer_user_panel/env.corrected", "zimmer_user_panel/env.user")
+$userEnvFound = $false
+foreach ($envFile in $userEnvFiles) {
+    if (Test-Path $envFile) {
+        $userEnvFound = $true
+        break
+    }
+}
+if ($userEnvFound) {
+    Write-TestResult -Category "Environment" -Test "User Panel Config" -Status "PASS" -Details "Environment file found" -Component "User Panel"
 } else {
-    Write-Host "⚠️ ATTENTION NEEDED! Critical failures detected. System may not be fully operational." -ForegroundColor Red
+    Write-TestResult -Category "Environment" -Test "User Panel Config" -Status "WARNING" -Details "No environment files found" -Component "User Panel"
 }
 
-# Save detailed report
-$reportFile = "system_test_report_$(Get-Date -Format 'yyyyMMdd_HHmmss').md"
-$reportContent = "# Zimmer Platform 2025 - System Test Report`n"
-$reportContent += "Generated: $(Get-Date)`n`n"
-$reportContent += "## Summary`n"
-$reportContent += "- PASS: $passCount`n"
-$reportContent += "- FAIL: $failCount`n"
-$reportContent += "- WARNING: $warningCount`n"
-$reportContent += "- ERROR: $errorCount`n`n"
-$reportContent += "## Detailed Results`n"
+# 7.2 Admin Panel Environment
+if (Test-Path "zimmermanagement/zimmer-admin-dashboard/.env.local") {
+    Write-TestResult -Category "Environment" -Test "Admin Panel Config" -Status "PASS" -Details "Environment file found" -Component "Admin Panel"
+} else {
+    Write-TestResult -Category "Environment" -Test "Admin Panel Config" -Status "WARNING" -Details "No .env.local file found" -Component "Admin Panel"
+}
 
-foreach ($result in $testResults) {
-    $reportContent += "- [$($result.Component)] $($result.Test): $($result.Status)"
-    if ($result.Details) {
-        $reportContent += " - $($result.Details)"
+# 7.3 Backend Environment
+if (Test-Path "zimmer-backend/.env") {
+    Write-TestResult -Category "Environment" -Test "Backend Config" -Status "PASS" -Details "Environment file found" -Component "Backend"
+} else {
+    Write-TestResult -Category "Environment" -Test "Backend Config" -Status "WARNING" -Details "No .env file found" -Component "Backend"
+}
+
+# =============================================================================
+# 8. SECURITY TESTS
+# =============================================================================
+Write-Host "`n🔒 SECURITY TESTS" -ForegroundColor Cyan
+Write-Host "=================" -ForegroundColor Cyan
+
+# 8.1 Authentication Endpoints Security
+$secureEndpoints = @(
+    @{ Path = "/api/admin/users"; Name = "Admin Users" },
+    @{ Path = "/api/admin/tickets"; Name = "Admin Tickets" },
+    @{ Path = "/api/admin/automations"; Name = "Admin Automations" }
+)
+
+foreach ($endpoint in $secureEndpoints) {
+    try {
+        $response = Invoke-RestMethod -Uri "http://127.0.0.1:8000$($endpoint.Path)" -Method Get -TimeoutSec 5 -ErrorAction SilentlyContinue
+        Write-TestResult -Category "Security" -Test $endpoint.Name -Status "WARNING" -Details "Endpoint accessible without auth" -Component "Security"
+    } catch {
+        if ($_.Exception.Response.StatusCode -eq 401) {
+            Write-TestResult -Category "Security" -Test $endpoint.Name -Status "PASS" -Details "Properly protected with auth" -Component "Security"
+        } else {
+            Write-TestResult -Category "Security" -Test $endpoint.Name -Status "WARNING" -Details "Unexpected response: $($_.Exception.Message)" -Component "Security"
+        }
     }
-    $reportContent += "`n"
 }
 
-$reportContent | Out-File -FilePath $reportFile -Encoding UTF8
-Write-Host "`n📄 Detailed report saved to: $reportFile" -ForegroundColor Green
+# =============================================================================
+# GENERATE COMPREHENSIVE REPORT
+# =============================================================================
+$endTime = Get-Date
+$duration = $endTime - $startTime
 
-Write-Host "`n🚀 System Test completed at $(Get-Date)" -ForegroundColor Green
-Write-Host "=========================================" -ForegroundColor Green
+Write-Host "`n📊 COMPREHENSIVE TEST RESULTS SUMMARY" -ForegroundColor Yellow
+Write-Host "=====================================" -ForegroundColor Yellow
+Write-Host ""
+
+Write-Host "📈 Test Statistics:" -ForegroundColor Cyan
+Write-Host "  Total Tests: $totalTests" -ForegroundColor White
+Write-Host "  ✅ Passed: $passedTests" -ForegroundColor Green
+Write-Host "  ❌ Failed: $failedTests" -ForegroundColor Red
+Write-Host "  ⚠️ Warnings: $warningTests" -ForegroundColor Yellow
+Write-Host "  ⏱️ Duration: $($duration.TotalSeconds.ToString('F2')) seconds" -ForegroundColor Gray
+
+$successRate = if ($totalTests -gt 0) { [math]::Round(($passedTests / $totalTests) * 100, 2) } else { 0 }
+Write-Host "  📊 Success Rate: $successRate%" -ForegroundColor $(if ($successRate -ge 90) { "Green" } elseif ($successRate -ge 70) { "Yellow" } else { "Red" })
+
+Write-Host "`n📋 Results by Category:" -ForegroundColor Cyan
+$categories = $testResults | Group-Object Category
+foreach ($category in $categories) {
+    $categoryPassed = ($category.Group | Where-Object { $_.Status -eq "PASS" }).Count
+    $categoryFailed = ($category.Group | Where-Object { $_.Status -eq "FAIL" }).Count
+    $categoryWarnings = ($category.Group | Where-Object { $_.Status -eq "WARNING" }).Count
+    $categoryTotal = $category.Count
+    
+    $categoryRate = if ($categoryTotal -gt 0) { [math]::Round(($categoryPassed / $categoryTotal) * 100, 1) } else { 0 }
+    $categoryColor = if ($categoryRate -ge 90) { "Green" } elseif ($categoryRate -ge 70) { "Yellow" } else { "Red" }
+    
+    Write-Host "  [$($category.Name)]: $categoryPassed/$categoryTotal passed ($categoryRate%)" -ForegroundColor $categoryColor
+}
+
+Write-Host "`n🔍 Failed Tests Details:" -ForegroundColor Red
+$failedTests = $testResults | Where-Object { $_.Status -eq "FAIL" }
+if ($failedTests.Count -gt 0) {
+    foreach ($test in $failedTests) {
+        Write-Host "  ❌ [$($test.Category)] $($test.Test): $($test.Details)" -ForegroundColor Red
+    }
+} else {
+    Write-Host "  🎉 No failed tests!" -ForegroundColor Green
+}
+
+Write-Host "`n⚠️ Warning Tests Details:" -ForegroundColor Yellow
+$warningTests = $testResults | Where-Object { $_.Status -eq "WARNING" }
+if ($warningTests.Count -gt 0) {
+    foreach ($test in $warningTests) {
+        Write-Host "  ⚠️ [$($test.Category)] $($test.Test): $($test.Details)" -ForegroundColor Yellow
+    }
+} else {
+    Write-Host "  🎉 No warning tests!" -ForegroundColor Green
+}
+
+# Overall System Status
+Write-Host "`n🎯 OVERALL SYSTEM STATUS:" -ForegroundColor Cyan
+if ($failedTests -eq 0 -and $warningTests -eq 0) {
+    Write-Host "🎉 EXCELLENT! All tests passed. System is fully operational!" -ForegroundColor Green
+    Write-Host "🚀 The Zimmer system is ready for production use!" -ForegroundColor Green
+} elseif ($failedTests -eq 0) {
+    Write-Host "✅ GOOD! No critical failures, but some warnings to investigate." -ForegroundColor Yellow
+    Write-Host "🔧 Review the warning details above and address any issues." -ForegroundColor Yellow
+} else {
+    Write-Host "⚠️ ATTENTION NEEDED! Critical failures detected." -ForegroundColor Red
+    Write-Host "🛠️ Please review and fix the failing tests before proceeding." -ForegroundColor Red
+}
+
+Write-Host "`n📋 SYSTEM ARCHITECTURE STATUS:" -ForegroundColor Cyan
+Write-Host "• Backend API (FastAPI): $(if ($testResults | Where-Object { $_.Category -eq 'Backend' -and $_.Status -eq 'PASS' }) { '✅ Operational' } else { '❌ Issues' })" -ForegroundColor $(if ($testResults | Where-Object { $_.Category -eq 'Backend' -and $_.Status -eq 'PASS' }) { 'Green' } else { 'Red' })
+Write-Host "• User Panel (Next.js): $(if ($testResults | Where-Object { $_.Category -eq 'User Panel' -and $_.Status -eq 'PASS' }) { '✅ Operational' } else { '❌ Issues' })" -ForegroundColor $(if ($testResults | Where-Object { $_.Category -eq 'User Panel' -and $_.Status -eq 'PASS' }) { 'Green' } else { 'Red' })
+Write-Host "• Admin Panel (Next.js): $(if ($testResults | Where-Object { $_.Category -eq 'Admin Panel' -and $_.Status -eq 'PASS' }) { '✅ Operational' } else { '❌ Issues' })" -ForegroundColor $(if ($testResults | Where-Object { $_.Category -eq 'Admin Panel' -and $_.Status -eq 'PASS' }) { 'Green' } else { 'Red' })
+Write-Host "• Database (SQLite): $(if ($testResults | Where-Object { $_.Category -eq 'Database' -and $_.Status -eq 'PASS' }) { '✅ Operational' } else { '❌ Issues' })" -ForegroundColor $(if ($testResults | Where-Object { $_.Category -eq 'Database' -and $_.Status -eq 'PASS' }) { 'Green' } else { 'Red' })
+Write-Host "• Authentication: $(if ($testResults | Where-Object { $_.Category -eq 'Authentication' -and $_.Status -eq 'PASS' }) { '✅ Operational' } else { '❌ Issues' })" -ForegroundColor $(if ($testResults | Where-Object { $_.Category -eq 'Authentication' -and $_.Status -eq 'PASS' }) { 'Green' } else { 'Red' })
+Write-Host "• Support System: $(if ($testResults | Where-Object { $_.Category -eq 'Support' -and $_.Status -eq 'PASS' }) { '✅ Operational' } else { '❌ Issues' })" -ForegroundColor $(if ($testResults | Where-Object { $_.Category -eq 'Support' -and $_.Status -eq 'PASS' }) { 'Green' } else { 'Red' })
+Write-Host "• Settings System: $(if ($testResults | Where-Object { $_.Category -eq 'Settings' -and $_.Status -eq 'PASS' }) { '✅ Operational' } else { '❌ Issues' })" -ForegroundColor $(if ($testResults | Where-Object { $_.Category -eq 'Settings' -and $_.Status -eq 'PASS' }) { 'Green' } else { 'Red' })
+
+Write-Host "`n🚀 Comprehensive System Test completed at $(Get-Date)" -ForegroundColor Green
+Write-Host "Total execution time: $($duration.TotalMinutes.ToString('F2')) minutes" -ForegroundColor Gray

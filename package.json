@@ -1,0 +1,21 @@
+{
+  "name": "zimmer-platform-monorepo",
+  "version": "1.0.0",
+  "description": "Zimmer AI Platform - Monorepo",
+  "private": true,
+  "workspaces": [
+    "zimmer_user_panel",
+    "zimmermanagement/zimmer-admin-dashboard"
+  ],
+  "devDependencies": {
+    "globby": "^14.0.2",
+    "ts-node": "^10.9.2"
+  },
+  "scripts": {
+    "analyze:features": "node scripts/analyze_user_panel.js",
+    "analyze:features:strict": "OPENAPI=1 node scripts/analyze_user_panel.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

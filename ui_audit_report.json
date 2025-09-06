@@ -1,0 +1,232 @@
+{
+  "timestamp": "2025-09-06T22:22:05.931507",
+  "summary": {
+    "missing_pages": 9,
+    "broken_components": 0,
+    "non_functional_buttons": 0,
+    "undefined_links": 0,
+    "incomplete_components": 14,
+    "total_issues": 23
+  },
+  "missing_pages": [
+    {
+      "page": "profile",
+      "type": "missing_page",
+      "severity": "high",
+      "description": "Page /profile is referenced but not implemented"
+    },
+    {
+      "page": "notifications",
+      "type": "missing_page",
+      "severity": "high",
+      "description": "Page /notifications is referenced but not implemented"
+    },
+    {
+      "page": "billing",
+      "type": "missing_page",
+      "severity": "high",
+      "description": "Page /billing is referenced but not implemented"
+    },
+    {
+      "page": "usage",
+      "type": "missing_page",
+      "severity": "high",
+      "description": "Page /usage is referenced but not implemented"
+    },
+    {
+      "page": "tickets",
+      "type": "missing_page",
+      "severity": "high",
+      "description": "Page /tickets is referenced but not implemented"
+    },
+    {
+      "page": "help",
+      "type": "missing_page",
+      "severity": "high",
+      "description": "Page /help is referenced but not implemented"
+    },
+    {
+      "page": "documentation",
+      "type": "missing_page",
+      "severity": "high",
+      "description": "Page /documentation is referenced but not implemented"
+    },
+    {
+      "page": "api",
+      "type": "missing_page",
+      "severity": "high",
+      "description": "Page /api is referenced but not implemented"
+    },
+    {
+      "page": "integrations",
+      "type": "missing_page",
+      "severity": "high",
+      "description": "Page /integrations is referenced but not implemented"
+    }
+  ],
+  "broken_components": [],
+  "non_functional_buttons": [],
+  "undefined_links": [],
+  "incomplete_components": [
+    {
+      "component": "DiscountCodeField",
+      "file": "zimmer_user_panel\\components\\DiscountCodeField.tsx",
+      "issues": [
+        {
+          "type": "placeholder",
+          "message": "Placeholder text: مثلاً WELCOME20"
+        },
+        {
+          "type": "disabled_button",
+          "message": "Disabled button: {busy ? \"در حال بررسی...\" : \"اعمال\"}"
+        }
+      ]
+    },
+    {
+      "component": "PurchaseModal",
+      "file": "zimmer_user_panel\\components\\PurchaseModal.tsx",
+      "issues": [
+        {
+          "type": "placeholder",
+          "message": "Placeholder text: تعداد توکن مورد نظر"
+        },
+        {
+          "type": "disabled_button",
+          "message": "Disabled button: انصراف"
+        }
+      ]
+    },
+    {
+      "component": "Topbar",
+      "file": "zimmer_user_panel\\components\\Topbar.tsx",
+      "issues": [
+        {
+          "type": "placeholder",
+          "message": "Placeholder text: جستجو کردن"
+        }
+      ]
+    },
+    {
+      "component": "TwoFADialog",
+      "file": "zimmer_user_panel\\components\\TwoFADialog.tsx",
+      "issues": [
+        {
+          "type": "placeholder",
+          "message": "Placeholder text: 123456"
+        },
+        {
+          "type": "disabled_button",
+          "message": "Disabled button: {busy ? \"در حال بررسی...\" : \"تأیید\"}"
+        }
+      ]
+    },
+    {
+      "component": "MyAutomationsList",
+      "file": "zimmer_user_panel\\components\\automations\\MyAutomationsList.tsx",
+      "issues": [
+        {
+          "type": "todo",
+          "message": "Uncomment when API is ready"
+        }
+      ]
+    },
+    {
+      "component": "QuickActions",
+      "file": "zimmer_user_panel\\components\\automations\\QuickActions.tsx",
+      "issues": [
+        {
+          "type": "todo",
+          "message": "Uncomment when API is ready"
+        }
+      ]
+    },
+    {
+      "component": "DistributionPie",
+      "file": "zimmer_user_panel\\components\\dashboard\\DistributionPie.tsx",
+      "issues": [
+        {
+          "type": "todo",
+          "message": "Uncomment when API is ready"
+        }
+      ]
+    },
+    {
+      "component": "MyAutomations",
+      "file": "zimmer_user_panel\\components\\dashboard\\MyAutomations.tsx",
+      "issues": [
+        {
+          "type": "todo",
+          "message": "Uncomment when API is ready"
+        }
+      ]
+    },
+    {
+      "component": "RecentPayments",
+      "file": "zimmer_user_panel\\components\\dashboard\\RecentPayments.tsx",
+      "issues": [
+        {
+          "type": "todo",
+          "message": "Uncomment when API is ready"
+        }
+      ]
+    },
+    {
+      "component": "SixMonthTrend",
+      "file": "zimmer_user_panel\\components\\dashboard\\SixMonthTrend.tsx",
+      "issues": [
+        {
+          "type": "todo",
+          "message": "Uncomment when API is ready"
+        }
+      ]
+    },
+    {
+      "component": "WeeklyActivityChart",
+      "file": "zimmer_user_panel\\components\\dashboard\\WeeklyActivityChart.tsx",
+      "issues": [
+        {
+          "type": "todo",
+          "message": "Uncomment when API is ready"
+        }
+      ]
+    },
+    {
+      "component": "ActiveAutomations",
+      "file": "zimmer_user_panel\\components\\payments\\ActiveAutomations.tsx",
+      "issues": [
+        {
+          "type": "todo",
+          "message": "Uncomment when API is ready"
+        }
+      ]
+    },
+    {
+      "component": "MonthlyExpenses",
+      "file": "zimmer_user_panel\\components\\payments\\MonthlyExpenses.tsx",
+      "issues": [
+        {
+          "type": "todo",
+          "message": "Uncomment when API is ready"
+        }
+      ]
+    },
+    {
+      "component": "PaymentHistory",
+      "file": "zimmer_user_panel\\components\\payments\\PaymentHistory.tsx",
+      "issues": [
+        {
+          "type": "todo",
+          "message": "Uncomment when API is ready"
+        },
+        {
+          "type": "disabled_button",
+          "message": "Disabled button: setPage(p=>Math.max(1,p-1))} \n              className=\"px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors\"\n            >\n              قبلی"
+        },
+        {
+          "type": "disabled_button",
+          "message": "Disabled button: =pages} \n              onClick={()=>setPage(p=>p+1)} \n              className=\"px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors\"\n            >\n              بعدی"
+        }
+      ]
+    }
+  ]
+}

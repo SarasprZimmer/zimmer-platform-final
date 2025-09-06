@@ -174,15 +174,17 @@ export default function Tickets() {
     for (let i = 1; i < parts.length; i++) {
       const part = parts[i];
       const endIndex = part.indexOf(' ---');
+      
       if (endIndex !== -1) {
         const sender = part.substring(0, endIndex);
         const content = part.substring(endIndex + 4).trim();
+        
         messages.push({
           id: `reply-${i}`,
           sender,
           content,
           timestamp: new Date().toISOString(), // We don't have individual timestamps
-          isAdmin: sender.toLowerCase().includes('admin')
+          isAdmin: sender.toLowerCase().includes('admin') || sender.toLowerCase().includes('مدیر')
         });
       }
     }
@@ -190,7 +192,8 @@ export default function Tickets() {
     return { originalMessage, messages };
   };
 
-  const getImportanceColor = (importance: string) => {
+  const getImportanceColor = (importance: string | undefined | null) => {
+    if (!importance) return 'bg-gray-100 text-gray-800';
     switch (importance.toLowerCase()) {
       case 'low': return 'bg-gray-100 text-gray-800';
       case 'medium': return 'bg-yellow-100 text-yellow-800';
@@ -199,7 +202,8 @@ export default function Tickets() {
     }
   };
 
-  const getImportanceText = (importance: string) => {
+  const getImportanceText = (importance: string | undefined | null) => {
+    if (!importance) return 'نامشخص';
     switch (importance.toLowerCase()) {
       case 'low': return 'کم';
       case 'medium': return 'متوسط';
@@ -218,7 +222,8 @@ export default function Tickets() {
     return date.toLocaleDateString('fa-IR') + ' ' + date.toLocaleTimeString('fa-IR');
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string | undefined | null) => {
+    if (!status) return 'bg-gray-100 text-gray-800';
     switch (status) {
       case 'open': return 'bg-red-100 text-red-800';
       case 'pending': return 'bg-yellow-100 text-yellow-800';
@@ -227,7 +232,8 @@ export default function Tickets() {
     }
   };
 
-  const getStatusText = (status: string) => {
+  const getStatusText = (status: string | undefined | null) => {
+    if (!status) return 'نامشخص';
     switch (status) {
       case 'open': return 'باز';
       case 'pending': return 'در انتظار';
@@ -460,7 +466,15 @@ export default function Tickets() {
                       <span className="text-sm font-medium text-gray-700">{selectedTicket.user_name}</span>
                       <span className="text-xs text-gray-500">کاربر</span>
                     </div>
-                    <p className="text-gray-900 whitespace-pre-wrap">{parseTicketMessages(selectedTicket).originalMessage}</p>
+                    <p className="text-gray-900 whitespace-pre-wrap">
+                      {(() => {
+                        const parsed = parseTicketMessages(selectedTicket);
+                        console.log('Debug - Full message:', selectedTicket.message);
+                        console.log('Debug - Parsed original:', parsed.originalMessage);
+                        console.log('Debug - Parsed messages:', parsed.messages);
+                        return parsed.originalMessage;
+                      })()}
+                    </p>
                   </div>
                   
                   {selectedTicket.attachment_path && (
@@ -486,22 +500,26 @@ export default function Tickets() {
                   
                   {/* Messages */}
                   <div className="space-y-4 mb-6 max-h-96 overflow-y-auto">
-                    {parseTicketMessages(selectedTicket).messages.length === 0 ? (
-                      <div className="text-center py-8 text-gray-500">هنوز پیامی ارسال نشده است.</div>
-                    ) : (
-                      parseTicketMessages(selectedTicket).messages.map((message) => (
-                        <div key={message.id} className={`flex ${message.isAdmin ? 'justify-end' : 'justify-start'}`}>
-                          <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                            message.isAdmin 
-                              ? 'bg-blue-500 text-white' 
-                              : 'bg-gray-200 text-gray-900'
-                          }`}>
-                            <div className="text-xs opacity-75 mb-1">{message.sender}</div>
-                            <div className="whitespace-pre-wrap">{message.content}</div>
+                    {(() => {
+                      const parsed = parseTicketMessages(selectedTicket);
+                      console.log('Debug - Chat messages:', parsed.messages);
+                      return parsed.messages.length === 0 ? (
+                        <div className="text-center py-8 text-gray-500">هنوز پیامی ارسال نشده است.</div>
+                      ) : (
+                        parsed.messages.map((message) => (
+                          <div key={message.id} className={`flex ${message.isAdmin ? 'justify-end' : 'justify-start'}`}>
+                            <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                              message.isAdmin 
+                                ? 'bg-blue-500 text-white' 
+                                : 'bg-gray-200 text-gray-900'
+                            }`}>
+                              <div className="text-xs opacity-75 mb-1">{message.sender}</div>
+                              <div className="whitespace-pre-wrap">{message.content}</div>
+                            </div>
                           </div>
-                        </div>
-                      ))
-                    )}
+                        ))
+                      );
+                    })()}
                   </div>
                   
                   {/* Reply Input */}

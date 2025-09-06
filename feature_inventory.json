@@ -1,0 +1,746 @@
+{
+  "generatedAt": "2025-09-06T19:11:53.362Z",
+  "pages": [
+    {
+      "file": "pages\\dashboard.tsx",
+      "route": "/dashboard",
+      "endpoints": [],
+      "hrefs": [],
+      "components": [
+        "DashboardLayout",
+        "RecentPayments",
+        "MyAutomations"
+      ],
+      "charts": [],
+      "actionsHint": true
+    },
+    {
+      "file": "pages\\forgot-password.tsx",
+      "route": "/forgot-password",
+      "title": "فراموشی رمز عبور",
+      "endpoints": [],
+      "hrefs": [
+        "/login"
+      ],
+      "components": [
+        "Link",
+        "ApiClient"
+      ],
+      "charts": [],
+      "actionsHint": true
+    },
+    {
+      "file": "pages\\index.tsx",
+      "route": "/",
+      "endpoints": [],
+      "hrefs": [],
+      "components": [],
+      "charts": [],
+      "actionsHint": false
+    },
+    {
+      "file": "pages\\login.tsx",
+      "route": "/login",
+      "title": "Zimmer AI",
+      "endpoints": [],
+      "hrefs": [
+        "/signup",
+        "/forgot-password"
+      ],
+      "components": [
+        "Link",
+        "TwoFADialog",
+        "Toast"
+      ],
+      "charts": [],
+      "actionsHint": true
+    },
+    {
+      "file": "pages\\reset-password.tsx",
+      "route": "/reset-password",
+      "title": "بازنشانی رمز عبور",
+      "endpoints": [],
+      "hrefs": [
+        "/login"
+      ],
+      "components": [
+        "Link",
+        "ApiClient"
+      ],
+      "charts": [],
+      "actionsHint": true
+    },
+    {
+      "file": "pages\\settings.tsx",
+      "route": "/settings",
+      "title": "تنظیمات حساب کاربری",
+      "endpoints": [],
+      "hrefs": [
+        "/settings/security"
+      ],
+      "components": [
+        "DashboardLayout",
+        "ProfileForm"
+      ],
+      "charts": [],
+      "actionsHint": true
+    },
+    {
+      "file": "pages\\signup.tsx",
+      "route": "/signup",
+      "title": "Zimmer AI",
+      "endpoints": [],
+      "hrefs": [
+        "/login"
+      ],
+      "components": [
+        "React",
+        "Link"
+      ],
+      "charts": [],
+      "actionsHint": true
+    },
+    {
+      "file": "pages\\support.tsx",
+      "route": "/support",
+      "title": "پشتیبانی",
+      "endpoints": [],
+      "hrefs": [],
+      "components": [
+        "DashboardLayout",
+        "Card"
+      ],
+      "charts": [],
+      "actionsHint": true
+    },
+    {
+      "file": "pages\\test.tsx",
+      "route": "/test",
+      "title": "Test Page",
+      "endpoints": [],
+      "hrefs": [],
+      "components": [],
+      "charts": [],
+      "actionsHint": false
+    },
+    {
+      "file": "pages\\verify-email.tsx",
+      "route": "/verify-email",
+      "title": "تأیید ایمیل",
+      "endpoints": [],
+      "hrefs": [
+        "/login"
+      ],
+      "components": [],
+      "charts": [],
+      "actionsHint": true
+    },
+    {
+      "file": "pages\\_app.tsx",
+      "route": "/_app",
+      "endpoints": [],
+      "hrefs": [],
+      "components": [
+        "AppProps",
+        "AuthProvider",
+        "HeaderAuth"
+      ],
+      "charts": [],
+      "actionsHint": false
+    },
+    {
+      "file": "pages\\payment\\index.tsx",
+      "route": "/payment",
+      "endpoints": [],
+      "hrefs": [],
+      "components": [
+        "DashboardLayout",
+        "ActiveAutomations"
+      ],
+      "charts": [],
+      "actionsHint": false
+    },
+    {
+      "file": "pages\\settings\\security.tsx",
+      "route": "/settings/security",
+      "title": "امنیت حساب",
+      "endpoints": [
+        {
+          "path": "/api/auth/2fa/status",
+          "method": "POST"
+        },
+        {
+          "path": "/api/auth/2fa/initiate",
+          "method": "POST"
+        },
+        {
+          "path": "/api/auth/2fa/activate",
+          "method": "POST"
+        },
+        {
+          "path": "/api/auth/2fa/disable",
+          "method": "POST"
+        },
+        {
+          "path": "/api/auth/2fa/recovery-codes/regenerate"
+        }
+      ],
+      "hrefs": [],
+      "components": [],
+      "charts": [],
+      "actionsHint": true
+    },
+    {
+      "file": "pages\\automations\\index.tsx",
+      "route": "/automations",
+      "endpoints": [],
+      "hrefs": [],
+      "components": [
+        "DashboardLayout",
+        "QuickActions",
+        "MyAutomationsList"
+      ],
+      "charts": [],
+      "actionsHint": false
+    },
+    {
+      "file": "pages\\automations\\marketplace.tsx",
+      "route": "/automations/marketplace",
+      "endpoints": [],
+      "hrefs": [],
+      "components": [
+        "DashboardLayout",
+        "Card"
+      ],
+      "charts": [],
+      "actionsHint": false
+    },
+    {
+      "file": "pages\\automations\\[id]\\purchase.tsx",
+      "route": "/automations/[id]/purchase",
+      "title": "اتوماسیون یافت نشد",
+      "endpoints": [
+        {
+          "path": "/api/automations/${id}",
+          "method": "POST"
+        },
+        {
+          "path": "/api/discounts/validate",
+          "method": "POST"
+        },
+        {
+          "path": "/api/payments/zarinpal/init"
+        }
+      ],
+      "hrefs": [],
+      "components": [
+        "Head",
+        "DiscountCodeField",
+        "PriceSummary"
+      ],
+      "charts": [],
+      "actionsHint": true
+    }
+  ],
+  "byRoute": {
+    "/dashboard": {
+      "endpoints": [],
+      "methods": [],
+      "charts": [],
+      "hrefs": [],
+      "components": [
+        "DashboardLayout",
+        "RecentPayments",
+        "MyAutomations"
+      ]
+    },
+    "/forgot-password": {
+      "endpoints": [],
+      "methods": [],
+      "charts": [],
+      "hrefs": [
+        "/login"
+      ],
+      "components": [
+        "Link",
+        "ApiClient"
+      ]
+    },
+    "/": {
+      "endpoints": [],
+      "methods": [],
+      "charts": [],
+      "hrefs": [],
+      "components": []
+    },
+    "/login": {
+      "endpoints": [],
+      "methods": [],
+      "charts": [],
+      "hrefs": [
+        "/signup",
+        "/forgot-password"
+      ],
+      "components": [
+        "Link",
+        "TwoFADialog",
+        "Toast"
+      ]
+    },
+    "/reset-password": {
+      "endpoints": [],
+      "methods": [],
+      "charts": [],
+      "hrefs": [
+        "/login"
+      ],
+      "components": [
+        "Link",
+        "ApiClient"
+      ]
+    },
+    "/settings": {
+      "endpoints": [],
+      "methods": [],
+      "charts": [],
+      "hrefs": [
+        "/settings/security"
+      ],
+      "components": [
+        "DashboardLayout",
+        "ProfileForm"
+      ]
+    },
+    "/signup": {
+      "endpoints": [],
+      "methods": [],
+      "charts": [],
+      "hrefs": [
+        "/login"
+      ],
+      "components": [
+        "React",
+        "Link"
+      ]
+    },
+    "/support": {
+      "endpoints": [],
+      "methods": [],
+      "charts": [],
+      "hrefs": [],
+      "components": [
+        "DashboardLayout",
+        "Card"
+      ]
+    },
+    "/test": {
+      "endpoints": [],
+      "methods": [],
+      "charts": [],
+      "hrefs": [],
+      "components": []
+    },
+    "/verify-email": {
+      "endpoints": [],
+      "methods": [],
+      "charts": [],
+      "hrefs": [
+        "/login"
+      ],
+      "components": []
+    },
+    "/_app": {
+      "endpoints": [],
+      "methods": [],
+      "charts": [],
+      "hrefs": [],
+      "components": [
+        "AppProps",
+        "AuthProvider",
+        "HeaderAuth"
+      ]
+    },
+    "/payment": {
+      "endpoints": [],
+      "methods": [],
+      "charts": [],
+      "hrefs": [],
+      "components": [
+        "DashboardLayout",
+        "ActiveAutomations"
+      ]
+    },
+    "/settings/security": {
+      "endpoints": [
+        "/api/auth/2fa/status",
+        "/api/auth/2fa/initiate",
+        "/api/auth/2fa/activate",
+        "/api/auth/2fa/disable",
+        "/api/auth/2fa/recovery-codes/regenerate"
+      ],
+      "methods": [
+        "POST",
+        "GET?"
+      ],
+      "charts": [],
+      "hrefs": [],
+      "components": []
+    },
+    "/automations": {
+      "endpoints": [],
+      "methods": [],
+      "charts": [],
+      "hrefs": [],
+      "components": [
+        "DashboardLayout",
+        "QuickActions",
+        "MyAutomationsList"
+      ]
+    },
+    "/automations/marketplace": {
+      "endpoints": [],
+      "methods": [],
+      "charts": [],
+      "hrefs": [],
+      "components": [
+        "DashboardLayout",
+        "Card"
+      ]
+    },
+    "/automations/[id]/purchase": {
+      "endpoints": [
+        "/api/automations/${id}",
+        "/api/discounts/validate",
+        "/api/payments/zarinpal/init"
+      ],
+      "methods": [
+        "POST",
+        "GET?"
+      ],
+      "charts": [],
+      "hrefs": [],
+      "components": [
+        "Head",
+        "DiscountCodeField",
+        "PriceSummary"
+      ]
+    }
+  },
+  "desired": [
+    {
+      "key": "auth.profile",
+      "title": "ویرایش پروفایل",
+      "expectedEndpoints": [
+        "/api/me",
+        "/api/user/profile"
+      ]
+    },
+    {
+      "key": "auth.security",
+      "title": "امنیت حساب (۲مرحله‌ای/ایمیل)",
+      "expectedEndpoints": [
+        "/api/auth/2fa/*",
+        "/api/auth/verify-email"
+      ]
+    },
+    {
+      "key": "payments.history",
+      "title": "تاریخچه پرداخت",
+      "expectedEndpoints": [
+        "/api/user/payments"
+      ]
+    },
+    {
+      "key": "payments.monthly",
+      "title": "نمودار هزینه‌های ماهانه",
+      "expectedEndpoints": [
+        "/api/user/payments/summary",
+        "/api/user/payments"
+      ]
+    },
+    {
+      "key": "payments.purchase",
+      "title": "خرید اعتبار/توکن",
+      "expectedEndpoints": [
+        "/api/payments/zarinpal/init"
+      ]
+    },
+    {
+      "key": "discounts",
+      "title": "کد تخفیف",
+      "expectedEndpoints": [
+        "/api/discounts/validate",
+        "/api/payments/zarinpal/init"
+      ]
+    },
+    {
+      "key": "automations.list",
+      "title": "فهرست اتوماسیون‌های من",
+      "expectedEndpoints": [
+        "/api/user/automations"
+      ]
+    },
+    {
+      "key": "automations.detail",
+      "title": "جزئیات اتوماسیون",
+      "expectedEndpoints": [
+        "/api/automations/*"
+      ]
+    },
+    {
+      "key": "usage.weekly",
+      "title": "مصرف هفتگی",
+      "expectedEndpoints": [
+        "/api/user/usage?range=7d"
+      ]
+    },
+    {
+      "key": "usage.sixMonths",
+      "title": "مصرف ۶ ماه اخیر",
+      "expectedEndpoints": [
+        "/api/user/usage?range=6m"
+      ]
+    },
+    {
+      "key": "usage.distribution",
+      "title": "توزیع مصرف بین اتوماسیون‌ها",
+      "expectedEndpoints": [
+        "/api/user/usage/distribution"
+      ]
+    },
+    {
+      "key": "notifications",
+      "title": "اعلان‌ها",
+      "expectedEndpoints": [
+        "/api/notifications",
+        "/api/notifications/mark-*"
+      ]
+    },
+    {
+      "key": "support.tickets",
+      "title": "تیکت‌ها",
+      "expectedEndpoints": [
+        "/api/tickets",
+        "/api/tickets/*/messages"
+      ]
+    },
+    {
+      "key": "help.docs",
+      "title": "مستندات/هلپ",
+      "expectedEndpoints": [
+        "/docs",
+        "/openapi.json"
+      ]
+    },
+    {
+      "key": "api.dev",
+      "title": "دسترسی API/توکن‌ها",
+      "expectedEndpoints": [
+        "/api/user/automations",
+        "/api/automation-usage"
+      ]
+    },
+    {
+      "key": "integrations",
+      "title": "یکپارچه‌سازی‌ها/سلامت",
+      "expectedEndpoints": [
+        "/api/automations/*/health",
+        "/api/user/automations"
+      ]
+    }
+  ],
+  "coverage": [
+    {
+      "key": "auth.profile",
+      "title": "ویرایش پروفایل",
+      "usedByRoutes": [],
+      "matchedEndpoints": []
+    },
+    {
+      "key": "auth.security",
+      "title": "امنیت حساب (۲مرحله‌ای/ایمیل)",
+      "usedByRoutes": [],
+      "matchedEndpoints": []
+    },
+    {
+      "key": "payments.history",
+      "title": "تاریخچه پرداخت",
+      "usedByRoutes": [],
+      "matchedEndpoints": []
+    },
+    {
+      "key": "payments.monthly",
+      "title": "نمودار هزینه‌های ماهانه",
+      "usedByRoutes": [],
+      "matchedEndpoints": []
+    },
+    {
+      "key": "payments.purchase",
+      "title": "خرید اعتبار/توکن",
+      "usedByRoutes": [
+        "/automations/[id]/purchase"
+      ],
+      "matchedEndpoints": [
+        "/api/payments/zarinpal/init"
+      ]
+    },
+    {
+      "key": "discounts",
+      "title": "کد تخفیف",
+      "usedByRoutes": [
+        "/automations/[id]/purchase"
+      ],
+      "matchedEndpoints": [
+        "/api/discounts/validate",
+        "/api/payments/zarinpal/init"
+      ]
+    },
+    {
+      "key": "automations.list",
+      "title": "فهرست اتوماسیون‌های من",
+      "usedByRoutes": [],
+      "matchedEndpoints": []
+    },
+    {
+      "key": "automations.detail",
+      "title": "جزئیات اتوماسیون",
+      "usedByRoutes": [],
+      "matchedEndpoints": []
+    },
+    {
+      "key": "usage.weekly",
+      "title": "مصرف هفتگی",
+      "usedByRoutes": [],
+      "matchedEndpoints": []
+    },
+    {
+      "key": "usage.sixMonths",
+      "title": "مصرف ۶ ماه اخیر",
+      "usedByRoutes": [],
+      "matchedEndpoints": []
+    },
+    {
+      "key": "usage.distribution",
+      "title": "توزیع مصرف بین اتوماسیون‌ها",
+      "usedByRoutes": [],
+      "matchedEndpoints": []
+    },
+    {
+      "key": "notifications",
+      "title": "اعلان‌ها",
+      "usedByRoutes": [],
+      "matchedEndpoints": []
+    },
+    {
+      "key": "support.tickets",
+      "title": "تیکت‌ها",
+      "usedByRoutes": [],
+      "matchedEndpoints": []
+    },
+    {
+      "key": "help.docs",
+      "title": "مستندات/هلپ",
+      "usedByRoutes": [],
+      "matchedEndpoints": []
+    },
+    {
+      "key": "api.dev",
+      "title": "دسترسی API/توکن‌ها",
+      "usedByRoutes": [],
+      "matchedEndpoints": []
+    },
+    {
+      "key": "integrations",
+      "title": "یکپارچه‌سازی‌ها/سلامت",
+      "usedByRoutes": [],
+      "matchedEndpoints": []
+    }
+  ],
+  "missingDesiredFeatures": [
+    {
+      "key": "auth.profile",
+      "title": "ویرایش پروفایل",
+      "usedByRoutes": [],
+      "matchedEndpoints": []
+    },
+    {
+      "key": "auth.security",
+      "title": "امنیت حساب (۲مرحله‌ای/ایمیل)",
+      "usedByRoutes": [],
+      "matchedEndpoints": []
+    },
+    {
+      "key": "payments.history",
+      "title": "تاریخچه پرداخت",
+      "usedByRoutes": [],
+      "matchedEndpoints": []
+    },
+    {
+      "key": "payments.monthly",
+      "title": "نمودار هزینه‌های ماهانه",
+      "usedByRoutes": [],
+      "matchedEndpoints": []
+    },
+    {
+      "key": "automations.list",
+      "title": "فهرست اتوماسیون‌های من",
+      "usedByRoutes": [],
+      "matchedEndpoints": []
+    },
+    {
+      "key": "automations.detail",
+      "title": "جزئیات اتوماسیون",
+      "usedByRoutes": [],
+      "matchedEndpoints": []
+    },
+    {
+      "key": "usage.weekly",
+      "title": "مصرف هفتگی",
+      "usedByRoutes": [],
+      "matchedEndpoints": []
+    },
+    {
+      "key": "usage.sixMonths",
+      "title": "مصرف ۶ ماه اخیر",
+      "usedByRoutes": [],
+      "matchedEndpoints": []
+    },
+    {
+      "key": "usage.distribution",
+      "title": "توزیع مصرف بین اتوماسیون‌ها",
+      "usedByRoutes": [],
+      "matchedEndpoints": []
+    },
+    {
+      "key": "notifications",
+      "title": "اعلان‌ها",
+      "usedByRoutes": [],
+      "matchedEndpoints": []
+    },
+    {
+      "key": "support.tickets",
+      "title": "تیکت‌ها",
+      "usedByRoutes": [],
+      "matchedEndpoints": []
+    },
+    {
+      "key": "help.docs",
+      "title": "مستندات/هلپ",
+      "usedByRoutes": [],
+      "matchedEndpoints": []
+    },
+    {
+      "key": "api.dev",
+      "title": "دسترسی API/توکن‌ها",
+      "usedByRoutes": [],
+      "matchedEndpoints": []
+    },
+    {
+      "key": "integrations",
+      "title": "یکپارچه‌سازی‌ها/سلامت",
+      "usedByRoutes": [],
+      "matchedEndpoints": []
+    }
+  ],
+  "openapiLoaded": false
+}
