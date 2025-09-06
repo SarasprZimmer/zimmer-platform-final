@@ -4,7 +4,7 @@ import { BellIcon, MagnifyingGlassIcon, UserIcon, Cog6ToothIcon } from '@heroico
 
 export default function Topbar() {
   return (
-    <div className="bg-white border-b border-gray-100 px-8 py-6">
+    <div className="bg-white border-b border-gray-100 px-8 py-6 font-farhang">
       <div className="flex items-center justify-between">
         {/* Left side - Logo and Dashboard text */}
         <div className="flex items-center gap-4">

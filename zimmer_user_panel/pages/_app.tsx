@@ -6,7 +6,7 @@ import '../styles/globals.css'
 export default function App({ Component, pageProps }: AppProps) {
   return (
     <AuthProvider>
-      <div dir="rtl">
+      <div dir="rtl" className="font-farhang">
         <header className="p-4 border-b flex items-center justify-between">
           <div className="font-semibold">Zimmer</div>
           <HeaderAuth />

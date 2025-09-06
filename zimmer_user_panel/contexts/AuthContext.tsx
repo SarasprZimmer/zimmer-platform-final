@@ -15,8 +15,10 @@ interface AuthContextType {
   user: User | null
   isAuthenticated: boolean
   loading: boolean
+  api: ApiClient
   login: (email: string, password: string) => Promise<void>
   signup: (email: string, password: string, name: string) => Promise<void>
+  verifyOtp: (challenge_token: string, otp_code: string) => Promise<void>
   logout: () => Promise<void>
 }
 
@@ -55,9 +57,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await api.login(email, password)
       setUser(data.user)
       setIsAuthenticated(true)
+      // Store user email for mock data detection
+      localStorage.setItem('user_email', email)
       router.push("/dashboard")
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login error:", error)
+      // Re-throw the error to let the login page handle 2FA challenges
       throw error
     }
   }, [api, router])
@@ -71,6 +76,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       router.push("/dashboard")
     } catch (error) {
       console.error("Signup error:", error)
+      throw error
+    }
+  }, [api, router])
+
+  // 2FA verification function
+  const verifyOtp = useCallback(async (challenge_token: string, otp_code: string) => {
+    try {
+      const data = await api.verifyOtp(challenge_token, otp_code)
+      setUser(data.user)
+      setIsAuthenticated(true)
+      // Store user email for mock data detection
+      if (data.user?.email) {
+        localStorage.setItem('user_email', data.user.email)
+      }
+      router.push("/dashboard")
+    } catch (error) {
+      console.error("2FA verification error:", error)
       throw error
     }
   }, [api, router])
@@ -93,8 +115,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user,
     isAuthenticated,
     loading,
+    api,
     login,
     signup,
+    verifyOtp,
     logout
   }
 

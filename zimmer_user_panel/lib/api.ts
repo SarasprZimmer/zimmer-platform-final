@@ -21,6 +21,18 @@ class ApiClient {
         const errorText = await response.text()
         console.log(" API: Login error response:", errorText)
         
+        // Handle 2FA challenge
+        if (response.status === 401) {
+          try {
+            const errorData = JSON.parse(errorText)
+            if (errorData.error === "otp_required" && errorData.challenge_token) {
+              throw { status: 401, data: errorData }
+            }
+          } catch (e) {
+            // If parsing fails, continue with normal error handling
+          }
+        }
+        
         let errorMessage = "Login failed"
         try {
           const errorData = JSON.parse(errorText)
@@ -118,6 +130,42 @@ class ApiClient {
       console.error("Logout error:", error)
     } finally {
       localStorage.removeItem("access_token")
+    }
+  }
+
+  async verifyOtp(challenge_token: string, otp_code: string) {
+    console.log(" API: OTP verification attempt")
+    
+    try {
+      const response = await fetch(`${BASE_URL}/api/auth/2fa/verify`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ challenge_token, otp_code }),
+        credentials: "include"
+      })
+
+      console.log(" API: OTP verification response status:", response.status)
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.log(" API: OTP verification error response:", errorText)
+        throw new Error("OTP verification failed")
+      }
+
+      const data = await response.json()
+      console.log(" API: OTP verification successful")
+      
+      // Store the token in localStorage
+      if (data.access_token) {
+        localStorage.setItem("access_token", data.access_token)
+      }
+      
+      return data
+    } catch (error) {
+      console.error(" API: OTP verification error:", error)
+      throw error
     }
   }
 

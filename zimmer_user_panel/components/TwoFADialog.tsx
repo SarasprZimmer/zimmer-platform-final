@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { verifyOtp } from "@/lib/apiClient";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function TwoFADialog({
   challengeToken, onSuccess, onCancel
@@ -8,6 +8,7 @@ export default function TwoFADialog({
   const [code, setCode] = useState("");
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const { verifyOtp } = useAuth();
 
   async function submit() {
     setBusy(true); setErr(null);

@@ -1,10 +1,9 @@
+'use client';
 
-
-import { useState, useEffect } from 'react'
-import Link from 'next/link'
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/router'
-import { login } from '@/lib/apiClient'
 import { fetchCsrf } from '@/lib/csrf'
 import TwoFADialog from '@/components/TwoFADialog'
 import { Toast } from '@/components/Toast'
@@ -17,7 +16,7 @@ export default function LoginPage() {
   const [mounted, setMounted] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   const [challenge, setChallenge] = useState<string | null>(null)
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, login: authLogin } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
@@ -36,9 +35,9 @@ export default function LoginPage() {
     setError('')
 
     try {
-      await login(email, password)
+      await authLogin(email, password)
       setToast("خوش آمدید!")
-      setTimeout(()=> router.push("/dashboard"), 600)
+      // The AuthContext will handle the redirect to dashboard
     } catch (err: any) {
       if (err?.status === 401 && err?.data?.error === "otp_required" && err?.data?.challenge_token) {
         setChallenge(err.data.challenge_token);
@@ -139,7 +138,11 @@ export default function LoginPage() {
       {challenge && (
         <TwoFADialog
           challengeToken={challenge}
-          onSuccess={() => { setChallenge(null); setToast("ورود موفق!"); setTimeout(()=>router.push("/dashboard"), 400); }}
+          onSuccess={() => { 
+            setChallenge(null); 
+            setToast("ورود موفق!"); 
+            // The AuthContext will handle the redirect to dashboard
+          }}
           onCancel={() => setChallenge(null)}
         />
       )}

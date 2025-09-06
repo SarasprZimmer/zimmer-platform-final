@@ -8,7 +8,8 @@ import {
   CreditCardIcon, 
   UserIcon,
   RocketLaunchIcon,
-  ArrowRightOnRectangleIcon
+  ArrowRightOnRectangleIcon,
+  QuestionMarkCircleIcon
 } from '@heroicons/react/24/outline'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -20,22 +21,22 @@ const navigationItems = [
     description: 'نمای کلی و آمار'
   },
   {
+    name: 'اتوماسیون ها',
+    href: '/automations',
+    icon: RocketLaunchIcon,
+    description: 'مدیریت گردش‌های هوشمند'
+  },
+  {
     name: 'مدیریت پرداخت ها',
     href: '/payment',
     icon: CreditCardIcon,
     description: 'صورتحساب و اشتراک‌ها'
   },
   {
-    name: 'پروفایل من',
-    href: '/settings',
-    icon: UserIcon,
-    description: 'اطلاعات شخصی'
-  },
-  {
-    name: 'اتوماسیون ها',
-    href: '/automations',
-    icon: RocketLaunchIcon,
-    description: 'مدیریت گردش‌های هوشمند'
+    name: 'پشتیبانی',
+    href: '/support',
+    icon: QuestionMarkCircleIcon,
+    description: 'تیکت‌ها و سوالات متداول'
   },
   {
     name: 'تنظیمات',
@@ -62,7 +63,7 @@ export default function Sidebar() {
   }
 
   return (
-    <div className="w-72 bg-white shadow-lg h-screen fixed right-0 top-0 z-50 border-l border-gray-100 flex flex-col">
+    <div className="w-72 bg-white shadow-lg h-screen fixed right-0 top-0 z-50 border-l border-gray-100 flex flex-col font-farhang">
       {/* Logo Section - Fixed */}
       <div className="p-8 border-b border-gray-100 flex-shrink-0">
         <div className="flex items-center gap-4">

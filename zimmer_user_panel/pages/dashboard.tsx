@@ -1,70 +1,19 @@
 
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { useAuth } from '@/contexts/AuthContext'
 import DashboardLayout from '@/components/DashboardLayout'
-import AvailableAutomationsCard from '@/components/dashboard/AvailableAutomationsCard'
-import PurchasedAutomationsCard from '@/components/dashboard/PurchasedAutomationsCard'
-import TokenUsageCard from '@/components/dashboard/TokenUsageCard'
+import dynamic from "next/dynamic";
+import RecentPayments from "@/components/dashboard/RecentPayments";
+import MyAutomations from "@/components/dashboard/MyAutomations";
+
+const WeeklyActivityChart = dynamic(()=>import("@/components/dashboard/WeeklyActivityChart"), { ssr:false });
+const DistributionPie   = dynamic(()=>import("@/components/dashboard/DistributionPie"), { ssr:false });
+const SixMonthTrend     = dynamic(()=>import("@/components/dashboard/SixMonthTrend"), { ssr:false });
+const SupportQuick      = dynamic(()=>import("@/components/dashboard/SupportQuick"), { ssr:false });
 
 
-// Mock data for dashboard components
-const mockAvailableAutomations = [
-  {
-    id: 1,
-    name: 'اتوماسیون مدیریت شبکه‌های اجتماعی',
-    description: 'مدیریت خودکار پست‌ها، نظرات و تعاملات در شبکه‌های اجتماعی مختلف',
-    price: 150000,
-    popular: true,
-    features: ['پست خودکار', 'مدیریت نظرات', 'تحلیل عملکرد', 'تقویم محتوا']
-  },
-  {
-    id: 2,
-    name: 'اتوماسیون تجزیه و تحلیل داده‌ها',
-    description: 'جمع‌آوری و تحلیل خودکار داده‌ها از منابع مختلف',
-    price: 200000,
-    popular: false,
-    features: ['جمع‌آوری داده', 'تحلیل پیشرفته', 'گزارش‌گیری', 'هشدارهای هوشمند']
-  },
-  {
-    id: 3,
-    name: 'اتوماسیون مدیریت ایمیل',
-    description: 'مدیریت خودکار ایمیل‌ها، پاسخ‌های خودکار و فیلترینگ هوشمند',
-    price: 120000,
-    popular: true,
-    features: ['پاسخ خودکار', 'فیلترینگ هوشمند', 'طبقه‌بندی', 'آمار ارسال']
-  }
-]
-
-const mockPurchasedAutomations = [
-  {
-    id: 1,
-    name: 'اتوماسیون مدیریت شبکه‌های اجتماعی',
-    description: 'مدیریت خودکار پست‌ها و تعاملات',
-    status: 'active' as const,
-    purchaseDate: '2024-01-15',
-    expiryDate: '2025-01-15',
-    usage: 85,
-    maxUsage: 100
-  },
-  {
-    id: 2,
-    name: 'اتوماسیون تجزیه و تحلیل داده‌ها',
-    description: 'تحلیل خودکار داده‌ها و گزارش‌گیری',
-    status: 'active' as const,
-    purchaseDate: '2024-02-01',
-    expiryDate: '2025-02-01',
-    usage: 45,
-    maxUsage: 200
-  }
-]
-
-const mockTokenUsage = {
-  used: 1250,
-  remaining: 2750,
-  total: 4000
-}
 
 export default function DashboardPage() {
   const { user, isAuthenticated, loading } = useAuth()
@@ -103,37 +52,31 @@ export default function DashboardPage() {
 
   return (
     <DashboardLayout>
-      <div className="p-8">
-        <div className="max-w-7xl mx-auto">
-          {/* Welcome Header with Refresh Button */}
-          <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-4">داشبورد</h1>
-                <p className="text-xl text-gray-600 mb-2">خوش آمدید، {user?.name || 'کاربر'}!</p>
-                <p className="text-gray-500">ایمیل: {user?.email || 'ایمیل نامشخص'}</p>
-
-              </div>
-
-            </div>
+      <div className="p-6 space-y-6" dir="rtl">
+        {/* Dashboard Grid - Matching the image layout exactly */}
+        <div className="grid grid-cols-12 gap-6">
+          {/* Top Row */}
+          <div className="col-span-12 lg:col-span-6">
+            <MyAutomations />
           </div>
-
-          {/* Dashboard Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Token Usage Card */}
-            <div className="lg:col-span-2">
-              <TokenUsageCard usage={mockTokenUsage} />
-            </div>
-
-            {/* Available Automations */}
-            <div>
-              <AvailableAutomationsCard automations={mockAvailableAutomations} />
-            </div>
-
-            {/* Purchased Automations */}
-            <div>
-              <PurchasedAutomationsCard automations={mockPurchasedAutomations} />
-            </div>
+          <div className="col-span-12 lg:col-span-6">
+            <RecentPayments />
+          </div>
+          
+          {/* Middle Row */}
+          <div className="col-span-12 lg:col-span-7">
+            <WeeklyActivityChart />
+          </div>
+          <div className="col-span-12 lg:col-span-5">
+            <DistributionPie />
+          </div>
+          
+          {/* Bottom Row */}
+          <div className="col-span-12 lg:col-span-5">
+            <SupportQuick />
+          </div>
+          <div className="col-span-12 lg:col-span-7">
+            <SixMonthTrend />
           </div>
         </div>
       </div>
