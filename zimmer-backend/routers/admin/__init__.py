@@ -271,7 +271,7 @@ async def get_tickets(
             query = query.filter(Ticket.status == status)
         
         if priority is not None:
-            query = query.filter(Ticket.priority == priority)
+            query = query.filter(Ticket.importance == priority)
         
         # Get total count
         total_count = query.count()
@@ -288,7 +288,7 @@ async def get_tickets(
                 "user_name": user_name,
                 "subject": ticket.subject,
                 "status": ticket.status,
-                "priority": ticket.priority,
+                "priority": ticket.importance,
                 "created_at": ticket.created_at,
                 "updated_at": ticket.updated_at
             })

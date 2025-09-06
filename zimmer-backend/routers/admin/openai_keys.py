@@ -72,7 +72,7 @@ async def test_endpoint():
     """Test endpoint to verify router is working"""
     return {"message": "OpenAI keys router is working"}
 
-@router.get("/", response_model=List[OpenAIKeyOut])
+@router.get("/list", response_model=List[OpenAIKeyOut])
 async def list_openai_keys(
     automation_id: Optional[int] = Query(None, description="Filter by automation ID"),
     status: Optional[OpenAIKeyStatus] = Query(None, description="Filter by status"),
