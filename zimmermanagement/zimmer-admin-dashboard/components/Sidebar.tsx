@@ -4,8 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 const navigation = [
   { name: 'داشبورد', href: '/', icon: '📊' },
-  { name: 'مدیریت کاربران', href: '/users', icon: '👥', managerOnly: true },
-  { name: 'مشتریان', href: '/clients', icon: '👥' },
+  { name: 'مشتریان', href: '/users', icon: '👥' },
   { name: 'اتوماسیون‌های کاربران', href: '/user-automations', icon: '🔧', managerOnly: true },
   { name: 'تاریخچه تنظیمات توکن', href: '/tokens/adjustments', icon: '📝', managerOnly: true },
   { name: 'پایگاه دانش', href: '/knowledge', icon: '📚' },
