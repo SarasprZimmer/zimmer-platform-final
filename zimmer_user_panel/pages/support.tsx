@@ -38,10 +38,15 @@ export default function SupportPage() {
   const [loadingTickets, setLoadingTickets] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [newMessage, setNewMessage] = useState('');
-  const [newTicket, setNewTicket] = useState({
+  const [newTicket, setNewTicket] = useState<{
+    subject: string;
+    category: 'financial' | 'tech' | 'customer';
+    priority: 'low' | 'medium' | 'high' | 'urgent';
+    description: string;
+  }>({
     subject: '',
-    category: 'tech' as const,
-    priority: 'medium' as const,
+    category: 'tech',
+    priority: 'medium',
     description: ''
   });
 

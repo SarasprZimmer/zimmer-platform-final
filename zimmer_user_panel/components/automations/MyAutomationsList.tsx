@@ -54,7 +54,7 @@ export default function MyAutomationsList(){
         tokens_remaining: automation.tokens_remaining,
         demo_tokens: automation.demo_tokens,
         integration_status: 'healthy',
-        status: index % 3 === 0 ? 'active' : index % 3 === 1 ? 'inactive' : 'error',
+        status: (index % 3 === 0 ? 'active' : index % 3 === 1 ? 'inactive' : 'error') as 'active' | 'inactive' | 'error',
         success_rate: 85 + Math.random() * 15, // Random between 85-100
         total_runs: Math.floor(Math.random() * 1000) + 100,
         last_run: index % 2 === 0 ? '۲ ساعت پیش' : '۱ روز پیش',
