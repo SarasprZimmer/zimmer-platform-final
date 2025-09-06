@@ -1,6 +1,7 @@
 'use client'
 
 import { BellIcon, MagnifyingGlassIcon, UserIcon, Cog6ToothIcon } from '@heroicons/react/24/outline'
+import NotificationsBell from '@/components/notifications/NotificationsBell'
 
 export default function Topbar() {
   return (
@@ -38,10 +39,7 @@ export default function Topbar() {
           </button>
 
           {/* Notifications */}
-          <button className="relative p-3 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-xl transition-all duration-300">
-            <BellIcon className="w-6 h-6" />
-            <span className="absolute top-2 left-2 w-2 h-2 bg-red-500 rounded-full"></span>
-          </button>
+          <NotificationsBell />
 
           {/* Settings */}
           <button className="relative p-3 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-xl transition-all duration-300">
