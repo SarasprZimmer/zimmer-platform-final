@@ -1,0 +1,118 @@
+{
+  "timestamp": "2025-09-07T16:18:14.027649",
+  "summary": {
+    "total_passed": 13,
+    "total_failed": 1,
+    "success_rate": 92.85714285714286
+  },
+  "categories": {
+    "backend": {
+      "passed": 4,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "User endpoint",
+          "passed": true,
+          "details": "Status: 401",
+          "timestamp": "2025-09-07T16:18:12.539826"
+        },
+        {
+          "name": "CSRF endpoint",
+          "passed": true,
+          "details": "Status: 200",
+          "timestamp": "2025-09-07T16:18:12.563654"
+        },
+        {
+          "name": "Notifications endpoint",
+          "passed": true,
+          "details": "Status: 401",
+          "timestamp": "2025-09-07T16:18:12.599296"
+        },
+        {
+          "name": "CSRF JSON response",
+          "passed": true,
+          "details": "Valid JSON structure",
+          "timestamp": "2025-09-07T16:18:14.020371"
+        }
+      ]
+    },
+    "frontend": {
+      "passed": 0,
+      "failed": 1,
+      "tests": [
+        {
+          "name": "Frontend server",
+          "passed": false,
+          "details": "Status: 404",
+          "timestamp": "2025-09-07T16:18:13.962293"
+        }
+      ]
+    },
+    "integration": {
+      "passed": 2,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "User data access",
+          "passed": true,
+          "details": "Status: 401",
+          "timestamp": "2025-09-07T16:18:13.987700"
+        },
+        {
+          "name": "Notifications data access",
+          "passed": true,
+          "details": "Status: 401",
+          "timestamp": "2025-09-07T16:18:14.017503"
+        }
+      ]
+    },
+    "new_features": {
+      "passed": 7,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "Usage weekly data",
+          "passed": true,
+          "details": "Status: 401",
+          "timestamp": "2025-09-07T16:18:12.609709"
+        },
+        {
+          "name": "Usage monthly data",
+          "passed": true,
+          "details": "Status: 401",
+          "timestamp": "2025-09-07T16:18:12.620833"
+        },
+        {
+          "name": "Usage distribution",
+          "passed": true,
+          "details": "Status: 401",
+          "timestamp": "2025-09-07T16:18:12.630520"
+        },
+        {
+          "name": "Active automations",
+          "passed": true,
+          "details": "Status: 401",
+          "timestamp": "2025-09-07T16:18:12.670742"
+        },
+        {
+          "name": "Payment history",
+          "passed": true,
+          "details": "Status: 401",
+          "timestamp": "2025-09-07T16:18:12.680726"
+        },
+        {
+          "name": "Payment summary",
+          "passed": true,
+          "details": "Status: 401",
+          "timestamp": "2025-09-07T16:18:12.717644"
+        },
+        {
+          "name": "2FA status",
+          "passed": true,
+          "details": "Status: 401",
+          "timestamp": "2025-09-07T16:18:12.725118"
+        }
+      ]
+    }
+  }
+}

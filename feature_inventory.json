@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2025-09-06T19:11:53.362Z",
+  "generatedAt": "2025-09-07T11:16:31.438Z",
   "pages": [
     {
       "file": "pages\\dashboard.tsx",
@@ -104,7 +104,20 @@
       "file": "pages\\support.tsx",
       "route": "/support",
       "title": "پشتیبانی",
-      "endpoints": [],
+      "endpoints": [
+        {
+          "path": "/api/tickets",
+          "method": "GET"
+        },
+        {
+          "path": "/api/tickets",
+          "method": "POST"
+        },
+        {
+          "path": "/api/tickets/${ticketId}",
+          "method": "PUT"
+        }
+      ],
       "hrefs": [],
       "components": [
         "DashboardLayout",
@@ -149,6 +162,56 @@
       "actionsHint": false
     },
     {
+      "file": "pages\\automations\\index.tsx",
+      "route": "/automations",
+      "endpoints": [],
+      "hrefs": [],
+      "components": [
+        "DashboardLayout",
+        "QuickActions",
+        "MyAutomationsList"
+      ],
+      "charts": [],
+      "actionsHint": false
+    },
+    {
+      "file": "pages\\automations\\marketplace.tsx",
+      "route": "/automations/marketplace",
+      "endpoints": [],
+      "hrefs": [],
+      "components": [
+        "DashboardLayout",
+        "Card"
+      ],
+      "charts": [],
+      "actionsHint": false
+    },
+    {
+      "file": "pages\\notifications\\index.tsx",
+      "route": "/notifications",
+      "title": "اعلان‌ها",
+      "endpoints": [
+        {
+          "path": "/api/notifications?limit=100&offset=0",
+          "method": "POST"
+        },
+        {
+          "path": "/api/notifications/mark-all-read",
+          "method": "POST"
+        },
+        {
+          "path": "/api/notifications/mark-read"
+        }
+      ],
+      "hrefs": [],
+      "components": [
+        "Notify",
+        "DashboardLayout"
+      ],
+      "charts": [],
+      "actionsHint": true
+    },
+    {
       "file": "pages\\payment\\index.tsx",
       "route": "/payment",
       "endpoints": [],
@@ -189,31 +252,6 @@
       "components": [],
       "charts": [],
       "actionsHint": true
-    },
-    {
-      "file": "pages\\automations\\index.tsx",
-      "route": "/automations",
-      "endpoints": [],
-      "hrefs": [],
-      "components": [
-        "DashboardLayout",
-        "QuickActions",
-        "MyAutomationsList"
-      ],
-      "charts": [],
-      "actionsHint": false
-    },
-    {
-      "file": "pages\\automations\\marketplace.tsx",
-      "route": "/automations/marketplace",
-      "endpoints": [],
-      "hrefs": [],
-      "components": [
-        "DashboardLayout",
-        "Card"
-      ],
-      "charts": [],
-      "actionsHint": false
     },
     {
       "file": "pages\\automations\\[id]\\purchase.tsx",
@@ -324,8 +362,15 @@
       ]
     },
     "/support": {
-      "endpoints": [],
-      "methods": [],
+      "endpoints": [
+        "/api/tickets",
+        "/api/tickets/${ticketId}"
+      ],
+      "methods": [
+        "GET",
+        "POST",
+        "PUT"
+      ],
       "charts": [],
       "hrefs": [],
       "components": [
@@ -360,6 +405,44 @@
         "HeaderAuth"
       ]
     },
+    "/automations": {
+      "endpoints": [],
+      "methods": [],
+      "charts": [],
+      "hrefs": [],
+      "components": [
+        "DashboardLayout",
+        "QuickActions",
+        "MyAutomationsList"
+      ]
+    },
+    "/automations/marketplace": {
+      "endpoints": [],
+      "methods": [],
+      "charts": [],
+      "hrefs": [],
+      "components": [
+        "DashboardLayout",
+        "Card"
+      ]
+    },
+    "/notifications": {
+      "endpoints": [
+        "/api/notifications?limit=100&offset=0",
+        "/api/notifications/mark-all-read",
+        "/api/notifications/mark-read"
+      ],
+      "methods": [
+        "POST",
+        "GET?"
+      ],
+      "charts": [],
+      "hrefs": [],
+      "components": [
+        "Notify",
+        "DashboardLayout"
+      ]
+    },
     "/payment": {
       "endpoints": [],
       "methods": [],
@@ -385,27 +468,6 @@
       "charts": [],
       "hrefs": [],
       "components": []
-    },
-    "/automations": {
-      "endpoints": [],
-      "methods": [],
-      "charts": [],
-      "hrefs": [],
-      "components": [
-        "DashboardLayout",
-        "QuickActions",
-        "MyAutomationsList"
-      ]
-    },
-    "/automations/marketplace": {
-      "endpoints": [],
-      "methods": [],
-      "charts": [],
-      "hrefs": [],
-      "components": [
-        "DashboardLayout",
-        "Card"
-      ]
     },
     "/automations/[id]/purchase": {
       "endpoints": [
@@ -634,8 +696,12 @@
     {
       "key": "support.tickets",
       "title": "تیکت‌ها",
-      "usedByRoutes": [],
-      "matchedEndpoints": []
+      "usedByRoutes": [
+        "/support"
+      ],
+      "matchedEndpoints": [
+        "/api/tickets"
+      ]
     },
     {
       "key": "help.docs",
@@ -714,12 +780,6 @@
     {
       "key": "notifications",
       "title": "اعلان‌ها",
-      "usedByRoutes": [],
-      "matchedEndpoints": []
-    },
-    {
-      "key": "support.tickets",
-      "title": "تیکت‌ها",
       "usedByRoutes": [],
       "matchedEndpoints": []
     },

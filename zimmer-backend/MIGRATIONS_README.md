@@ -1,22 +1,12 @@
-# Email Verification Migration
-Run:
-```bash
-alembic revision --autogenerate -m "email verification"
-alembic upgrade head
-```
+## User Usage Endpoints
+- `GET /api/user/usage?range=7d&automation_id=` → returns 7 daily points `{ day, tokens, sessions }`
+- `GET /api/user/usage?range=6m` → returns monthly points `{ month, value }`
+- `GET /api/user/usage/distribution` → tokens grouped by automation `{ name, value }`
 
-## Discounts
-Run:
-```bash
-alembic revision --autogenerate -m "discount codes and redemptions"
-alembic upgrade head
-```
+Works with SQLite and PostgreSQL (dialect-aware date grouping).
 
-**Run migrations & tests**
-```bash
-cd zimmer-backend
-$env:DATABASE_URL="sqlite:///./_discounts.db"        # PowerShell; bash: export DATABASE_URL=...
-alembic revision --autogenerate -m "discount codes and redemptions"
-alembic upgrade head
-pytest -q tests/test_discounts.py
-```
+## User Billing Endpoints
+- `GET /api/user/automations/active` → list user's active automations with token balances
+- `GET /api/user/payments?limit=&offset=&order=desc|asc` → payment history (paginated)
+- `GET /api/user/payments/summary?months=6` → monthly expenses for last N months (successful payments)
+- `GET /api/user/payments/{id}` → receipt detail

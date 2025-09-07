@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/apiClient";
-import { Skeleton, Card } from "@/components/Skeleton";
+import { Skeleton, Card } from "@/components/ui/Kit";
 import { mockData } from "@/lib/mockApi";
 
 type Payment = { id:number; amount:number; status:string; created_at:string; method?:string; description?:string; };

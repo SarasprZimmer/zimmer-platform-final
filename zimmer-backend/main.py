@@ -122,6 +122,14 @@ app.include_router(token_adjustments_router, prefix="/api/admin/tokens", tags=["
 from routers.notifications import router as notifications_router
 app.include_router(notifications_router, tags=["notifications"])
 
+# Import user usage router
+from routers.user_usage import router as user_usage_router
+app.include_router(user_usage_router)
+
+# Import user billing router
+from routers.user_billing import router as user_billing_router
+app.include_router(user_billing_router)
+
 # Import admin notifications router
 from routers.admin_notifications import router as admin_notifications_router
 app.include_router(admin_notifications_router, tags=["admin:notifications"])

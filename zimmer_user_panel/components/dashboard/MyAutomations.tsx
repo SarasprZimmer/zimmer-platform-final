@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/apiClient";
-import { Skeleton, Card } from "@/components/Skeleton";
+import { Skeleton, Card } from "@/components/ui/Kit";
 import { motion } from "framer-motion";
 import { mockData } from "@/lib/mockApi";
 

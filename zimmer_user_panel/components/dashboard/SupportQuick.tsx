@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/router";
-import { Card } from "@/components/Skeleton";
+import { Card } from "@/components/ui/Kit";
 
 export default function SupportQuick(){
   const [busy,setBusy]=useState(false);

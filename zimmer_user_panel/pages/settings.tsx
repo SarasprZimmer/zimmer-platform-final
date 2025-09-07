@@ -5,6 +5,7 @@ import DashboardLayout from '@/components/DashboardLayout'
 import dynamic from "next/dynamic";
 import ProfileForm from "@/components/settings/ProfileForm";
 const ChangePasswordForm = dynamic(()=>import("@/components/settings/ChangePasswordForm"), { ssr:false });
+const SecurityStatus = dynamic(()=>import("@/components/settings/SecurityStatus"), { ssr:false });
 
 export default function SettingsPage() {
   const { user, isAuthenticated, loading } = useAuth()
@@ -120,20 +121,14 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          {/* Security Settings - New API-based forms */}
+          {/* Security Status */}
           <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">امنیت</h2>
-            <div className="space-y-6">
-              {/* Change Password Form */}
-              <ChangePasswordForm />
-              
-              {/* 2FA Security Link */}
-              <div className="max-w-xl">
-                <a href="/settings/security" className="inline-block mt-2 text-sm underline text-purple-600 hover:text-purple-700">
-                  امنیت حساب (۲مرحله‌ای / تایید ایمیل)
-                </a>
-              </div>
-            </div>
+            <SecurityStatus />
+          </div>
+
+          {/* Change Password */}
+          <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
+            <ChangePasswordForm />
           </div>
         </div>
       </div>

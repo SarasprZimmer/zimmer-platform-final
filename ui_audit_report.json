@@ -1,12 +1,12 @@
 {
-  "timestamp": "2025-09-06T22:22:05.931507",
+  "timestamp": "2025-09-07T16:18:47.799635",
   "summary": {
-    "missing_pages": 9,
+    "missing_pages": 7,
     "broken_components": 0,
     "non_functional_buttons": 0,
     "undefined_links": 0,
-    "incomplete_components": 14,
-    "total_issues": 23
+    "incomplete_components": 18,
+    "total_issues": 25
   },
   "missing_pages": [
     {
@@ -16,22 +16,10 @@
       "description": "Page /profile is referenced but not implemented"
     },
     {
-      "page": "notifications",
-      "type": "missing_page",
-      "severity": "high",
-      "description": "Page /notifications is referenced but not implemented"
-    },
-    {
       "page": "billing",
       "type": "missing_page",
       "severity": "high",
       "description": "Page /billing is referenced but not implemented"
-    },
-    {
-      "page": "usage",
-      "type": "missing_page",
-      "severity": "high",
-      "description": "Page /usage is referenced but not implemented"
     },
     {
       "page": "tickets",
@@ -191,6 +179,16 @@
       ]
     },
     {
+      "component": "NotificationsBell",
+      "file": "zimmer_user_panel\\components\\notifications\\NotificationsBell.tsx",
+      "issues": [
+        {
+          "type": "disabled_button",
+          "message": "Disabled button: علامت‌گذاری همه"
+        }
+      ]
+    },
+    {
       "component": "ActiveAutomations",
       "file": "zimmer_user_panel\\components\\payments\\ActiveAutomations.tsx",
       "issues": [
@@ -225,6 +223,44 @@
         {
           "type": "disabled_button",
           "message": "Disabled button: =pages} \n              onClick={()=>setPage(p=>p+1)} \n              className=\"px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors\"\n            >\n              بعدی"
+        }
+      ]
+    },
+    {
+      "component": "ChangePasswordForm",
+      "file": "zimmer_user_panel\\components\\settings\\ChangePasswordForm.tsx",
+      "issues": [
+        {
+          "type": "placeholder",
+          "message": "Placeholder text: رمز جدید"
+        },
+        {
+          "type": "placeholder",
+          "message": "Placeholder text: تکرار رمز"
+        },
+        {
+          "type": "disabled_button",
+          "message": "Disabled button: اعمال"
+        }
+      ]
+    },
+    {
+      "component": "ProfileForm",
+      "file": "zimmer_user_panel\\components\\settings\\ProfileForm.tsx",
+      "issues": [
+        {
+          "type": "disabled_button",
+          "message": "Disabled button: ذخیره"
+        }
+      ]
+    },
+    {
+      "component": "SecurityStatus",
+      "file": "zimmer_user_panel\\components\\settings\\SecurityStatus.tsx",
+      "issues": [
+        {
+          "type": "disabled_button",
+          "message": "Disabled button: ارسال ایمیل تأیید"
         }
       ]
     }

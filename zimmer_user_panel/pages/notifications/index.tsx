@@ -1,16 +1,26 @@
 "use client";
-import { useEffect, useState } from "react";
-import { apiFetch } from "@/lib/apiClient";
-import { Notify, routeForNotification } from "@/lib/notifications";
-import DashboardLayout from "@/components/DashboardLayout";
-import { useAuth } from "@/contexts/AuthContext";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/router";
+import { useAuth } from "@/contexts/AuthContext";
+import DashboardLayout from "@/components/DashboardLayout";
+import { apiFetch } from "@/lib/apiClient";
+import { Notify, routeForNotification, typeLabel } from "@/lib/notifications";
+
+type Tab = "all" | "unread" | "payment" | "ticket" | "automation" | "admin";
+
+const LIMIT = 20;
 
 export default function NotificationsPage(){
   const { user, isAuthenticated, loading } = useAuth();
   const router = useRouter();
-  const [items, setItems] = useState<Notify[] | null>(null);
+  const [tab, setTab] = useState<Tab>("all");
+  const [items, setItems] = useState<Notify[]|null>(null);
+  const [offset, setOffset] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selected, setSelected] = useState<Record<number,boolean>>({});
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -18,54 +28,53 @@ export default function NotificationsPage(){
     }
   }, [isAuthenticated, loading, router]);
 
-  async function load(){
-    try {
-      const r = await apiFetch("/api/notifications?limit=100&offset=0");
-      if (!r.ok) { 
-        setItems([]); 
-        return; 
-      }
-      const j = await r.json(); 
-      setItems(Array.isArray(j) ? j : (j.items || []));
-    } catch (error) {
-      console.error('Failed to load notifications:', error);
-      setItems([]);
-    }
+  const typeParam = useMemo(()=> tab==="all"||tab==="unread" ? "" : tab, [tab]);
+  const readParam = useMemo(()=> tab==="unread" ? "false" : "", [tab]);
+
+  async function load(reset:boolean){
+    const params = new URLSearchParams();
+    params.set("limit", String(LIMIT));
+    params.set("offset", String(reset?0:offset));
+    if(typeParam) params.set("type", typeParam);
+    if(readParam) params.set("read", readParam);
+    const r = await apiFetch(`/api/notifications?${params.toString()}`);
+    if(!r.ok){ if(reset) setItems([]); return; }
+    const j = await r.json();
+    const batch: Notify[] = Array.isArray(j) ? j : (j.items||[]);
+    if(reset){ setItems(batch); setOffset(batch.length); setHasMore(batch.length===LIMIT); }
+    else { setItems(prev => [ ...(prev||[]), ...batch ]); setOffset(o=>o+batch.length); setHasMore(batch.length===LIMIT); }
   }
 
-  async function markAllRead() {
-    setBusy(true);
-    try {
-      await apiFetch("/api/notifications/mark-all-read", { method: "POST" });
-      await load();
-    } catch (error) {
-      console.error('Failed to mark all as read:', error);
-    } finally {
-      setBusy(false);
-    }
-  }
+  useEffect(()=>{ if(isAuthenticated) load(true); },[tab, isAuthenticated]);
 
-  async function markOneRead(id: number) {
+  function toggle(id:number){ setSelected(s => ({...s, [id]: !s[id]})); }
+  function clearSelection(){ setSelected({}); }
+
+  async function markSelected(){
+    const ids = Object.entries(selected).filter(([,v])=>v).map(([k])=>Number(k));
+    if(ids.length===0) return;
     setBusy(true);
-    try {
-      await apiFetch("/api/notifications/mark-read", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids: [id] })
+    try{
+      await apiFetch("/api/notifications/mark-read",{
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify({ ids })
       });
-      await load();
-    } catch (error) {
-      console.error('Failed to mark as read:', error);
-    } finally {
-      setBusy(false);
-    }
+      setItems(prev => (prev||[]).map(n => ids.includes(n.id) ? {...n, read:true} : n));
+      clearSelection();
+    } finally { setBusy(false); }
   }
 
-  useEffect(() => { 
-    if (isAuthenticated) {
-      load(); 
-    }
-  }, [isAuthenticated]);
+  async function markAll(){
+    setBusy(true);
+    try{
+      await apiFetch("/api/notifications/mark-all-read",{ method:"POST" });
+      setItems(prev => (prev||[]).map(n => ({...n, read:true})));
+      clearSelection();
+    } finally { setBusy(false); }
+  }
+
+  async function loadMore(){ if(hasMore && !busy) await load(false); }
 
   if (loading) {
     return (
@@ -82,123 +91,56 @@ export default function NotificationsPage(){
     return null;
   }
 
-  const unreadCount = items ? items.filter(n => !n.read).length : 0;
-
   return (
     <DashboardLayout>
-      <div className="p-8">
-        <div className="max-w-4xl mx-auto">
-          {/* Page Header */}
-          <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">اعلان‌ها</h1>
-                <p className="text-gray-600">مدیریت و مشاهده تمام اعلان‌های سیستم</p>
-              </div>
-              {unreadCount > 0 && (
-                <button 
-                  onClick={markAllRead}
-                  disabled={busy}
-                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 transition-colors"
-                >
-                  {busy ? "در حال پردازش..." : `علامت‌گذاری همه (${unreadCount})`}
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Notifications List */}
-          <div className="bg-white rounded-2xl shadow-xl p-8">
-            {!items && (
-              <div className="space-y-4">
-                <div className="h-16 rounded-xl bg-gray-100 animate-pulse" />
-                <div className="h-16 rounded-xl bg-gray-100 animate-pulse" />
-                <div className="h-16 rounded-xl bg-gray-100 animate-pulse" />
-              </div>
-            )}
-            
-            {items && items.length === 0 && (
-              <div className="text-center py-12">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM4.828 7l2.586 2.586a2 2 0 002.828 0L12.828 7H4.828z" />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">اعلانی وجود ندارد</h3>
-                <p className="text-gray-500">هنوز هیچ اعلانی دریافت نکرده‌اید.</p>
-              </div>
-            )}
-            
-            {items && items.length > 0 && (
-              <div className="space-y-4">
-                {items.map(n => (
-                  <div 
-                    key={n.id} 
-                    className={`rounded-xl border p-6 transition-all duration-200 hover:shadow-md ${
-                      n.read ? "opacity-70 bg-gray-50" : "bg-white border-purple-200"
-                    }`}
-                  >
-                    <div className="flex items-start gap-4">
-                      <TypeBadge type={n.type} />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-gray-900 mb-1">{n.title}</h3>
-                            {n.body && (
-                              <p className="text-gray-600 text-sm mb-3 line-clamp-2">{n.body}</p>
-                            )}
-                            <div className="flex items-center gap-4 text-xs text-gray-500">
-                              <span>{new Date(n.created_at).toLocaleDateString('fa-IR')}</span>
-                              <span>{new Date(n.created_at).toLocaleTimeString('fa-IR', { 
-                                hour: '2-digit', 
-                                minute: '2-digit' 
-                              })}</span>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2 ml-4">
-                            <a 
-                              href={routeForNotification(n)} 
-                              className="px-3 py-1 bg-purple-100 text-purple-700 rounded-lg text-sm hover:bg-purple-200 transition-colors"
-                            >
-                              مشاهده
-                            </a>
-                            {!n.read && (
-                              <button 
-                                onClick={() => markOneRead(n.id)}
-                                disabled={busy}
-                                className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200 disabled:opacity-50 transition-colors"
-                              >
-                                خواندم
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+      <div className="p-6 space-y-4" dir="rtl">
+        <div className="flex items-center justify-between">
+          <div className="text-xl font-semibold">اعلان‌ها</div>
+          <div className="flex items-center gap-2">
+            <button onClick={()=>setSelectMode(m=>!m)} className="px-3 py-1 rounded-xl border text-sm">{selectMode?"خروج از انتخاب":"انتخاب"}</button>
+            <button onClick={markSelected} disabled={!Object.values(selected).some(Boolean) || busy} className="px-3 py-1 rounded-xl border text-sm disabled:opacity-50">علامت‌گذاری انتخاب‌شده</button>
+            <button onClick={markAll} disabled={busy} className="px-3 py-1 rounded-xl bg-black text-white text-sm disabled:opacity-50">علامت‌گذاری همه</button>
           </div>
         </div>
+
+        <div className="flex flex-wrap gap-2">
+          {(["all","unread","payment","ticket","automation","admin"] as Tab[]).map(t=>(
+            <button key={t} onClick={()=>{ setTab(t); setOffset(0); }} className={`px-3 py-1 rounded-full text-sm border ${tab===t?"bg-black text-white":"bg-white"}`}>
+              {t==="all"?"همه": t==="unread"?"خوانده‌نشده": t==="payment"?"پرداخت": t==="ticket"?"تیکت": t==="automation"?"اتوماسیون":"سیستمی"}
+            </button>
+          ))}
+        </div>
+
+        <div className="space-y-2 max-w-3xl">
+          {items===null && (<>
+            <div className="h-14 rounded-xl bg-gray-100 animate-pulse" />
+            <div className="h-14 rounded-xl bg-gray-100 animate-pulse" />
+          </>)}
+          {items && items.length===0 && (
+            <div className="text-sm opacity-70">اعلانی وجود ندارد.</div>
+          )}
+          {items && items.map(n=>(
+            <div key={n.id} className={`rounded-xl border p-3 ${n.read?"opacity-70":""} flex items-start gap-3`}>
+              {selectMode
+                ? <input type="checkbox" checked={!!selected[n.id]} onChange={()=>toggle(n.id)} className="mt-1" />
+                : <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100">{typeLabel(n.type)}</span>}
+              <div className="min-w-0 flex-1">
+                <div className="font-medium">{n.title}</div>
+                {n.body && <div className="text-sm opacity-80">{n.body}</div>}
+                <div className="mt-2">
+                  <Link href={routeForNotification(n)} className="text-xs underline">مشاهده</Link>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {hasMore && (
+          <div>
+            <button onClick={loadMore} disabled={busy} className="px-3 py-1 rounded-xl border text-sm disabled:opacity-50">موارد بیشتر</button>
+          </div>
+        )}
       </div>
     </DashboardLayout>
-  );
-}
-
-function TypeBadge({ type }: { type?: string }){
-  const t = (type || "").toLowerCase();
-  const label = t === "payment" ? "پرداخت" : 
-                t === "ticket" ? "تیکت" : 
-                t === "automation" ? "اتوماسیون" : 
-                "سیستمی";
-  const color = t === "payment" ? "bg-emerald-100 text-emerald-800" :
-                t === "ticket" ? "bg-blue-100 text-blue-800" :
-                t === "automation" ? "bg-purple-100 text-purple-800" :
-                "bg-gray-100 text-gray-800";
-  return (
-    <span className={`text-xs px-3 py-1 rounded-full font-medium ${color}`}>
-      {label}
-    </span>
   );
 }

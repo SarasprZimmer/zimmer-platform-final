@@ -1,11 +1,11 @@
 # Zimmer User Panel — Feature Inventory
 
-**Generated**: 06/09/2025, 11:11:53 PM
-**Pages Analyzed**: 16
-**Routes Found**: 16
+**Generated**: 07/09/2025, 3:16:31 PM
+**Pages Analyzed**: 17
+**Routes Found**: 17
 **Desired Features**: 16
-**Covered Features**: 2
-**Missing Features**: 14
+**Covered Features**: 3
+**Missing Features**: 13
 
 ## 📄 Pages Scanned
 
@@ -42,6 +42,12 @@
 - **Links**: /signup, /forgot-password
 - **Components**: Link, TwoFADialog, Toast
 
+### /notifications
+- **Title**: اعلان‌ها
+- **Endpoints**: `/api/notifications?limit=100&offset=0`, `/api/notifications/mark-all-read`, `/api/notifications/mark-read`
+- **Actions**: form/buttons detected
+- **Components**: Notify, DashboardLayout
+
 ### /payment
 - **Components**: DashboardLayout, ActiveAutomations
 
@@ -70,6 +76,7 @@
 
 ### /support
 - **Title**: پشتیبانی
+- **Endpoints**: `/api/tickets`, `/api/tickets`, `/api/tickets/${ticketId}`
 - **Actions**: form/buttons detected
 - **Components**: DashboardLayout, Card
 
@@ -131,6 +138,12 @@
 - **Charts**: —
 - **Components**: Link, TwoFADialog, Toast
 
+### /notifications
+- **Endpoints**: `/api/notifications?limit=100&offset=0`, `/api/notifications/mark-all-read`, `/api/notifications/mark-read`
+- **Methods**: POST, GET?
+- **Charts**: —
+- **Components**: Notify, DashboardLayout
+
 ### /payment
 - **Endpoints**: —
 - **Methods**: —
@@ -162,8 +175,8 @@
 - **Components**: React, Link
 
 ### /support
-- **Endpoints**: —
-- **Methods**: —
+- **Endpoints**: `/api/tickets`, `/api/tickets/${ticketId}`
+- **Methods**: GET, POST, PUT
 - **Charts**: —
 - **Components**: DashboardLayout, Card
 
@@ -209,7 +222,9 @@
 
 - ❌ **اعلان‌ها** (`notifications`)
 
-- ❌ **تیکت‌ها** (`support.tickets`)
+- ✅ **تیکت‌ها** (`support.tickets`)
+  - **Routes**: /support
+  - **Endpoints**: `/api/tickets`
 
 - ❌ **مستندات/هلپ** (`help.docs`)
 
@@ -231,7 +246,6 @@ These features are defined in the desired feature list but not found on any page
 - ❌ **مصرف ۶ ماه اخیر** (`usage.sixMonths`)
 - ❌ **توزیع مصرف بین اتوماسیون‌ها** (`usage.distribution`)
 - ❌ **اعلان‌ها** (`notifications`)
-- ❌ **تیکت‌ها** (`support.tickets`)
 - ❌ **مستندات/هلپ** (`help.docs`)
 - ❌ **دسترسی API/توکن‌ها** (`api.dev`)
 - ❌ **یکپارچه‌سازی‌ها/سلامت** (`integrations`)
@@ -242,7 +256,7 @@ These features are defined in the desired feature list but not found on any page
 
 ## 📊 Summary Statistics
 
-- **Total Unique Endpoints**: 8
-- **Total Unique Components**: 19
+- **Total Unique Endpoints**: 13
+- **Total Unique Components**: 20
 - **Total Chart Types**: 0
-- **Feature Coverage Rate**: 13%
+- **Feature Coverage Rate**: 19%
