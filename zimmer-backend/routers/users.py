@@ -85,22 +85,6 @@ async def logout_user():
     """
     return {"message": "Logout successful"}
 
-@router.get("/user/profile", response_model=UserResponse)
-async def get_user_profile(
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """
-    Get current user's profile information
-    """
-    try:
-        return current_user
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to retrieve user profile: {str(e)}"
-        )
-
 @router.get("/me", response_model=UserResponse)
 async def get_current_user_info(
     current_user: User = Depends(get_current_user)
@@ -177,7 +161,51 @@ async def change_password(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error changing password: {e}")
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="خطا در تغییر رمز عبور"
+        )
+
+@router.post("/user/password")
+async def change_user_password(
+    request: dict,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Change user password (alternative endpoint)"""
+    try:
+        new_password = request.get("new_password")
+        confirm_password = request.get("confirm_password")
+        
+        if not new_password or not confirm_password:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="رمز عبور جدید و تکرار آن الزامی است"
+            )
+        
+        if new_password != confirm_password:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="رمز عبور و تکرار آن یکسان نیست"
+            )
+        
+        if len(new_password) < 8:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="رمز عبور باید حداقل 8 کاراکتر باشد"
+            )
+        
+        # Hash new password
+        current_user.password_hash = hash_password(new_password)
+        db.commit()
+        
+        return {"message": "رمز عبور با موفقیت تغییر یافت"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="خطا در تغییر رمز عبور"

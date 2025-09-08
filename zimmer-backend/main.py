@@ -1,8 +1,12 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from database import Base, engine
 import os
+import time
+import psutil
+import gc
+from asyncio import Semaphore
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -50,6 +54,69 @@ configure_cors(app, allowed_origins=[
 async def test_cors():
     return {"message": "CORS test successful", "timestamp": "2025-07-07"}
 
+@app.get("/health")
+async def health_check():
+    """Simple health check endpoint"""
+    return {
+        "status": "healthy",
+        "timestamp": time.time(),
+        "memory_percent": psutil.virtual_memory().percent,
+        "cpu_percent": psutil.cpu_percent()
+    }
+
+# Performance optimization middleware
+request_semaphore = Semaphore(10)  # Max 10 concurrent requests
+
+@app.middleware("http")
+async def performance_middleware(request: Request, call_next):
+    """Performance optimization middleware"""
+    start_time = time.time()
+    
+    # Check memory usage and cleanup if needed
+    memory_percent = psutil.virtual_memory().percent
+    if memory_percent > 80:
+        gc.collect()  # Force garbage collection
+        print(f"High memory usage: {memory_percent}% - forced GC")
+    
+    # Rate limiting with semaphore
+    async with request_semaphore:
+        try:
+            response = await call_next(request)
+            
+            # Log slow requests
+            process_time = time.time() - start_time
+            if process_time > 1.0:
+                print(f"Slow request: {request.url.path} - {process_time:.2f}s")
+            
+            return response
+            
+        except Exception as e:
+            process_time = time.time() - start_time
+            print(f"Request error: {request.url.path} - {process_time:.2f}s - {str(e)}")
+            raise e
+
+@app.middleware("http")
+async def auth_optimization_middleware(request: Request, call_next):
+    """Optimize authentication for public endpoints"""
+    # Skip auth middleware for public endpoints
+    public_endpoints = [
+        "/api/automations/marketplace",
+        "/api/optimized/automations/marketplace",
+        "/api/optimized/cache/stats",
+        "/health",
+        "/docs",
+        "/redoc",
+        "/openapi.json"
+    ]
+    
+    if request.url.path in public_endpoints:
+        response = await call_next(request)
+        return response
+    
+    # For other endpoints, proceed normally
+    response = await call_next(request)
+    return response
+
 # Import and include routers
 from routers import users, admin, fallback, knowledge, telegram, ticket, ticket_message
 app.include_router(users.router, prefix="/api", tags=["users"])
@@ -92,6 +159,31 @@ from routers.automations import router as automations_router
 app.include_router(automations_router, prefix="/api", tags=["automations"])
 from routers.automation_usage import router as automation_usage_router
 app.include_router(automation_usage_router, prefix="/api", tags=["automation-usage"])
+
+# Import optimized endpoints
+from optimized_endpoints import router as optimized_router
+app.include_router(optimized_router, tags=["optimized"])
+
+# Import production monitoring
+from production_monitoring import router as monitoring_router, start_monitoring
+app.include_router(monitoring_router, tags=["monitoring"])
+
+# Import new routers
+from routers.payments import router as payments_router
+app.include_router(payments_router, tags=["payments"])
+
+from routers.notifications_extended import router as notifications_extended_router
+app.include_router(notifications_extended_router, tags=["notifications-extended"])
+
+from routers.support import router as support_router
+app.include_router(support_router, tags=["support"])
+
+# Import optimized routers for timeout fixes
+from routers.auth_optimized import router as auth_optimized_router
+app.include_router(auth_optimized_router, tags=["auth-optimized"])
+
+from routers.users_optimized import router as users_optimized_router
+app.include_router(users_optimized_router, tags=["users-optimized"])
 
 # Import admin discounts router (MUST be before openai_keys to avoid routing conflict)
 from routers.admin_discounts import router as admin_discounts_router

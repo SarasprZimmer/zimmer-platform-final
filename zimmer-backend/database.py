@@ -24,31 +24,40 @@ if DATABASE_URL is None or DATABASE_URL.strip() == "":
     DATABASE_URL = "sqlite:///./dev.db"
     print("⚠️  No DATABASE_URL found in .env, using SQLite for development")
 
-# Configure engine with connection pooling
+# Configure engine with optimized connection pooling
 if DATABASE_URL.startswith("sqlite"):
-    # SQLite configuration
+    # SQLite configuration - optimized for performance
     engine = create_engine(
         DATABASE_URL,
-        connect_args={"check_same_thread": False},
+        connect_args={
+            "check_same_thread": False,
+            "timeout": 30,  # 30 second timeout
+            "isolation_level": None  # Autocommit mode for better performance
+        },
         poolclass=QueuePool,
-        pool_size=10,
-        max_overflow=20,
+        pool_size=5,  # Reduced pool size for SQLite
+        max_overflow=10,  # Reduced overflow
         pool_pre_ping=True,
-        pool_recycle=3600,
+        pool_recycle=1800,  # 30 minutes recycle
         future=True,
-        echo=False
+        echo=False,
+        # SQLite-specific optimizations
+        pool_timeout=30,
+        pool_reset_on_return='commit'
     )
 else:
-    # PostgreSQL configuration
+    # PostgreSQL configuration - optimized for performance
     engine = create_engine(
         DATABASE_URL,
         poolclass=QueuePool,
-        pool_size=10,
-        max_overflow=20,
+        pool_size=5,  # Reduced pool size
+        max_overflow=10,  # Reduced overflow
         pool_pre_ping=True,
-        pool_recycle=3600,
+        pool_recycle=1800,  # 30 minutes recycle
         future=True,
-        echo=False
+        echo=False,
+        pool_timeout=30,
+        pool_reset_on_return='commit'
     )
 
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False, future=True)

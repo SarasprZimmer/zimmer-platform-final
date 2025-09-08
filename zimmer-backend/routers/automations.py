@@ -21,6 +21,34 @@ def list_automations(db: Session = Depends(get_db)):
     automations = db.query(Automation).filter(Automation.is_listed == True).all()
     return {"automations": automations}
 
+@router.get("/automations/marketplace")
+def get_marketplace_automations(db: Session = Depends(get_db)):
+    """Get automations available in the marketplace"""
+    automations = db.query(Automation).filter(
+        Automation.status == True,
+        Automation.is_listed == True,
+        Automation.health_status == "healthy"
+    ).all()
+    
+    marketplace_data = []
+    for automation in automations:
+        marketplace_data.append({
+            "id": automation.id,
+            "name": automation.name,
+            "description": automation.description,
+            "pricing_type": automation.pricing_type,
+            "price_per_token": automation.price_per_token,
+            "health_status": automation.health_status,
+            "last_health_at": automation.last_health_at,
+            "created_at": automation.created_at
+        })
+    
+    return {
+        "automations": marketplace_data,
+        "total": len(marketplace_data),
+        "message": "Available automations in marketplace"
+    }
+
 @router.post("/automations/{automation_id}/provision", response_model=ProvisionResponse)
 async def provision_automation(
     automation_id: int = Path(...),

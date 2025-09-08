@@ -26,7 +26,7 @@ export default function ProfileForm(){
     setBusy(true); setMsg(null);
     try{
       const r=await apiFetch("/api/user/profile",{
-        method:"POST",
+        method:"PUT",
         headers:{ "Content-Type":"application/json" },
         body: JSON.stringify({ name, phone_number: phone })
       });
@@ -48,6 +48,14 @@ export default function ProfileForm(){
         <div className="md:col-span-2">
           <label className="block text-sm mb-1">ایمیل</label>
           <input className="w-full border rounded-xl p-3 bg-gray-50" value={me?.email||""} disabled />
+        </div>
+        <div className="md:col-span-2">
+          <label className="block text-sm mb-1">نوع حساب</label>
+          <input className="w-full border rounded-xl p-3 bg-gray-50" value={me?.role === 'manager' ? 'مدیر' : me?.role === 'technical_team' ? 'تیم فنی' : 'کاربر عادی'} disabled />
+        </div>
+        <div className="md:col-span-2">
+          <label className="block text-sm mb-1">تاریخ عضویت</label>
+          <input className="w-full border rounded-xl p-3 bg-gray-50" value={me?.created_at ? new Date(me.created_at).toLocaleDateString('fa-IR') : ''} disabled />
         </div>
         {msg && <div className="md:col-span-2 text-sm">{msg}</div>}
         <div className="md:col-span-2 flex justify-end gap-2">
