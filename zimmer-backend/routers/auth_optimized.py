@@ -14,6 +14,7 @@ from models.user import User
 from models.twofa import TwoFactorRecoveryCode
 from models.email_verification import EmailVerificationToken
 from utils.auth_optimized import get_current_user_optimized, rate_limit_dependency
+from utils.circuit_breaker import auth_circuit_breaker, login_circuit_breaker
 from cache_manager import cache_manager
 
 router = APIRouter(prefix="/api/optimized/auth", tags=["auth-optimized"])
@@ -24,9 +25,10 @@ CSRF_CACHE_TTL = 1800  # 30 minutes
 EMAIL_VERIFY_CACHE_TTL = 600  # 10 minutes
 
 @router.get("/csrf")
+@auth_circuit_breaker
 async def get_csrf_token_optimized():
     """
-    Get CSRF token (optimized with caching)
+    Get CSRF token (optimized with caching and circuit breaker)
     """
     cache_key = "csrf_token"
     cached_token = cache_manager.get(cache_key)
@@ -50,12 +52,13 @@ async def get_csrf_token_optimized():
         )
 
 @router.get("/2fa/status")
+@auth_circuit_breaker
 async def get_2fa_status_optimized(
     current_user: User = Depends(get_current_user_optimized),
     db: Session = Depends(get_db)
 ):
     """
-    Get 2FA status for current user (optimized with caching)
+    Get 2FA status for current user (optimized with caching and circuit breaker)
     """
     cache_key = f"2fa_status_{current_user.id}"
     cached_status = cache_manager.get(cache_key)
@@ -85,12 +88,13 @@ async def get_2fa_status_optimized(
         )
 
 @router.post("/request-email-verify")
+@auth_circuit_breaker
 async def request_email_verification_optimized(
     request: dict,
     db: Session = Depends(get_db)
 ):
     """
-    Request email verification (optimized with rate limiting)
+    Request email verification (optimized with rate limiting and circuit breaker)
     """
     try:
         email = request.get("email")

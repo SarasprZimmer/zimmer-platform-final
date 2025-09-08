@@ -64,40 +64,18 @@ async def health_check():
         "cpu_percent": psutil.cpu_percent()
     }
 
-# Performance optimization middleware
-request_semaphore = Semaphore(10)  # Max 10 concurrent requests
+@app.get("/circuit-breaker/stats")
+async def get_circuit_breaker_stats():
+    """Get circuit breaker statistics"""
+    from utils.circuit_breaker import get_circuit_breaker_stats
+    return get_circuit_breaker_stats()
 
-@app.middleware("http")
-async def performance_middleware(request: Request, call_next):
-    """Performance optimization middleware"""
-    start_time = time.time()
-    
-    # Check memory usage and cleanup if needed
-    memory_percent = psutil.virtual_memory().percent
-    if memory_percent > 80:
-        gc.collect()  # Force garbage collection
-        print(f"High memory usage: {memory_percent}% - forced GC")
-    
-    # Rate limiting with semaphore
-    async with request_semaphore:
-        try:
-            response = await call_next(request)
-            
-            # Log slow requests
-            process_time = time.time() - start_time
-            if process_time > 1.0:
-                print(f"Slow request: {request.url.path} - {process_time:.2f}s")
-            
-            return response
-            
-        except Exception as e:
-            process_time = time.time() - start_time
-            print(f"Request error: {request.url.path} - {process_time:.2f}s - {str(e)}")
-            raise e
+# Auth optimization middleware (MUST be first)
+auth_semaphore = Semaphore(5)  # Limit auth requests to 5 concurrent
 
 @app.middleware("http")
 async def auth_optimization_middleware(request: Request, call_next):
-    """Optimize authentication for public endpoints"""
+    """Optimize authentication for public endpoints - FIRST MIDDLEWARE"""
     # Skip auth middleware for public endpoints
     public_endpoints = [
         "/api/automations/marketplace",
@@ -113,9 +91,63 @@ async def auth_optimization_middleware(request: Request, call_next):
         response = await call_next(request)
         return response
     
+    # For auth endpoints, use limited concurrency
+    if request.url.path.startswith("/api/auth/"):
+        async with auth_semaphore:
+            response = await call_next(request)
+            return response
+    
     # For other endpoints, proceed normally
     response = await call_next(request)
     return response
+
+# Performance optimization middleware (SECOND)
+request_semaphore = Semaphore(10)  # Max 10 concurrent requests
+
+@app.middleware("http")
+async def performance_middleware(request: Request, call_next):
+    """Performance optimization middleware - SECOND MIDDLEWARE"""
+    start_time = time.time()
+    
+    # Check memory usage and cleanup if needed
+    memory_percent = psutil.virtual_memory().percent
+    if memory_percent > 80:
+        gc.collect()  # Force garbage collection
+        print(f"High memory usage: {memory_percent}% - forced GC")
+    
+    # Rate limiting with semaphore (but not for auth endpoints - they have their own)
+    if not request.url.path.startswith("/api/auth/"):
+        async with request_semaphore:
+            try:
+                response = await call_next(request)
+                
+                # Log slow requests
+                process_time = time.time() - start_time
+                if process_time > 1.0:
+                    print(f"Slow request: {request.url.path} - {process_time:.2f}s")
+                
+                return response
+                
+            except Exception as e:
+                process_time = time.time() - start_time
+                print(f"Request error: {request.url.path} - {process_time:.2f}s - {str(e)}")
+                raise e
+    else:
+        # For auth endpoints, just proceed without additional semaphore
+        try:
+            response = await call_next(request)
+            
+            # Log slow requests
+            process_time = time.time() - start_time
+            if process_time > 1.0:
+                print(f"Slow auth request: {request.url.path} - {process_time:.2f}s")
+            
+            return response
+            
+        except Exception as e:
+            process_time = time.time() - start_time
+            print(f"Auth request error: {request.url.path} - {process_time:.2f}s - {str(e)}")
+            raise e
 
 # Import and include routers
 from routers import users, admin, fallback, knowledge, telegram, ticket, ticket_message

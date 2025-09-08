@@ -15,6 +15,7 @@ from models.user_automation import UserAutomation
 from models.automation import Automation
 from models.token_usage import TokenUsage
 from utils.auth_optimized import get_current_user_optimized, invalidate_user_cache
+from utils.circuit_breaker import user_circuit_breaker
 from schemas.user import UserResponse, UserUpdateRequest
 from cache_manager import cache_manager
 
@@ -26,11 +27,12 @@ USER_USAGE_CACHE_TTL = 180  # 3 minutes
 USER_AUTOMATIONS_CACHE_TTL = 300  # 5 minutes
 
 @router.get("/me", response_model=UserResponse)
+@user_circuit_breaker
 async def get_current_user_info_optimized(
     current_user: User = Depends(get_current_user_optimized)
 ):
     """
-    Get current user's basic information (optimized with caching)
+    Get current user's basic information (optimized with caching and circuit breaker)
     """
     cache_key = f"user_info_{current_user.id}"
     cached_data = cache_manager.get(cache_key)
@@ -228,13 +230,14 @@ async def get_user_active_automations_optimized(
         )
 
 @router.post("/password")
+@user_circuit_breaker
 async def change_user_password_optimized(
     request: dict,
     current_user: User = Depends(get_current_user_optimized),
     db: Session = Depends(get_db)
 ):
     """
-    Change user password (optimized)
+    Change user password (optimized with circuit breaker)
     """
     try:
         new_password = request.get("new_password")
