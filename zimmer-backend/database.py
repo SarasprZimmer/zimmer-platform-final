@@ -72,8 +72,10 @@ def get_db():
     """Optimized database session with timeout handling"""
     db = SessionLocal()
     try:
-        # Set session timeout
-        db.execute("PRAGMA busy_timeout = 10000")  # 10 second timeout
+        # Set session timeout (only for SQLite)
+        if DATABASE_URL.startswith("sqlite"):
+            from sqlalchemy import text
+            db.execute(text("PRAGMA busy_timeout = 10000"))  # 10 second timeout
         yield db
     except Exception as e:
         db.rollback()

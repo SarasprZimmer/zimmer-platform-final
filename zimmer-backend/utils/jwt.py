@@ -5,6 +5,10 @@ import bcrypt
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 from fastapi import HTTPException, status
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # JWT Configuration
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
