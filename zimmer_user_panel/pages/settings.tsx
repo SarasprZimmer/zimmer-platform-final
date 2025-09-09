@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import DashboardLayout from '@/components/DashboardLayout'
 import dynamic from "next/dynamic";
 import ProfileForm from "@/components/settings/ProfileForm";
-const ChangePasswordForm = dynamic(()=>import("@/components/settings/ChangePasswordForm"), { ssr:false });
+const PasswordChangeButton = dynamic(()=>import("@/components/settings/PasswordChangeButton"), { ssr:false });
 const SecurityStatus = dynamic(()=>import("@/components/settings/SecurityStatus"), { ssr:false });
 
 export default function SettingsPage() {
@@ -128,7 +128,7 @@ export default function SettingsPage() {
 
           {/* Change Password */}
           <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
-            <ChangePasswordForm />
+            <PasswordChangeButton />
           </div>
         </div>
       </div>

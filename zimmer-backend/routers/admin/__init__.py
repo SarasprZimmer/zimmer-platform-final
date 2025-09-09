@@ -17,8 +17,8 @@ from utils.auth_dependency import get_current_admin_user, get_db
 
 router = APIRouter()
 
-@router.get("/users", response_model=UserListResponse)
-async def get_users(
+@router.get("/users-legacy", response_model=UserListResponse)
+async def get_users_legacy(
     is_admin: Optional[bool] = Query(None, description="Filter by admin status"),
     db: Session = Depends(get_db),
     current_admin: User = Depends(get_current_admin_user)

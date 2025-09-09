@@ -110,16 +110,24 @@ async def update_user_profile(
     Update current user's profile information
     """
     try:
+        # Get the user from the current session to avoid session issues
+        user = db.query(User).filter(User.id == current_user.id).first()
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+        
         # Update user fields if provided
         if user_data.name is not None:
-            current_user.name = user_data.name
+            user.name = user_data.name
         if user_data.phone_number is not None:
-            current_user.phone_number = user_data.phone_number
+            user.phone_number = user_data.phone_number
         
         db.commit()
-        db.refresh(current_user)
+        db.refresh(user)
         
-        return current_user
+        return user
         
     except Exception as e:
         db.rollback()
@@ -173,10 +181,12 @@ async def change_user_password(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Change user password (alternative endpoint)"""
+    """Change user password with current password or email verification"""
     try:
         new_password = request.get("new_password")
         confirm_password = request.get("confirm_password")
+        current_password = request.get("current_password")
+        verification_code = request.get("verification_code")
         
         if not new_password or not confirm_password:
             raise HTTPException(
@@ -190,10 +200,44 @@ async def change_user_password(
                 detail="رمز عبور و تکرار آن یکسان نیست"
             )
         
-        if len(new_password) < 8:
+        if len(new_password) < 6:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="رمز عبور باید حداقل 8 کاراکتر باشد"
+                detail="رمز عبور باید حداقل ۶ کاراکتر باشد"
+            )
+        
+        # Check verification method
+        if current_password:
+            # Method 1: Current password verification
+            if not verify_password(current_password, current_user.password_hash):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="رمز عبور فعلی اشتباه است"
+                )
+        elif verification_code:
+            # Method 2: Email verification code
+            if not current_user.email_verified_at:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="ایمیل شما تأیید نشده است"
+                )
+            
+            # Import cache_manager here to avoid circular imports
+            from cache_manager import cache_manager
+            
+            stored_code = cache_manager.get(f"password_reset_code_{current_user.email}")
+            if not stored_code or stored_code != verification_code:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="کد تأیید نامعتبر یا منقضی شده است"
+                )
+            
+            # Clear the verification code after successful use
+            cache_manager.delete(f"password_reset_code_{current_user.email}")
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="رمز عبور فعلی یا کد تأیید الزامی است"
             )
         
         # Hash new password
@@ -585,6 +629,94 @@ async def get_available_automations(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to retrieve available automations: {str(e)}"
+        )
+
+@router.get("/user/usage/distribution")
+async def get_user_usage_distribution(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get user's token usage distribution by automation
+    """
+    try:
+        # Get user automations with usage data
+        user_automations = db.query(UserAutomation).filter(
+            UserAutomation.user_id == current_user.id
+        ).all()
+        
+        distribution = []
+        for ua in user_automations:
+            automation = db.query(Automation).filter(
+                Automation.id == ua.automation_id
+            ).first()
+            
+            if automation:
+                # Get usage for this automation
+                usage = db.query(TokenUsage).filter(
+                    TokenUsage.user_automation_id == ua.id
+                ).all()
+                
+                used_tokens = sum(u.tokens_used for u in usage)
+                
+                distribution.append({
+                    "automation_id": automation.id,
+                    "automation_name": automation.name,
+                    "tokens_remaining": ua.tokens_remaining,
+                    "tokens_used": used_tokens,
+                    "total_tokens": ua.tokens_remaining + used_tokens
+                })
+        
+        return distribution
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve usage distribution: {str(e)}"
+        )
+
+@router.get("/user/automations/active")
+async def get_user_active_automations(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get user's active automations
+    """
+    try:
+        # Get user automations with automation details
+        user_automations = db.query(UserAutomation).filter(
+            UserAutomation.user_id == current_user.id,
+            UserAutomation.status == "active"
+        ).all()
+        
+        active_automations = []
+        for ua in user_automations:
+            automation = db.query(Automation).filter(
+                Automation.id == ua.automation_id
+            ).first()
+            
+            if automation:
+                active_automations.append({
+                    "id": ua.id,
+                    "automation_id": automation.id,
+                    "automation_name": automation.name,
+                    "automation_description": automation.description,
+                    "tokens_remaining": ua.tokens_remaining,
+                    "demo_tokens": ua.demo_tokens,
+                    "is_demo_active": ua.is_demo_active,
+                    "demo_expired": ua.demo_expired,
+                    "status": ua.status,
+                    "provisioned_at": ua.provisioned_at,
+                    "integration_status": ua.integration_status
+                })
+        
+        return active_automations
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve active automations: {str(e)}"
         )
 
 @router.get("/user/automations/{automation_id}")

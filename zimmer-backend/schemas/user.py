@@ -172,6 +172,42 @@ class UserUpdateRoleRequest(BaseModel):
     role: UserRole
     is_active: Optional[bool] = None
 
+class UserUpdateRequest(BaseModel):
+    name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    phone_number: Optional[str] = None
+    role: Optional[UserRole] = None
+    is_active: Optional[bool] = None
+    password: Optional[str] = None
+
+    @validator('name')
+    def validate_name(cls, v):
+        if v is None:
+            return v
+        return validate_string_field(v, max_length=100)
+
+    @validator('email')
+    def validate_email(cls, v):
+        if v is None:
+            return v
+        return validate_email(v)
+
+    @validator('phone_number')
+    def validate_phone_number(cls, v):
+        if v is None:
+            return v
+        return validate_phone(v)
+
+    @validator('password')
+    def validate_password(cls, v):
+        if v is None:
+            return v
+        if len(v) < 8:
+            raise ValueError("Password must be at least 8 characters long")
+        if len(v) > 128:
+            raise ValueError("Password too long. Maximum 128 characters allowed.")
+        return v
+
 class UserListResponse(BaseModel):
     id: int
     name: str

@@ -109,7 +109,7 @@ async def list_openai_keys(
     
     return result
 
-@router.get("/{key_id}", response_model=OpenAIKeyOut)
+@router.get("/keys/{key_id}", response_model=OpenAIKeyOut)
 async def get_openai_key(
     key_id: int,
     db: Session = Depends(get_db),
@@ -134,7 +134,7 @@ async def get_openai_key(
         masked_key=masked
     )
 
-@router.put("/{key_id}", response_model=OpenAIKeyOut)
+@router.put("/keys/{key_id}", response_model=OpenAIKeyOut)
 async def update_openai_key(
     key_id: int,
     key_data: OpenAIKeyUpdate,
@@ -191,7 +191,7 @@ async def update_openai_key(
         masked_key=masked
     )
 
-@router.patch("/{key_id}/status", response_model=OpenAIKeyOut)
+@router.patch("/keys/{key_id}/status", response_model=OpenAIKeyOut)
 async def update_key_status(
     key_id: int,
     status_data: OpenAIKeyStatusUpdate,
@@ -221,7 +221,7 @@ async def update_key_status(
         masked_key=masked
     )
 
-@router.post("/{key_id}/test", response_model=OpenAIKeyTestResponse)
+@router.post("/keys/{key_id}/test", response_model=OpenAIKeyTestResponse)
 async def test_openai_key(
     key_id: int,
     db: Session = Depends(get_db),

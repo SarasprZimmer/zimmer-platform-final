@@ -1,0 +1,489 @@
+{
+  "test_results": {
+    "authentication": {
+      "login": {
+        "status": "working",
+        "status_code": 200,
+        "response_time": 0.328462,
+        "method": "POST",
+        "endpoint": "/api/auth/login"
+      },
+      "protected_access": {
+        "status": "working",
+        "status_code": 200
+      },
+      "token_valid": true
+    },
+    "endpoints": {
+      "auth": {
+        "/api/auth/login": {
+          "status": "working",
+          "status_code": 405,
+          "response_time": 0.005439,
+          "method": "GET",
+          "endpoint": "/api/auth/login"
+        },
+        "/api/auth/logout": {
+          "status": "working",
+          "status_code": 405,
+          "response_time": 0.003796,
+          "method": "GET",
+          "endpoint": "/api/auth/logout"
+        },
+        "/api/auth/refresh": {
+          "status": "working",
+          "status_code": 405,
+          "response_time": 0.004203,
+          "method": "GET",
+          "endpoint": "/api/auth/refresh"
+        },
+        "/api/auth/csrf": {
+          "status": "working",
+          "status_code": 200,
+          "response_time": 0.004922,
+          "method": "GET",
+          "endpoint": "/api/auth/csrf"
+        },
+        "/api/auth/register": {
+          "status": "working",
+          "status_code": 404,
+          "response_time": 0.003988,
+          "method": "GET",
+          "endpoint": "/api/auth/register"
+        },
+        "/api/auth/forgot-password": {
+          "status": "working",
+          "status_code": 404,
+          "response_time": 0.004237,
+          "method": "GET",
+          "endpoint": "/api/auth/forgot-password"
+        },
+        "/api/auth/reset-password": {
+          "status": "working",
+          "status_code": 404,
+          "response_time": 0.0063,
+          "method": "GET",
+          "endpoint": "/api/auth/reset-password"
+        },
+        "/api/auth/verify-email": {
+          "status": "working",
+          "status_code": 405,
+          "response_time": 0.003623,
+          "method": "GET",
+          "endpoint": "/api/auth/verify-email"
+        },
+        "/api/auth/2fa/setup": {
+          "status": "working",
+          "status_code": 404,
+          "response_time": 0.008678,
+          "method": "GET",
+          "endpoint": "/api/auth/2fa/setup"
+        },
+        "/api/auth/2fa/verify": {
+          "status": "working",
+          "status_code": 405,
+          "response_time": 0.004825,
+          "method": "GET",
+          "endpoint": "/api/auth/2fa/verify"
+        },
+        "/api/auth/2fa/disable": {
+          "status": "working",
+          "status_code": 405,
+          "response_time": 0.003616,
+          "method": "GET",
+          "endpoint": "/api/auth/2fa/disable"
+        }
+      },
+      "user": {
+        "/api/me": {
+          "status": "working",
+          "status_code": 401,
+          "response_time": 0.007842,
+          "method": "GET",
+          "endpoint": "/api/me"
+        },
+        "/api/user/profile": {
+          "status": "working",
+          "status_code": 405,
+          "response_time": 0.003934,
+          "method": "GET",
+          "endpoint": "/api/user/profile"
+        },
+        "/api/user/dashboard": {
+          "status": "working",
+          "status_code": 401,
+          "response_time": 0.01015,
+          "method": "GET",
+          "endpoint": "/api/user/dashboard"
+        },
+        "/api/user/settings": {
+          "status": "working",
+          "status_code": 404,
+          "response_time": 0.005085,
+          "method": "GET",
+          "endpoint": "/api/user/settings"
+        },
+        "/api/user/password": {
+          "status": "working",
+          "status_code": 405,
+          "response_time": 0.006624,
+          "method": "GET",
+          "endpoint": "/api/user/password"
+        },
+        "/api/user/usage": {
+          "status": "working",
+          "status_code": 401,
+          "response_time": 0.005361,
+          "method": "GET",
+          "endpoint": "/api/user/usage"
+        },
+        "/api/user/automations": {
+          "status": "working",
+          "status_code": 401,
+          "response_time": 0.008103,
+          "method": "GET",
+          "endpoint": "/api/user/automations"
+        },
+        "/api/user/notifications": {
+          "status": "working",
+          "status_code": 404,
+          "response_time": 0.003998,
+          "method": "GET",
+          "endpoint": "/api/user/notifications"
+        },
+        "/api/user/sessions": {
+          "status": "working",
+          "status_code": 404,
+          "response_time": 0.003161,
+          "method": "GET",
+          "endpoint": "/api/user/sessions"
+        }
+      },
+      "admin": {
+        "/api/admin/dashboard": {
+          "status": "working",
+          "status_code": 401,
+          "response_time": 0.009659,
+          "method": "GET",
+          "endpoint": "/api/admin/dashboard"
+        },
+        "/api/admin/users": {
+          "status": "working",
+          "status_code": 401,
+          "response_time": 0.007784,
+          "method": "GET",
+          "endpoint": "/api/admin/users"
+        },
+        "/api/admin/automations": {
+          "status": "working",
+          "status_code": 401,
+          "response_time": 0.006352,
+          "method": "GET",
+          "endpoint": "/api/admin/automations"
+        },
+        "/api/admin/payments": {
+          "status": "working",
+          "status_code": 401,
+          "response_time": 0.006859,
+          "method": "GET",
+          "endpoint": "/api/admin/payments"
+        },
+        "/api/admin/notifications": {
+          "status": "working",
+          "status_code": 401,
+          "response_time": 0.008298,
+          "method": "GET",
+          "endpoint": "/api/admin/notifications"
+        },
+        "/api/admin/settings": {
+          "status": "working",
+          "status_code": 401,
+          "response_time": 0.010697,
+          "method": "GET",
+          "endpoint": "/api/admin/settings"
+        },
+        "/api/admin/analytics": {
+          "status": "working",
+          "status_code": 401,
+          "response_time": 0.008724,
+          "method": "GET",
+          "endpoint": "/api/admin/analytics"
+        },
+        "/api/admin/logs": {
+          "status": "working",
+          "status_code": 401,
+          "response_time": 0.007122,
+          "method": "GET",
+          "endpoint": "/api/admin/logs"
+        },
+        "/api/admin/backup": {
+          "status": "working",
+          "status_code": 401,
+          "response_time": 0.009181,
+          "method": "GET",
+          "endpoint": "/api/admin/backup"
+        },
+        "/api/admin/health": {
+          "status": "working",
+          "status_code": 401,
+          "response_time": 0.008996,
+          "method": "GET",
+          "endpoint": "/api/admin/health"
+        }
+      },
+      "automations": {
+        "/api/automations": {
+          "status": "working",
+          "status_code": 200,
+          "response_time": 0.011647,
+          "method": "GET",
+          "endpoint": "/api/automations"
+        },
+        "/api/automations/marketplace": {
+          "status": "working",
+          "status_code": 200,
+          "response_time": 0.010831,
+          "method": "GET",
+          "endpoint": "/api/automations/marketplace"
+        },
+        "/api/automations/my-automations": {
+          "status": "working",
+          "status_code": 404,
+          "response_time": 0.004228,
+          "method": "GET",
+          "endpoint": "/api/automations/my-automations"
+        },
+        "/api/automations/create": {
+          "status": "working",
+          "status_code": 404,
+          "response_time": 0.008264,
+          "method": "GET",
+          "endpoint": "/api/automations/create"
+        }
+      },
+      "payments": {
+        "/api/payments": {
+          "status": "working",
+          "status_code": 404,
+          "response_time": 0.004452,
+          "method": "GET",
+          "endpoint": "/api/payments"
+        },
+        "/api/payments/create": {
+          "status": "working",
+          "status_code": 401,
+          "response_time": 0.005149,
+          "method": "GET",
+          "endpoint": "/api/payments/create"
+        },
+        "/api/payments/verify": {
+          "status": "working",
+          "status_code": 401,
+          "response_time": 0.005885,
+          "method": "GET",
+          "endpoint": "/api/payments/verify"
+        },
+        "/api/payments/history": {
+          "status": "working",
+          "status_code": 401,
+          "response_time": 0.005403,
+          "method": "GET",
+          "endpoint": "/api/payments/history"
+        },
+        "/api/payments/methods": {
+          "status": "working",
+          "status_code": 401,
+          "response_time": 0.005921,
+          "method": "GET",
+          "endpoint": "/api/payments/methods"
+        },
+        "/api/payments/subscriptions": {
+          "status": "working",
+          "status_code": 401,
+          "response_time": 0.004873,
+          "method": "GET",
+          "endpoint": "/api/payments/subscriptions"
+        }
+      },
+      "support": {
+        "/api/support/tickets": {
+          "status": "working",
+          "status_code": 401,
+          "response_time": 0.009402,
+          "method": "GET",
+          "endpoint": "/api/support/tickets"
+        },
+        "/api/support/tickets/create": {
+          "status": "working",
+          "status_code": 401,
+          "response_time": 0.004864,
+          "method": "GET",
+          "endpoint": "/api/support/tickets/create"
+        },
+        "/api/support/knowledge-base": {
+          "status": "working",
+          "status_code": 404,
+          "response_time": 0.007556,
+          "method": "GET",
+          "endpoint": "/api/support/knowledge-base"
+        },
+        "/api/support/faq": {
+          "status": "working",
+          "status_code": 404,
+          "response_time": 0.004714,
+          "method": "GET",
+          "endpoint": "/api/support/faq"
+        }
+      },
+      "notifications": {
+        "/api/notifications": {
+          "status": "working",
+          "status_code": 401,
+          "response_time": 0.010409,
+          "method": "GET",
+          "endpoint": "/api/notifications"
+        },
+        "/api/notifications/mark-read": {
+          "status": "working",
+          "status_code": 405,
+          "response_time": 0.004397,
+          "method": "GET",
+          "endpoint": "/api/notifications/mark-read"
+        },
+        "/api/notifications/settings": {
+          "status": "working",
+          "status_code": 405,
+          "response_time": 0.006398,
+          "method": "GET",
+          "endpoint": "/api/notifications/settings"
+        }
+      },
+      "system": {
+        "/health": {
+          "status": "working",
+          "status_code": 200,
+          "response_time": 0.004162,
+          "method": "GET",
+          "endpoint": "/health"
+        },
+        "/api/system/stats": {
+          "status": "working",
+          "status_code": 404,
+          "response_time": 0.006422,
+          "method": "GET",
+          "endpoint": "/api/system/stats"
+        },
+        "/api/system/logs": {
+          "status": "working",
+          "status_code": 404,
+          "response_time": 0.008155,
+          "method": "GET",
+          "endpoint": "/api/system/logs"
+        },
+        "/api/system/config": {
+          "status": "working",
+          "status_code": 404,
+          "response_time": 0.006615,
+          "method": "GET",
+          "endpoint": "/api/system/config"
+        },
+        "/circuit-breaker/stats": {
+          "status": "working",
+          "status_code": 200,
+          "response_time": 0.005075,
+          "method": "GET",
+          "endpoint": "/circuit-breaker/stats"
+        },
+        "/api/optimized/cache/stats": {
+          "status": "working",
+          "status_code": 200,
+          "response_time": 0.003545,
+          "method": "GET",
+          "endpoint": "/api/optimized/cache/stats"
+        }
+      }
+    },
+    "frontend": {
+      "user-panel": {
+        "status": "working",
+        "status_code": 200,
+        "url": "http://localhost:3000"
+      },
+      "admin-dashboard": {
+        "status": "working",
+        "status_code": 200,
+        "url": "http://localhost:3001"
+      }
+    }
+  },
+  "analysis": {
+    "missing_endpoints": [],
+    "working_endpoints": [
+      "/api/auth/login",
+      "/api/auth/logout",
+      "/api/auth/refresh",
+      "/api/auth/csrf",
+      "/api/auth/register",
+      "/api/auth/forgot-password",
+      "/api/auth/reset-password",
+      "/api/auth/verify-email",
+      "/api/auth/2fa/setup",
+      "/api/auth/2fa/verify",
+      "/api/auth/2fa/disable",
+      "/api/me",
+      "/api/user/profile",
+      "/api/user/dashboard",
+      "/api/user/settings",
+      "/api/user/password",
+      "/api/user/usage",
+      "/api/user/automations",
+      "/api/user/notifications",
+      "/api/user/sessions",
+      "/api/admin/dashboard",
+      "/api/admin/users",
+      "/api/admin/automations",
+      "/api/admin/payments",
+      "/api/admin/notifications",
+      "/api/admin/settings",
+      "/api/admin/analytics",
+      "/api/admin/logs",
+      "/api/admin/backup",
+      "/api/admin/health",
+      "/api/automations",
+      "/api/automations/marketplace",
+      "/api/automations/my-automations",
+      "/api/automations/create",
+      "/api/payments",
+      "/api/payments/create",
+      "/api/payments/verify",
+      "/api/payments/history",
+      "/api/payments/methods",
+      "/api/payments/subscriptions",
+      "/api/support/tickets",
+      "/api/support/tickets/create",
+      "/api/support/knowledge-base",
+      "/api/support/faq",
+      "/api/notifications",
+      "/api/notifications/mark-read",
+      "/api/notifications/settings",
+      "/health",
+      "/api/system/stats",
+      "/api/system/logs",
+      "/api/system/config",
+      "/circuit-breaker/stats",
+      "/api/optimized/cache/stats"
+    ],
+    "error_endpoints": [],
+    "missing_components": [],
+    "recommendations": []
+  },
+  "summary": {
+    "total_expected_endpoints": 63,
+    "working_endpoints": 53,
+    "missing_endpoints": 0,
+    "error_endpoints": 0,
+    "completion_percentage": 84.13,
+    "missing_components": 0,
+    "recommendations_count": 0
+  }
+}

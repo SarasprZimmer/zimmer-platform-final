@@ -291,14 +291,13 @@ async def get_current_user():
             detail=f"Failed to get user info: {str(e)}"
         )
 
-@router.post("/request-email-verify")
-@auth_circuit_breaker
-async def request_email_verification(
+@router.post("/send-email-verification")
+async def send_email_verification(
     request: dict,
     db: Session = Depends(get_db)
 ):
     """
-    Request email verification
+    Send email verification code
     """
     try:
         email = request.get("email")
@@ -310,9 +309,7 @@ async def request_email_verification(
         
         # Check rate limit
         rate_limit_key = f"email_verify_{email}"
-        if not cache_manager.get(rate_limit_key):
-            cache_manager.set(rate_limit_key, True, ttl=300)  # 5 minutes
-        else:
+        if cache_manager.get(rate_limit_key):
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 detail="Email verification request too frequent. Please wait 5 minutes."
@@ -326,28 +323,86 @@ async def request_email_verification(
                 detail="User not found"
             )
         
-        if user.email_verified:
+        if user.email_verified_at:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Email already verified"
             )
         
-        # Generate verification token
-        verification_token = secrets.token_urlsafe(32)
+        # Generate 6-digit verification code
+        verification_code = f"{secrets.randbelow(900000) + 100000:06d}"
         
-        # Store verification token
-        verification = EmailVerificationToken(
-            user_id=user.id,
-            token=verification_token,
-            expires_at=datetime.utcnow() + timedelta(hours=24)
-        )
+        # Store verification code in cache (5 minutes TTL)
+        cache_manager.set(f"email_verify_code_{email}", verification_code, ttl=300)
+        cache_manager.set(rate_limit_key, True, ttl=300)  # Rate limit
         
-        db.add(verification)
-        db.commit()
+        # TODO: Send actual email with verification code
+        # For now, we'll just return success
+        print(f"Email verification code for {email}: {verification_code}")
         
         return {
-            "message": "Verification email sent",
-            "user_id": user.id
+            "message": "Verification code sent to email",
+            "email": email
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to send email verification: {str(e)}"
+        )
+
+@router.post("/verify-email")
+async def verify_email(
+    request: dict,
+    db: Session = Depends(get_db)
+):
+    """
+    Verify email with code
+    """
+    try:
+        email = request.get("email")
+        verification_code = request.get("verification_code")
+        
+        if not email or not verification_code:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email and verification code are required"
+            )
+        
+        # Check if user exists
+        user = db.query(User).filter(User.email == email).first()
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+        
+        if user.email_verified_at:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email already verified"
+            )
+        
+        # Verify code
+        stored_code = cache_manager.get(f"email_verify_code_{email}")
+        if not stored_code or stored_code != verification_code:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid or expired verification code"
+            )
+        
+        # Mark email as verified
+        user.email_verified_at = datetime.utcnow()
+        db.commit()
+        
+        # Clear verification code
+        cache_manager.delete(f"email_verify_code_{email}")
+        
+        return {
+            "message": "Email verified successfully",
+            "email": email
         }
         
     except HTTPException:
@@ -356,5 +411,67 @@ async def request_email_verification(
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to request email verification: {str(e)}"
+            detail=f"Failed to verify email: {str(e)}"
+        )
+
+@router.post("/send-password-reset-code")
+async def send_password_reset_code(
+    request: dict,
+    db: Session = Depends(get_db)
+):
+    """
+    Send password reset code to verified email
+    """
+    try:
+        email = request.get("email")
+        if not email:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email is required"
+            )
+        
+        # Check if user exists and email is verified
+        user = db.query(User).filter(User.email == email).first()
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+        
+        if not user.email_verified_at:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email must be verified before password reset"
+            )
+        
+        # Check rate limit
+        rate_limit_key = f"password_reset_{email}"
+        if cache_manager.get(rate_limit_key):
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Password reset request too frequent. Please wait 5 minutes."
+            )
+        
+        # Generate 6-digit reset code
+        reset_code = f"{secrets.randbelow(900000) + 100000:06d}"
+        
+        # Store reset code in cache (10 minutes TTL)
+        cache_manager.set(f"password_reset_code_{email}", reset_code, ttl=600)
+        cache_manager.set(rate_limit_key, True, ttl=300)  # Rate limit
+        
+        # TODO: Send actual email with reset code
+        # For now, we'll just return success
+        print(f"Password reset code for {email}: {reset_code}")
+        
+        return {
+            "message": "Password reset code sent to email",
+            "email": email
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to send password reset code: {str(e)}"
         )

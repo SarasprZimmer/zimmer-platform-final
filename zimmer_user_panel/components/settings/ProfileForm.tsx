@@ -1,9 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
-import { apiFetch } from "@/lib/apiClient";
+import { useAuth } from "@/contexts/AuthContext";
 import { Card } from "@/components/ui/Kit";
 
 export default function ProfileForm(){
+  const { api } = useAuth();
   const [me,setMe]=useState<any|null>(null);
   const [name,setName]=useState("");
   const [phone,setPhone]=useState("");
@@ -11,26 +12,32 @@ export default function ProfileForm(){
   const [busy,setBusy]=useState(false);
 
   useEffect(()=>{(async()=>{
-    const r=await apiFetch("/api/me");
-    if(r.ok){
-      const j=await r.json();
-      setMe(j);
-      setName(j?.name||"");
-      setPhone(j?.phone_number||"");
+    try {
+      const userData = await api.getCurrentUser();
+      setMe(userData);
+      setName(userData?.name||"");
+      setPhone(userData?.phone_number||"");
+    } catch (error) {
+      console.error("Failed to fetch user data:", error);
     }
-  })()},[]);
+  })()},[api]);
 
   async function saveProfile(e?:React.FormEvent){
     e?.preventDefault();
     if(!name?.trim()){ setMsg("نام را وارد کنید."); return; }
     setBusy(true); setMsg(null);
     try{
-      const r=await apiFetch("/api/user/profile",{
-        method:"PUT",
-        headers:{ "Content-Type":"application/json" },
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/user/profile`, {
+        method: "PUT",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("access_token")}`
+        },
         body: JSON.stringify({ name, phone_number: phone })
       });
-      setMsg(r.ok ? "تغییرات ذخیره شد." : "خطا در ذخیره‌سازی");
+      setMsg(response.ok ? "تغییرات ذخیره شد." : "خطا در ذخیره‌سازی");
+    } catch (error) {
+      setMsg("خطا در ذخیره‌سازی");
     } finally { setBusy(false); }
   }
 
@@ -48,10 +55,6 @@ export default function ProfileForm(){
         <div className="md:col-span-2">
           <label className="block text-sm mb-1">ایمیل</label>
           <input className="w-full border rounded-xl p-3 bg-gray-50" value={me?.email||""} disabled />
-        </div>
-        <div className="md:col-span-2">
-          <label className="block text-sm mb-1">نوع حساب</label>
-          <input className="w-full border rounded-xl p-3 bg-gray-50" value={me?.role === 'manager' ? 'مدیر' : me?.role === 'technical_team' ? 'تیم فنی' : 'کاربر عادی'} disabled />
         </div>
         <div className="md:col-span-2">
           <label className="block text-sm mb-1">تاریخ عضویت</label>
