@@ -31,7 +31,7 @@ interface UserFormData {
   name: string;
   email: string;
   phone_number: string;
-  password: string;
+  password?: string;
   role: 'manager' | 'technical_team' | 'support_staff';
 }
 

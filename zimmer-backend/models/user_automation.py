@@ -9,7 +9,7 @@ class UserAutomation(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     automation_id = Column(Integer, ForeignKey("automations.id"), nullable=False)
     telegram_bot_token = Column(String, nullable=True)
-    tokens_remaining = Column(Integer, default=0)
+    tokens_remaining = Column(Integer, default=5)  # Default 5 tokens for testing
     demo_tokens = Column(Integer, default=5)
     is_demo_active = Column(Boolean, default=True)
     demo_expired = Column(Boolean, default=False)

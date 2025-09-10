@@ -89,7 +89,7 @@ cp .env .env.local
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:8000
 NODE_ENV=development
-PORT=3001
+PORT=4000
 NEXT_PUBLIC_ENABLE_DEBUG=true
 ```
 
@@ -99,9 +99,9 @@ npm run dev
 ```
 
 5. **Access the Application:**
-Open [http://localhost:3001](http://localhost:3001) in your browser.
+Open [http://localhost:4000](http://localhost:4000) in your browser.
 
-**Note**: The development server runs on port 3001 as configured in the environment.
+**Note**: The development server runs on port 4000 as configured in the environment.
 
 ## 📁 Project Structure
 
@@ -228,7 +228,7 @@ npm run start
 docker build -t zimmer-admin-dashboard .
 
 # Run container
-docker run -p 3000:3000 zimmer-admin-dashboard
+docker run -p 4000:4000 zimmer-admin-dashboard
 ```
 
 ### Platform Deployment

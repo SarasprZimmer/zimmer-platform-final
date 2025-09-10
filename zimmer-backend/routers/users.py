@@ -427,7 +427,7 @@ async def create_user_automation(
             user_id=current_user.id,
             automation_id=automation_data.automation_id,
             telegram_bot_token=automation_data.telegram_bot_token,
-            tokens_remaining=automation_data.tokens_remaining or 0,
+            tokens_remaining=automation_data.tokens_remaining or 5,  # Default 5 tokens for testing
             demo_tokens=5,  # Default demo tokens
             is_demo_active=True,
             demo_expired=False,
@@ -692,6 +692,9 @@ async def get_available_automations(
                 "description": automation.description,
                 "pricing_type": automation.pricing_type,
                 "price_per_token": automation.price_per_token,
+                "status": automation.status,
+                "is_listed": automation.is_listed,
+                "health_status": automation.health_status,
                 "created_at": automation.created_at
             })
         
@@ -701,6 +704,55 @@ async def get_available_automations(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to retrieve available automations: {str(e)}"
+        )
+
+@router.get("/automations/{automation_id}")
+async def get_automation_details(
+    automation_id: int = Path(..., description="Automation ID"),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get detailed information about a specific automation
+    """
+    try:
+        # Get the automation
+        automation = db.query(Automation).filter(Automation.id == automation_id).first()
+        
+        if not automation:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Automation not found"
+            )
+        
+        # Check if user already has this automation
+        existing_automation = db.query(UserAutomation).filter(
+            UserAutomation.user_id == current_user.id,
+            UserAutomation.automation_id == automation_id
+        ).first()
+        
+        # Format response
+        automation_details = {
+            "id": automation.id,
+            "name": automation.name,
+            "description": automation.description,
+            "pricing_type": automation.pricing_type,
+            "price_per_token": automation.price_per_token,
+            "status": automation.status,
+            "is_listed": automation.is_listed,
+            "health_status": automation.health_status,
+            "created_at": automation.created_at,
+            "user_has_automation": existing_automation is not None
+        }
+        
+        return automation_details
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve automation details: {str(e)}"
         )
 
 @router.get("/user/usage/distribution")

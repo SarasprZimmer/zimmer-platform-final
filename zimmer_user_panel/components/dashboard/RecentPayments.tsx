@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { apiFetch } from "@/lib/apiClient";
 import { Skeleton, Card } from "@/components/ui/Kit";
 import { mockData } from "@/lib/mockApi";
@@ -35,7 +36,7 @@ export default function RecentPayments() {
     <Card className="bg-white rounded-2xl shadow-lg border-0 p-6">
       <div className="flex items-center justify-between mb-4">
         <div className="text-lg font-semibold text-gray-900">پرداخت‌های اخیر</div>
-        <a href="/payment" className="text-sm text-purple-600 hover:text-purple-700 font-medium">بیشتر</a>
+        <Link href="/payment" className="text-sm text-purple-600 hover:text-purple-700 font-medium">بیشتر</Link>
       </div>
       {!items && !err && (
         <div className="space-y-3">

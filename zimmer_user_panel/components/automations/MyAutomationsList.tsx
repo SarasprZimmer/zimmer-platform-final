@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { apiFetch } from "@/lib/apiClient";
 import { Card, Skeleton } from "@/components/Skeleton";
 import { motion } from "framer-motion";
@@ -81,7 +82,7 @@ export default function MyAutomationsList(){
     <Card>
       <div className="flex items-center justify-between mb-3">
         <div className="font-semibold">محصولات</div>
-        <a href="/automations/marketplace" className="text-sm underline">مشاهده فروشگاه</a>
+        <Link href="/automations/marketplace" className="text-sm underline">مشاهده فروشگاه</Link>
       </div>
 
       {!items && !err && (
@@ -218,7 +219,7 @@ export default function MyAutomationsList(){
       )}
 
       {items && items.length===0 && (
-        <div className="text-sm opacity-70">هنوز اتوماسیونی تهیه نکرده‌اید. <a className="underline" href="/automations/marketplace">مشاهده فروشگاه</a></div>
+        <div className="text-sm opacity-70">هنوز اتوماسیونی تهیه نکرده‌اید. <Link className="underline" href="/automations/marketplace">مشاهده فروشگاه</Link></div>
       )}
     </Card>
   );

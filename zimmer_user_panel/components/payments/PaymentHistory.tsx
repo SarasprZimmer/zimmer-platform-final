@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { apiFetch } from "@/lib/apiClient";
 import { Card, Skeleton } from "@/components/Skeleton";
 import { rial } from "@/lib/money";
@@ -98,7 +99,7 @@ export default function PaymentHistory(){
     <Card className="bg-white rounded-2xl shadow-lg border-0 p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="text-lg font-semibold text-gray-900">پرداخت‌های اخیر</div>
-        <a href="/payment" className="text-sm text-purple-600 hover:text-purple-700 font-medium">تمام تراکنش‌ها</a>
+        <Link href="/payment" className="text-sm text-purple-600 hover:text-purple-700 font-medium">تمام تراکنش‌ها</Link>
       </div>
 
       {!items && !err && (

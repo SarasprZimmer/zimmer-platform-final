@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 export default function VerifyEmailPage() {
   const [state, setState] = useState<"idle"|"ok"|"error">("idle");
@@ -31,7 +32,7 @@ export default function VerifyEmailPage() {
       <div className="max-w-md w-full rounded-2xl shadow p-6 text-center">
         <h1 className="text-xl mb-2">تأیید ایمیل</h1>
         <p className="opacity-80">{msg}</p>
-        {state==="ok" && <a href="/login" className="inline-block mt-4 underline">رفتن به صفحه ورود</a>}
+        {state==="ok" && <Link href="/login" className="inline-block mt-4 underline">رفتن به صفحه ورود</Link>}
       </div>
     </div>
   );

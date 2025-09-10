@@ -44,8 +44,10 @@ app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])  # Configure appr
 configure_cors(app, allowed_origins=[
     "http://localhost:3000",  # User panel dev
     "http://127.0.0.1:3000", 
-    "http://localhost:3001",  # Admin panel dev
+    "http://localhost:3001",  # Admin panel dev (legacy)
     "http://127.0.0.1:3001", 
+    "http://localhost:4000",  # Admin panel dev (new)
+    "http://127.0.0.1:4000", 
     "https://zimmerai.com",   # Production
     "https://admin.zimmerai.com",  # Production admin
 ])

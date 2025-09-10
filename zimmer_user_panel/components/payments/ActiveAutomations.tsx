@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { apiFetch } from "@/lib/apiClient";
 import { Card, Skeleton } from "@/components/Skeleton";
 import { motion } from "framer-motion";
@@ -37,7 +38,7 @@ export default function ActiveAutomations(){
     <Card className="bg-white rounded-2xl shadow-lg border-0 p-6">
       <div className="flex items-center justify-between mb-4">
         <div className="text-lg font-semibold text-gray-900">اتوماسیون‌های فعال من</div>
-        <a href="/automations" className="text-sm text-purple-600 hover:text-purple-700 font-medium">مدیریت</a>
+        <Link href="/automations" className="text-sm text-purple-600 hover:text-purple-700 font-medium">مدیریت</Link>
       </div>
       {!items && !err && (
         <div className="grid grid-cols-2 gap-4">
