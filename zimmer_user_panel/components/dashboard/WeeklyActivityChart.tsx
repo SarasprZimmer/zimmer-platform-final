@@ -4,7 +4,6 @@ import { apiFetch } from "@/lib/apiClient";
 import { Card, Skeleton } from "@/components/ui/Kit";
 import { BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { motion } from "framer-motion";
-import { mockData } from "@/lib/mockApi";
 
 type Row = { day:string; tokens:number; sessions:number };
 
@@ -14,17 +13,10 @@ export default function WeeklyActivityChart(){
   useEffect(()=>{(async()=>{
     try{
       const r=await apiFetch("/api/user/usage?range=7d");
-      if(!r.ok) {
-        // Fallback to mock data if API fails
-        console.log('API failed, using mock data for weekly usage');
-        setData(mockData.weeklyUsage);
-        return;
-      }
+      if(!r.ok) throw new Error();
       setData(await r.json());
     }catch{ 
-      // Fallback to mock data on error
-      console.log('Error fetching data, using mock data for weekly usage');
-      setData(mockData.weeklyUsage);
+      setErr("خطا در دریافت آمار هفتگی");
     }
   })()},[]);
   return (

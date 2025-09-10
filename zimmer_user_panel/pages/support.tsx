@@ -67,57 +67,8 @@ export default function SupportPage() {
     }
   }, [router.query]);
 
-  // Mock data
-  const mockTickets: Ticket[] = [
-    {
-      id: 1,
-      subject: 'مشکل در ورود به سیستم',
-      category: 'tech',
-      status: 'open',
-      priority: 'high',
-      created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
-      updated_at: new Date(Date.now() - 86400000 * 1).toISOString(),
-      messages: [
-        {
-          id: 1,
-          content: 'سلام، نمی‌تونم وارد حساب کاربری‌ام بشم. خطای 401 می‌گیرم.',
-          is_from_user: true,
-          created_at: new Date(Date.now() - 86400000 * 2).toISOString()
-        },
-        {
-          id: 2,
-          content: 'سلام، لطفاً مرورگر خود را پاک کنید و دوباره تلاش کنید. اگر مشکل ادامه داشت، رمز عبور خود را ریست کنید.',
-          is_from_user: false,
-          created_at: new Date(Date.now() - 86400000 * 1).toISOString()
-        }
-      ]
-    },
-    {
-      id: 2,
-      subject: 'سوال در مورد پرداخت',
-      category: 'financial',
-      status: 'resolved',
-      priority: 'medium',
-      created_at: new Date(Date.now() - 86400000 * 5).toISOString(),
-      updated_at: new Date(Date.now() - 86400000 * 3).toISOString(),
-      messages: [
-        {
-          id: 3,
-          content: 'چطور می‌تونم پرداخت کنم؟',
-          is_from_user: true,
-          created_at: new Date(Date.now() - 86400000 * 5).toISOString()
-        },
-        {
-          id: 4,
-          content: 'شما می‌توانید از طریق کارت اعتباری، انتقال بانکی یا کیف پول دیجیتال پرداخت کنید.',
-          is_from_user: false,
-          created_at: new Date(Date.now() - 86400000 * 4).toISOString()
-        }
-      ]
-    }
-  ];
-
-  const mockFAQs: FAQ[] = [
+  // FAQ data - static content
+  const faqs: FAQ[] = [
     {
       id: 1,
       question: 'چطور می‌تونم اتوماسیون جدید خریداری کنم؟',
@@ -154,8 +105,8 @@ export default function SupportPage() {
     if (user) {
       fetchTickets();
     }
-    // Load mock FAQs data
-    setFaqs(mockFAQs);
+    // Set static FAQ data
+    setFaqs(faqs);
   }, [user]);
 
   const fetchTickets = async () => {
@@ -187,13 +138,11 @@ export default function SupportPage() {
         setTickets(formattedTickets);
       } else {
         console.error('Failed to fetch tickets:', response.status);
-        // Fallback to mock data
-        setTickets(mockTickets);
+        setTickets([]);
       }
     } catch (error) {
       console.error('Error fetching tickets:', error);
-      // Fallback to mock data
-      setTickets(mockTickets);
+      setTickets([]);
     }
   };
 

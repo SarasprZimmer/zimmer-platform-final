@@ -1,7 +1,201 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
+import { useAuth } from '../contexts/AuthContext';
+
+interface DashboardStats {
+  total_users: number;
+  active_tickets: number;
+  tokens_used: number;
+  monthly_revenue: number;
+}
+
+interface RecentActivity {
+  id: string;
+  type: 'ticket' | 'payment' | 'user';
+  message: string;
+  timestamp: string;
+}
 
 export default function Dashboard() {
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      fetchDashboardData();
+    }
+  }, [user]);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch stats
+      const statsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/admin/dashboard/stats`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (statsResponse.ok) {
+        const statsData = await statsResponse.json();
+        setStats(statsData);
+      } else {
+        // Fallback to individual endpoints if dashboard stats endpoint doesn't exist
+        await fetchIndividualStats();
+      }
+
+      // Fetch recent activity
+      const activityResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/admin/dashboard/activity`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (activityResponse.ok) {
+        const activityData = await activityResponse.json();
+        setRecentActivity(activityData);
+      } else {
+        // Fallback to empty array if activity endpoint doesn't exist
+        setRecentActivity([]);
+      }
+
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      // Set fallback data
+      setStats({
+        total_users: 0,
+        active_tickets: 0,
+        tokens_used: 0,
+        monthly_revenue: 0
+      });
+      setRecentActivity([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchIndividualStats = async () => {
+    try {
+      // Fetch users count
+      const usersResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/admin/users/stats`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      // Fetch tickets count
+      const ticketsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/admin/tickets?status=open`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      // Fetch usage stats
+      const usageResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/admin/usage`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      // Fetch payments for revenue
+      const paymentsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/admin/payments`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const usersData = usersResponse.ok ? await usersResponse.json() : { total_users: 0 };
+      const ticketsData = ticketsResponse.ok ? await ticketsResponse.json() : [];
+      const usageData = usageResponse.ok ? await usageResponse.json() : { tokens_used: 0 };
+      const paymentsData = paymentsResponse.ok ? await paymentsResponse.json() : [];
+
+      // Calculate monthly revenue
+      const currentMonth = new Date().getMonth();
+      const currentYear = new Date().getFullYear();
+      const monthlyRevenue = Array.isArray(paymentsData) ? 
+        paymentsData
+          .filter((payment: any) => {
+            const paymentDate = new Date(payment.date || payment.created_at);
+            return paymentDate.getMonth() === currentMonth && paymentDate.getFullYear() === currentYear;
+          })
+          .reduce((sum: number, payment: any) => sum + (payment.amount || 0), 0) : 0;
+
+      setStats({
+        total_users: usersData.total_users || 0,
+        active_tickets: Array.isArray(ticketsData) ? ticketsData.length : 0,
+        tokens_used: usageData.tokens_used || 0,
+        monthly_revenue: monthlyRevenue
+      });
+
+    } catch (error) {
+      console.error('Error fetching individual stats:', error);
+      setStats({
+        total_users: 0,
+        active_tickets: 0,
+        tokens_used: 0,
+        monthly_revenue: 0
+      });
+    }
+  };
+
+  const formatNumber = (num: number) => {
+    return new Intl.NumberFormat('fa-IR').format(num);
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('fa-IR', {
+      style: 'currency',
+      currency: 'IRR',
+      minimumFractionDigits: 0
+    }).format(amount);
+  };
+
+  const getTimeAgo = (timestamp: string) => {
+    const now = new Date();
+    const time = new Date(timestamp);
+    const diffInHours = Math.floor((now.getTime() - time.getTime()) / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) return 'همین الان';
+    if (diffInHours < 24) return `${diffInHours} ساعت پیش`;
+    const diffInDays = Math.floor(diffInHours / 24);
+    return `${diffInDays} روز پیش`;
+  };
+
+  if (loading) {
+    return (
+      <Layout title="داشبورد">
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">داشبورد مدیریت</h2>
+            <p className="text-gray-600 mt-2">در حال بارگذاری...</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 animate-pulse">
+                <div className="flex items-center">
+                  <div className="w-8 h-8 bg-gray-300 rounded-lg"></div>
+                  <div className="mr-4">
+                    <div className="h-4 bg-gray-300 rounded w-20 mb-2"></div>
+                    <div className="h-6 bg-gray-300 rounded w-16"></div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout title="داشبورد">
       <div className="space-y-6">
@@ -21,7 +215,7 @@ export default function Dashboard() {
               </div>
               <div className="mr-4">
                 <p className="text-sm font-medium text-gray-600">کل مشتریان</p>
-                <p className="text-2xl font-semibold text-gray-900">۱۲۵</p>
+                <p className="text-2xl font-semibold text-gray-900">{formatNumber(stats?.total_users || 0)}</p>
               </div>
             </div>
           </div>
@@ -35,7 +229,7 @@ export default function Dashboard() {
               </div>
               <div className="mr-4">
                 <p className="text-sm font-medium text-gray-600">تیکت‌های باز</p>
-                <p className="text-2xl font-semibold text-gray-900">۸</p>
+                <p className="text-2xl font-semibold text-gray-900">{formatNumber(stats?.active_tickets || 0)}</p>
               </div>
             </div>
           </div>
@@ -49,7 +243,7 @@ export default function Dashboard() {
               </div>
               <div className="mr-4">
                 <p className="text-sm font-medium text-gray-600">توکن‌های استفاده شده</p>
-                <p className="text-2xl font-semibold text-gray-900">۲,۴۵۶</p>
+                <p className="text-2xl font-semibold text-gray-900">{formatNumber(stats?.tokens_used || 0)}</p>
               </div>
             </div>
           </div>
@@ -63,7 +257,7 @@ export default function Dashboard() {
               </div>
               <div className="mr-4">
                 <p className="text-sm font-medium text-gray-600">درآمد ماهانه</p>
-                <p className="text-2xl font-semibold text-gray-900">$۱۲,۵۰۰</p>
+                <p className="text-2xl font-semibold text-gray-900">{formatCurrency(stats?.monthly_revenue || 0)}</p>
               </div>
             </div>
           </div>
@@ -92,27 +286,25 @@ export default function Dashboard() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">فعالیت‌های اخیر</h3>
           <div className="space-y-4">
-            <div className="flex items-center space-x-4">
-              <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-              <div className="flex-1">
-                <p className="text-sm text-gray-900">تیکت جدید از کاربر احمد محمدی</p>
-                <p className="text-xs text-gray-500">۲ ساعت پیش</p>
+            {recentActivity.length > 0 ? (
+              recentActivity.slice(0, 5).map((activity) => (
+                <div key={activity.id} className="flex items-center space-x-4">
+                  <div className={`w-2 h-2 rounded-full ${
+                    activity.type === 'ticket' ? 'bg-blue-600' :
+                    activity.type === 'payment' ? 'bg-green-600' :
+                    'bg-yellow-600'
+                  }`}></div>
+                  <div className="flex-1">
+                    <p className="text-sm text-gray-900">{activity.message}</p>
+                    <p className="text-xs text-gray-500">{getTimeAgo(activity.timestamp)}</p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <p>هیچ فعالیت اخیری یافت نشد</p>
               </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="w-2 h-2 bg-green-600 rounded-full"></div>
-              <div className="flex-1">
-                <p className="text-sm text-gray-900">پرداخت جدید ثبت شد</p>
-                <p className="text-xs text-gray-500">۴ ساعت پیش</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="w-2 h-2 bg-yellow-600 rounded-full"></div>
-              <div className="flex-1">
-                <p className="text-sm text-gray-900">مشتری جدید ثبت نام کرد</p>
-                <p className="text-xs text-gray-500">۶ ساعت پیش</p>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </div>

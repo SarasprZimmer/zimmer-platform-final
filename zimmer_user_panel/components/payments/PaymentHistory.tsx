@@ -4,7 +4,6 @@ import Link from "next/link";
 import { apiFetch } from "@/lib/apiClient";
 import { Card, Skeleton } from "@/components/Skeleton";
 import { rial } from "@/lib/money";
-import { mockData } from "@/lib/mockApi";
 
 type Row = { id:number; amount:number; status:string; created_at:string; method?:string; gateway?:string; automation_id?:number; description?:string; };
 
@@ -19,79 +18,14 @@ export default function PaymentHistory(){
   useEffect(()=>{(async()=>{
     setErr(null); setItems(null);
     try{
-      // Use mock data for now since API endpoints are not ready
-      console.log('Using mock data for payment history');
-      const mockPaymentData = [
-        {
-          id: 1,
-          amount: 0.254,
-          status: "paid",
-          created_at: "2024-10-02T10:30:00Z",
-          method: "کارت بانکی",
-          gateway: "زرین‌پال",
-          automation_id: 1,
-          description: "اتوماسیون \"پاسخ دهنده ایمیل\" تکمیل شد"
-        },
-        {
-          id: 2,
-          amount: 0.35,
-          status: "paid",
-          created_at: "2023-11-03T14:20:00Z",
-          method: "کارت بانکی",
-          gateway: "زرین‌پال",
-          automation_id: 2,
-          description: "پرداخت برای طرح ویژه انجام شد"
-        },
-        {
-          id: 3,
-          amount: 0.18,
-          status: "failed",
-          created_at: "2024-09-15T09:15:00Z",
-          method: "کارت بانکی",
-          gateway: "زرین‌پال",
-          automation_id: 3,
-          description: "خرید اتوماسیون شبکه‌های اجتماعی"
-        },
-        {
-          id: 4,
-          amount: 0.42,
-          status: "pending",
-          created_at: "2024-08-20T16:45:00Z",
-          method: "کارت بانکی",
-          gateway: "زرین‌پال",
-          automation_id: 4,
-          description: "خرید اتوماسیون تحلیل داده"
-        },
-        {
-          id: 5,
-          amount: 0.28,
-          status: "paid",
-          created_at: "2024-07-10T11:30:00Z",
-          method: "کارت بانکی",
-          gateway: "زرین‌پال",
-          automation_id: 5,
-          description: "خرید اتوماسیون گزارش‌گیری"
-        }
-      ];
-      
-      // Simulate pagination
-      const startIndex = (page - 1) * limit;
-      const endIndex = startIndex + limit;
-      const paginatedData = mockPaymentData.slice(startIndex, endIndex);
-      
-      setItems(paginatedData);
-      setTotal(mockPaymentData.length);
-      return;
-
-      // TODO: Uncomment when API is ready
-      // const r = await apiFetch(`/api/user/payments?limit=${limit}&offset=${(page-1)*limit}`);
-      // if(!r.ok) throw new Error();
-      // const j = await r.json();
-      // if (Array.isArray(j)) {
-      //   setItems(j); setTotal((page-1)*limit + j.length);
-      // } else {
-      //   setItems(j.items || []); setTotal(j.total || (j.items?.length || 0));
-      // }
+      const r = await apiFetch(`/api/user/payments?limit=${limit}&offset=${(page-1)*limit}`);
+      if(!r.ok) throw new Error();
+      const j = await r.json();
+      if (Array.isArray(j)) {
+        setItems(j); setTotal((page-1)*limit + j.length);
+      } else {
+        setItems(j.items || []); setTotal(j.total || (j.items?.length || 0));
+      }
     }catch{ setErr("عدم دریافت تاریخچه پرداخت"); }
   })()},[page,limit]);
 

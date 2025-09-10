@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/apiClient";
 import { Skeleton, Card } from "@/components/ui/Kit";
 import { motion } from "framer-motion";
-import { mockData } from "@/lib/mockApi";
 
 type UA = { id:number; name:string; description?:string; tokens_remaining?:number; demo_tokens?:number; provisioned_at?:string; expiry_date?:string; };
 
@@ -12,21 +11,9 @@ export default function MyAutomations() {
   const [err,setErr]=useState<string|null>(null);
   useEffect(()=>{(async()=>{
     try{
-      // Always use mock data for now since API endpoints are not ready
-      console.log('Using mock data for automations');
-      setItems(mockData.automations);
-      return;
-      
-      // TODO: Uncomment when API is ready
-      // const userEmail = localStorage.getItem('user_email') || '';
-      // if (userEmail === 'saraspr1899@gmail.com') {
-      //   setItems(mockData.automations);
-      //   return;
-      // }
-      // 
-      // const r=await apiFetch("/api/user/automations");
-      // if(!r.ok) throw new Error();
-      // setItems(await r.json());
+      const r=await apiFetch("/api/user/automations");
+      if(!r.ok) throw new Error();
+      setItems(await r.json());
     }catch{ setErr("عدم دریافت اتوماسیون‌ها"); }
   })()},[]);
 

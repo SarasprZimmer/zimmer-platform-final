@@ -4,7 +4,6 @@ import Link from "next/link";
 import { apiFetch } from "@/lib/apiClient";
 import { Card, Skeleton } from "@/components/Skeleton";
 import { motion } from "framer-motion";
-import { mockData } from "@/lib/mockApi";
 
 type UA = { id:number; name:string; description?:string; tokens_remaining?:number; demo_tokens?:number; };
 
@@ -14,23 +13,10 @@ export default function ActiveAutomations(){
 
   useEffect(()=>{(async()=>{
     try{
-      // Use mock data for now since API endpoints are not ready
-      console.log('Using mock data for active automations');
-      const transformedData = mockData.automations.map(automation => ({
-        id: automation.id,
-        name: automation.name,
-        description: automation.description,
-        tokens_remaining: automation.tokens_remaining,
-        demo_tokens: automation.demo_tokens
-      }));
-      setItems(transformedData);
-      return;
-
-      // TODO: Uncomment when API is ready
-      // const r = await apiFetch("/api/user/automations");
-      // if(!r.ok) throw new Error();
-      // const j = await r.json();
-      // setItems(Array.isArray(j) ? j : (j?.items || []));
+      const r = await apiFetch("/api/user/automations");
+      if(!r.ok) throw new Error();
+      const j = await r.json();
+      setItems(Array.isArray(j) ? j : (j?.items || []));
     }catch{ setErr("عدم دریافت اتوماسیون‌های فعال"); }
   })()},[]);
 

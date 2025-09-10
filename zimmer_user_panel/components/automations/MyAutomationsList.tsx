@@ -4,7 +4,6 @@ import Link from "next/link";
 import { apiFetch } from "@/lib/apiClient";
 import { Card, Skeleton } from "@/components/Skeleton";
 import { motion } from "framer-motion";
-import { mockData } from "@/lib/mockApi";
 
 type UA = {
   id:number;
@@ -45,36 +44,10 @@ export default function MyAutomationsList(){
 
   useEffect(()=>{(async()=>{
     try{
-      // Use mock data for now since API endpoints are not ready
-      console.log('Using mock data for automations list');
-      // Transform mock data to match the expected format
-      const transformedData = mockData.automations.map((automation, index) => ({
-        id: automation.id,
-        name: automation.name,
-        description: automation.description,
-        tokens_remaining: automation.tokens_remaining,
-        demo_tokens: automation.demo_tokens,
-        integration_status: 'healthy',
-        status: (index % 3 === 0 ? 'active' : index % 3 === 1 ? 'inactive' : 'error') as 'active' | 'inactive' | 'error',
-        success_rate: 85 + Math.random() * 15, // Random between 85-100
-        total_runs: Math.floor(Math.random() * 1000) + 100,
-        last_run: index % 2 === 0 ? '۲ ساعت پیش' : '۱ روز پیش',
-        next_run: index % 2 === 0 ? '۱ ساعت دیگر' : 'غیرفعال',
-        created_at: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
-        usage_stats: {
-          tokens_used_today: Math.floor(Math.random() * 50) + 10,
-          tokens_used_this_month: Math.floor(Math.random() * 500) + 100,
-          average_daily_usage: Math.floor(Math.random() * 30) + 5
-        }
-      }));
-      setItems(transformedData);
-      return;
-      
-      // TODO: Uncomment when API is ready
-      // const r=await apiFetch("/api/user/automations");
-      // if(!r.ok) throw new Error();
-      // const j = await r.json();
-      // setItems(Array.isArray(j) ? j : (j?.items || []));
+      const r=await apiFetch("/api/user/automations");
+      if(!r.ok) throw new Error();
+      const j = await r.json();
+      setItems(Array.isArray(j) ? j : (j?.items || []));
     }catch{ setErr("عدم دریافت فهرست اتوماسیون‌ها"); }
   })()},[]);
 
@@ -210,6 +183,22 @@ export default function MyAutomationsList(){
                         }}
                       ></div>
                     </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="mt-6 flex space-x-3 space-x-reverse">
+                    <Link
+                      href={`/automations/${a.id}/dashboard`}
+                      className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors text-center font-medium"
+                    >
+                      رفتن به داشبورد
+                    </Link>
+                    <Link
+                      href={`/automations/${a.id}/tokens`}
+                      className="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors text-center font-medium"
+                    >
+                      خرید توکن
+                    </Link>
                   </div>
                 </motion.div>
               )}

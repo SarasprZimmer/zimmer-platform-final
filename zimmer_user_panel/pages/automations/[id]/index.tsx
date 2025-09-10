@@ -56,8 +56,26 @@ export default function AutomationDetailPage() {
     }
   }
 
-  const handlePurchase = () => {
-    router.push(`/automations/${id}/purchase`)
+  const handlePurchase = async () => {
+    try {
+      setLoadingAutomation(true)
+      const response = await apiFetch(`/api/user/automations/${id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      })
+      
+      if (response.ok) {
+        // Success - redirect to automations page
+        router.push('/automations')
+      } else {
+        const errorData = await response.json()
+        setError(errorData.detail || 'خطا در اضافه کردن اتوماسیون')
+      }
+    } catch (err) {
+      setError('خطا در اضافه کردن اتوماسیون')
+    } finally {
+      setLoadingAutomation(false)
+    }
   }
 
   if (loading || loading_automation) {
@@ -238,13 +256,19 @@ export default function AutomationDetailPage() {
                 {automation.user_has_automation ? (
                   <div className="space-y-3">
                     <button
+                      onClick={() => router.push(`/automations/${id}/dashboard`)}
+                      className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                    >
+                      رفتن به داشبورد
+                    </button>
+                    <button
                       onClick={() => router.push(`/automations/${id}/tokens`)}
                       className="w-full bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 transition-colors font-medium"
                     >
                       خرید توکن
                     </button>
                     <p className="text-sm text-gray-500 text-center">
-                      شما این اتوماسیون را دارید. برای خرید توکن بیشتر کلیک کنید
+                      شما این اتوماسیون را دارید. برای مدیریت یا خرید توکن بیشتر کلیک کنید
                     </p>
                   </div>
                 ) : (
@@ -253,10 +277,10 @@ export default function AutomationDetailPage() {
                       onClick={handlePurchase}
                       className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors font-medium"
                     >
-                      خرید اتوماسیون
+                      اضافه کردن به اتوماسیون‌های من
                     </button>
                     <p className="text-sm text-gray-500 text-center">
-                      با خرید این اتوماسیون، ۵ توکن رایگان دریافت خواهید کرد
+                      با اضافه کردن این اتوماسیون، ۵ توکن رایگان دریافت خواهید کرد
                     </p>
                   </div>
                 )}

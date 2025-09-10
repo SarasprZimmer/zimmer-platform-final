@@ -5,7 +5,6 @@ import { Card, Skeleton } from "@/components/Skeleton";
 import { BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { motion } from "framer-motion";
 import { rial } from "@/lib/money";
-import { mockData } from "@/lib/mockApi";
 
 type Point = { month: string; amount: number };
 
@@ -15,29 +14,9 @@ export default function MonthlyExpenses(){
 
   useEffect(()=>{(async()=>{
     try{
-      // Use mock data for now since API endpoints are not ready
-      console.log('Using mock data for monthly expenses');
-      const mockMonthlyData = [
-        { month: "فروردین", amount: 150000 },
-        { month: "اردیبهشت", amount: 230000 },
-        { month: "خرداد", amount: 180000 },
-        { month: "تیر", amount: 320000 },
-        { month: "مرداد", amount: 280000 },
-        { month: "شهریور", amount: 410000 },
-        { month: "مهر", amount: 350000 },
-        { month: "آبان", amount: 290000 },
-        { month: "آذر", amount: 380000 },
-        { month: "دی", amount: 420000 },
-        { month: "بهمن", amount: 360000 },
-        { month: "اسفند", amount: 450000 }
-      ];
-      setData(mockMonthlyData);
-      return;
-
-      // TODO: Uncomment when API is ready
-      // const r = await apiFetch("/api/user/payments/monthly?months=12");
-      // if(!r.ok) throw new Error();
-      // setData(await r.json());
+      const r = await apiFetch("/api/user/payments/monthly?months=12");
+      if(!r.ok) throw new Error();
+      setData(await r.json());
     }catch{ setErr("عدم دریافت هزینه‌های ماهانه"); }
   })()},[]);
 

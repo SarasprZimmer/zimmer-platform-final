@@ -898,6 +898,76 @@ async def check_automation_access(
             detail=f"Failed to check automation access: {str(e)}"
         )
 
+@router.post("/user/automations/{automation_id}")
+async def create_user_automation(
+    automation_id: int = Path(..., description="Automation ID to add to user's collection"),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Add an automation to user's collection with 5 default tokens
+    """
+    try:
+        # Check if automation exists
+        automation = db.query(Automation).filter(Automation.id == automation_id).first()
+        if not automation:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Automation not found"
+            )
+        
+        # Check if user already has this automation
+        existing_automation = db.query(UserAutomation).filter(
+            UserAutomation.user_id == current_user.id,
+            UserAutomation.automation_id == automation_id
+        ).first()
+        
+        if existing_automation:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="User already has this automation"
+            )
+        
+        # Create new user automation with 5 default tokens
+        user_automation = UserAutomation(
+            user_id=current_user.id,
+            automation_id=automation_id,
+            tokens_remaining=5,  # Default 5 tokens
+            demo_tokens=5,       # Default 5 demo tokens
+            is_demo_active=True,
+            status="active"
+        )
+        
+        db.add(user_automation)
+        db.commit()
+        db.refresh(user_automation)
+        
+        return {
+            "message": "Automation added to your collection successfully",
+            "user_automation": {
+                "id": user_automation.id,
+                "automation_id": user_automation.automation_id,
+                "tokens_remaining": user_automation.tokens_remaining,
+                "demo_tokens": user_automation.demo_tokens,
+                "is_demo_active": user_automation.is_demo_active,
+                "status": user_automation.status
+            },
+            "automation": {
+                "id": automation.id,
+                "name": automation.name,
+                "description": automation.description
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to add automation to user collection: {str(e)}"
+        )
+
 @router.get("/user/payments")
 async def get_user_payments(
     current_user: User = Depends(get_current_user),

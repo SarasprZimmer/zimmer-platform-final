@@ -58,8 +58,26 @@ export default function Marketplace(){
     router.push(`/automations/${automationId}`)
   }
 
-  const handlePurchase = (automationId: number) => {
-    router.push(`/automations/${automationId}/purchase`)
+  const handlePurchase = async (automationId: number) => {
+    try {
+      setLoadingAutomations(true)
+      const response = await apiFetch(`/api/user/automations/${automationId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      })
+      
+      if (response.ok) {
+        // Success - redirect to automations page
+        router.push('/automations')
+      } else {
+        const errorData = await response.json()
+        setError(errorData.detail || 'خطا در اضافه کردن اتوماسیون')
+      }
+    } catch (err) {
+      setError('خطا در اضافه کردن اتوماسیون')
+    } finally {
+      setLoadingAutomations(false)
+    }
   }
 
   if (loading || loading_automations) {
@@ -180,7 +198,7 @@ export default function Marketplace(){
                       onClick={() => handlePurchase(automation.id)}
                       className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
                     >
-                      خرید
+                      اضافه کردن
                     </button>
                   </div>
                 </div>

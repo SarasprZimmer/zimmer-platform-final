@@ -4,7 +4,6 @@ import { apiFetch } from "@/lib/apiClient";
 import { Card, Skeleton } from "@/components/ui/Kit";
 import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { motion } from "framer-motion";
-import { mockData } from "@/lib/mockApi";
 
 type Row = { month:string; value:number };
 
@@ -14,17 +13,10 @@ export default function SixMonthTrend(){
   useEffect(()=>{(async()=>{
     try{
       const r=await apiFetch("/api/user/usage?range=6m");
-      if(!r.ok) {
-        // Fallback to mock data if API fails
-        console.log('API failed, using mock data for six month trend');
-        setData(mockData.sixMonthTrend);
-        return;
-      }
+      if(!r.ok) throw new Error();
       setData(await r.json());
     }catch{ 
-      // Fallback to mock data on error
-      console.log('Error fetching data, using mock data for six month trend');
-      setData(mockData.sixMonthTrend);
+      setErr("خطا در دریافت آمار شش ماه اخیر");
     }
   })()},[]);
   return (

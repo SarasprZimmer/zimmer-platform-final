@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { apiFetch } from "@/lib/apiClient";
 import { Skeleton, Card } from "@/components/ui/Kit";
-import { mockData } from "@/lib/mockApi";
 
 type Payment = { id:number; amount:number; status:string; created_at:string; method?:string; description?:string; };
 function rial(n:number){ try{ return n.toLocaleString("fa-IR"); }catch{ return String(n); } }
@@ -14,21 +13,9 @@ export default function RecentPayments() {
 
   useEffect(()=>{(async()=>{
     try{
-      // Always use mock data for now since API endpoints are not ready
-      console.log('Using mock data for payments');
-      setItems(mockData.payments);
-      return;
-      
-      // TODO: Uncomment when API is ready
-      // const userEmail = localStorage.getItem('user_email') || '';
-      // if (userEmail === 'saraspr1899@gmail.com') {
-      //   setItems(mockData.payments);
-      //   return;
-      // }
-      // 
-      // const r=await apiFetch("/api/user/payments?limit=4");
-      // if(!r.ok) throw new Error();
-      // setItems(await r.json());
+      const r=await apiFetch("/api/user/payments?limit=4");
+      if(!r.ok) throw new Error();
+      setItems(await r.json());
     }catch{ setErr("عدم دریافت اطلاعات پرداخت‌ها"); }
   })()},[]);
 

@@ -49,6 +49,9 @@ export default function TokenPurchasePage() {
   const [discountInfo, setDiscountInfo] = useState<DiscountInfo | null>(null)
   const [processing, setProcessing] = useState(false)
 
+  // Check if automation uses flat fee pricing
+  const isFlatFee = automation?.pricing_type === 'flat_fee'
+
   useEffect(() => {
     if (!loading && !isAuthenticated) {
       router.push('/login')
@@ -60,6 +63,13 @@ export default function TokenPurchasePage() {
       fetchData()
     }
   }, [id, isAuthenticated])
+
+  // Set token amount to 1 for flat fee pricing
+  useEffect(() => {
+    if (isFlatFee) {
+      setTokenAmount(1)
+    }
+  }, [isFlatFee])
 
   const fetchData = async () => {
     try {
@@ -148,7 +158,7 @@ export default function TokenPurchasePage() {
 
   const calculateTotal = () => {
     if (!automation) return 0
-    const baseAmount = automation.price_per_token * tokenAmount
+    const baseAmount = isFlatFee ? automation.price_per_token : automation.price_per_token * tokenAmount
     return discountInfo?.amount_after || baseAmount
   }
 
@@ -225,32 +235,46 @@ export default function TokenPurchasePage() {
                 {/* Token Amount Selection */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    تعداد توکن
+                    {isFlatFee ? 'نوع خرید' : 'تعداد توکن'}
                   </label>
-                  <div className="grid grid-cols-2 gap-2 mb-4">
-                    {[50, 100, 250, 500, 1000, 2000].map((amount) => (
-                      <button
-                        key={amount}
-                        onClick={() => setTokenAmount(amount)}
-                        className={`px-4 py-2 rounded border ${
-                          tokenAmount === amount
-                            ? 'bg-blue-600 text-white border-blue-600'
-                            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                        }`}
-                      >
-                        {amount.toLocaleString('fa-IR')}
-                      </button>
-                    ))}
-                  </div>
-                  <input
-                    type="number"
-                    min="1"
-                    max="100000"
-                    value={tokenAmount}
-                    onChange={(e) => setTokenAmount(parseInt(e.target.value) || 0)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="تعداد توکن مورد نظر را وارد کنید"
-                  />
+                  {isFlatFee ? (
+                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <p className="text-blue-800 text-sm">
+                        این اتوماسیون از سیستم قیمت‌گذاری ثابت استفاده می‌کند. 
+                        شما فقط می‌توانید یک بار خرید کنید.
+                      </p>
+                      <div className="mt-2 text-lg font-semibold text-blue-900">
+                        تعداد توکن: 1
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-2 gap-2 mb-4">
+                        {[50, 100, 250, 500, 1000, 2000].map((amount) => (
+                          <button
+                            key={amount}
+                            onClick={() => setTokenAmount(amount)}
+                            className={`px-4 py-2 rounded border ${
+                              tokenAmount === amount
+                                ? 'bg-blue-600 text-white border-blue-600'
+                                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                            }`}
+                          >
+                            {amount.toLocaleString('fa-IR')}
+                          </button>
+                        ))}
+                      </div>
+                      <input
+                        type="number"
+                        min="1"
+                        max="100000"
+                        value={tokenAmount}
+                        onChange={(e) => setTokenAmount(parseInt(e.target.value) || 0)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="تعداد توکن مورد نظر را وارد کنید"
+                      />
+                    </>
+                  )}
                 </div>
 
                 {/* Discount Code */}
@@ -291,18 +315,33 @@ export default function TokenPurchasePage() {
                 {/* Price Summary */}
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">قیمت هر توکن:</span>
-                      <span className="font-medium">{formatPrice(automation.price_per_token)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">تعداد توکن:</span>
-                      <span className="font-medium">{tokenAmount.toLocaleString('fa-IR')}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">مبلغ کل:</span>
-                      <span className="font-medium">{formatPrice(automation.price_per_token * tokenAmount)}</span>
-                    </div>
+                    {isFlatFee ? (
+                      <>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">نوع قیمت‌گذاری:</span>
+                          <span className="font-medium">ثابت</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">مبلغ کل:</span>
+                          <span className="font-medium">{formatPrice(automation.price_per_token)}</span>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">قیمت هر توکن:</span>
+                          <span className="font-medium">{formatPrice(automation.price_per_token)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">تعداد توکن:</span>
+                          <span className="font-medium">{tokenAmount.toLocaleString('fa-IR')}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">مبلغ کل:</span>
+                          <span className="font-medium">{formatPrice(automation.price_per_token * tokenAmount)}</span>
+                        </div>
+                      </>
+                    )}
                     {discountInfo?.valid && (
                       <>
                         <div className="flex justify-between text-green-600">

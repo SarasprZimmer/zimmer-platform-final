@@ -4,7 +4,6 @@ import { apiFetch } from "@/lib/apiClient";
 import { Card, Skeleton } from "@/components/ui/Kit";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { motion } from "framer-motion";
-import { mockData } from "@/lib/mockApi";
 
 type Slice = { name:string; value:number; color?:string };
 
@@ -14,17 +13,10 @@ export default function DistributionPie(){
   useEffect(()=>{(async()=>{
     try{
       const r=await apiFetch("/api/user/usage/distribution");
-      if(!r.ok) {
-        // Fallback to mock data if API fails
-        console.log('API failed, using mock data for distribution');
-        setData(mockData.distribution);
-        return;
-      }
+      if(!r.ok) throw new Error();
       setData(await r.json());
     }catch{ 
-      // Fallback to mock data on error
-      console.log('Error fetching data, using mock data for distribution');
-      setData(mockData.distribution);
+      setErr("خطا در دریافت آمار");
     }
   })()},[]);
   return (
