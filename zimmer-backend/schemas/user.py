@@ -218,4 +218,21 @@ class UserListResponse(BaseModel):
     created_at: datetime
 
     class Config:
+        from_attributes = True
+
+class UserSettingsResponse(BaseModel):
+    """User settings response model"""
+    id: int
+    name: str
+    email: str
+    phone_number: Optional[str] = None
+    role: UserRole
+    is_active: bool
+    email_verified: bool
+    twofa_enabled: bool
+    created_at: datetime
+    last_login: Optional[datetime] = None
+    preferences: Optional[dict] = None
+
+    class Config:
         from_attributes = True 

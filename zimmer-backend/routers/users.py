@@ -9,7 +9,7 @@ from models.payment import Payment
 from models.token_usage import TokenUsage
 from models.user_automation import UserAutomation
 from models.automation import Automation
-from schemas.user import UserSignupRequest, UserSignupResponse, UserLoginRequest, UserLoginResponse, UserResponse, UserUpdateRequest, UserDashboardResponse, UserAutomationCreate, UserAutomationUpdate, UserAutomationResponse
+from schemas.user import UserSignupRequest, UserSignupResponse, UserLoginRequest, UserLoginResponse, UserResponse, UserUpdateRequest, UserDashboardResponse, UserAutomationCreate, UserAutomationUpdate, UserAutomationResponse, UserSettingsResponse
 from schemas.admin import TokenUsageResponse, PaymentResponse
 from utils.security import hash_password, verify_password
 from utils.jwt import create_jwt_token
@@ -98,6 +98,78 @@ async def get_current_user_info(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to retrieve user info: {str(e)}"
+        )
+
+@router.get("/user/settings", response_model=UserSettingsResponse)
+async def get_user_settings(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get current user's settings and preferences
+    """
+    try:
+        # Get user with additional session info if available
+        user = db.query(User).filter(User.id == current_user.id).first()
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+        
+        # Check if email is verified
+        email_verified = user.email_verified_at is not None
+        
+        # Get last login from sessions (if available)
+        last_login = None
+        try:
+            from models.session import Session as UserSession
+            last_session = db.query(UserSession).filter(
+                UserSession.user_id == user.id,
+                UserSession.is_active == True
+            ).order_by(UserSession.created_at.desc()).first()
+            
+            if last_session:
+                last_login = last_session.created_at
+        except:
+            # If sessions table doesn't exist or has issues, continue without last_login
+            pass
+        
+        # Build preferences object
+        preferences = {
+            "theme": "light",  # Default theme
+            "language": "en",  # Default language
+            "notifications": {
+                "email": True,
+                "push": True,
+                "sms": False
+            },
+            "privacy": {
+                "profile_visibility": "private",
+                "show_online_status": True
+            }
+        }
+        
+        return UserSettingsResponse(
+            id=user.id,
+            name=user.name,
+            email=user.email,
+            phone_number=user.phone_number,
+            role=user.role,
+            is_active=user.is_active,
+            email_verified=email_verified,
+            twofa_enabled=user.twofa_enabled,
+            created_at=user.created_at,
+            last_login=last_login,
+            preferences=preferences
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve user settings: {str(e)}"
         )
 
 @router.put("/user/profile", response_model=UserResponse)

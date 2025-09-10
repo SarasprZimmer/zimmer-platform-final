@@ -19,6 +19,7 @@ from utils.circuit_breaker import auth_circuit_breaker, login_circuit_breaker
 from utils.jwt import create_access_token, create_jwt_token
 from utils.security import hash_password, verify_password
 from cache_manager import cache_manager
+from schemas.user import UserSignupRequest, UserSignupResponse
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -84,6 +85,62 @@ async def login(request: dict, db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Login failed: {str(e)}"
+        )
+
+@router.post("/register", response_model=UserSignupResponse)
+async def register(user_data: UserSignupRequest, db: Session = Depends(get_db)):
+    """
+    User registration endpoint
+    """
+    try:
+        # Check if user already exists
+        existing_user = db.query(User).filter(User.email == user_data.email).first()
+        if existing_user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="User with this email already exists"
+            )
+        
+        # Hash the password
+        password_hash = hash_password(user_data.password)
+        
+        # Create new user
+        new_user = User(
+            name=user_data.name,
+            email=user_data.email,
+            phone_number=user_data.phone_number,
+            password_hash=password_hash,
+            role="support_staff",  # Default role for new users
+            is_active=True,
+            email_verified_at=None,  # Will be verified later
+            twofa_enabled=False
+        )
+        
+        # Add to database
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+        
+        # Create JWT access token
+        access_token = create_access_token(new_user.id, new_user.is_admin)
+        
+        # Store token in cache for validation
+        cache_manager.set(f"token_{access_token}", new_user.id, ttl=3600)  # 1 hour
+        
+        return UserSignupResponse(
+            message="User registered successfully",
+            user_id=new_user.id,
+            email=new_user.email,
+            access_token=access_token
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Registration failed: {str(e)}"
         )
 
 @router.post("/refresh")
