@@ -1,0 +1,16 @@
+{
+  "admin_endpoints": {
+    "/api/admin/users": "working",
+    "/api/admin/users/stats": "working",
+    "/api/admin/openai-keys": "working",
+    "/api/admin/analytics": "working",
+    "/api/admin/settings": "working"
+  },
+  "frontend": {
+    "User Panel": "accessible",
+    "Admin Panel": "error_HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000015C6CB88890>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+  },
+  "missing_features": [
+    "OpenAI key management"
+  ]
+}

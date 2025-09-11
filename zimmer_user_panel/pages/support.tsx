@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/router';
 import DashboardLayout from '@/components/DashboardLayout';
@@ -29,6 +29,34 @@ type FAQ = {
   answer: string;
   category: string;
 };
+
+// FAQ data - static content (moved outside component to avoid re-creation)
+const staticFaqs: FAQ[] = [
+  {
+    id: 1,
+    question: 'چطور می‌تونم اتوماسیون جدید خریداری کنم؟',
+    answer: 'برای خرید اتوماسیون جدید، به صفحه اتوماسیون‌ها بروید و روی "خرید" کلیک کنید. سپس مراحل پرداخت را تکمیل کنید.',
+    category: 'خرید'
+  },
+  {
+    id: 2,
+    question: 'چطور می‌تونم وضعیت پرداخت رو چک کنم؟',
+    answer: 'برای بررسی وضعیت پرداخت، به بخش "پرداخت‌ها" در داشبورد خود بروید. تمام تراکنش‌های شما در آنجا نمایش داده می‌شود.',
+    category: 'پرداخت'
+  },
+  {
+    id: 3,
+    question: 'چطور می‌تونم پشتیبانی فنی دریافت کنم؟',
+    answer: 'برای دریافت پشتیبانی فنی، از طریق همین صفحه تیکت جدید ایجاد کنید یا با تیم پشتیبانی ما تماس بگیرید.',
+    category: 'پشتیبانی'
+  },
+  {
+    id: 4,
+    question: 'چطور می‌تونم حساب کاربری خود را حذف کنم؟',
+    answer: 'برای حذف حساب کاربری، به بخش تنظیمات بروید و روی "حذف حساب" کلیک کنید. توجه داشته باشید که این عمل غیرقابل بازگشت است.',
+    category: 'حساب کاربری'
+  }
+];
 
 export default function SupportPage() {
   const { isAuthenticated, loading, user } = useAuth();
@@ -67,33 +95,6 @@ export default function SupportPage() {
     }
   }, [router.query]);
 
-  // FAQ data - static content
-  const faqs: FAQ[] = [
-    {
-      id: 1,
-      question: 'چطور می‌تونم اتوماسیون جدید خریداری کنم؟',
-      answer: 'برای خرید اتوماسیون جدید، به صفحه اتوماسیون‌ها بروید و روی "خرید" کلیک کنید. سپس مراحل پرداخت را تکمیل کنید.',
-      category: 'خرید'
-    },
-    {
-      id: 2,
-      question: 'چطور می‌تونم رمز عبور خود را تغییر دهم؟',
-      answer: 'به صفحه تنظیمات > امنیت بروید و روی "تغییر رمز عبور" کلیک کنید.',
-      category: 'حساب کاربری'
-    },
-    {
-      id: 3,
-      question: 'چطور می‌تونم از اتوماسیون‌هایم استفاده کنم؟',
-      answer: 'پس از خرید، اتوماسیون‌ها در داشبورد شما نمایش داده می‌شوند. روی هر کدام کلیک کنید تا شروع به استفاده کنید.',
-      category: 'استفاده'
-    },
-    {
-      id: 4,
-      question: 'چطور می‌تونم پشتیبانی دریافت کنم؟',
-      answer: 'می‌توانید از طریق این صفحه تیکت ایجاد کنید یا با ایمیل support@zimmer.ai تماس بگیرید.',
-      category: 'پشتیبانی'
-    }
-  ];
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -101,15 +102,7 @@ export default function SupportPage() {
     }
   }, [isAuthenticated, loading, router]);
 
-  useEffect(() => {
-    if (user) {
-      fetchTickets();
-    }
-    // Set static FAQ data
-    setFaqs(faqs);
-  }, [user]);
-
-  const fetchTickets = async () => {
+  const fetchTickets = useCallback(async () => {
     if (!user) return;
     
     try {
@@ -144,7 +137,7 @@ export default function SupportPage() {
       console.error('Error fetching tickets:', error);
       setTickets([]);
     }
-  };
+  }, [user]);
 
   const handleCreateTicket = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -203,6 +196,14 @@ export default function SupportPage() {
       setLoadingTickets(false);
     }
   };
+
+  useEffect(() => {
+    if (user) {
+      fetchTickets();
+    }
+    // Set static FAQ data
+    setFaqs(staticFaqs);
+  }, [user, fetchTickets]);
 
   const handleSendMessage = async (ticketId: number) => {
     if (!newMessage.trim()) return;

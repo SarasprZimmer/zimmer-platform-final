@@ -269,6 +269,10 @@ app.include_router(admin_automation_health_router, tags=["admin:automation-healt
 from routers.admin_dashboard import router as admin_dashboard_router
 app.include_router(admin_dashboard_router, prefix="/api", tags=["admin-dashboard"])
 
+# Import missing admin endpoints router
+from routers.admin_missing_endpoints import router as admin_missing_router
+app.include_router(admin_missing_router, tags=["admin-missing"])
+
 # Import all models to ensure they're registered with Base
 from models.user import User
 from models.automation import Automation

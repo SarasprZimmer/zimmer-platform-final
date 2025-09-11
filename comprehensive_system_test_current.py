@@ -7,8 +7,6 @@ Tests the current system state after JWT authentication fixes and cleanup
 import requests
 import time
 import json
-import asyncio
-import aiohttp
 from datetime import datetime
 from typing import Dict, List, Any, Optional
 import sys

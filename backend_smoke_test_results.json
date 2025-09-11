@@ -1,0 +1,123 @@
+{
+  "database_operations": {
+    "user_creation": {
+      "status": "pass",
+      "status_code": 200,
+      "response_time": 2.40405
+    },
+    "user_profile_retrieval": {
+      "status": "pass",
+      "status_code": 200,
+      "response_time": 2.03895
+    },
+    "user_settings": {
+      "status": "pass",
+      "status_code": 200,
+      "response_time": 2.085251
+    }
+  },
+  "error_handling": {
+    "invalid_endpoint__api_nonexistent": {
+      "status": "pass",
+      "status_code": 404,
+      "expected": 404
+    },
+    "invalid_endpoint__api_invalid_endpoint": {
+      "status": "pass",
+      "status_code": 404,
+      "expected": 404
+    },
+    "invalid_endpoint__api_users_invalid_123": {
+      "status": "pass",
+      "status_code": 404,
+      "expected": 404
+    },
+    "malformed_json": {
+      "status": "pass",
+      "status_code": 422,
+      "expected": 422
+    },
+    "missing_required_fields": {
+      "status": "fail",
+      "status_code": 400,
+      "expected": 422
+    },
+    "invalid_auth": {
+      "status": "pass",
+      "status_code": 401,
+      "expected": 401
+    }
+  },
+  "rate_limiting": {
+    "rapid_requests": {
+      "status": "pass",
+      "success_count": 20,
+      "total_requests": 20,
+      "success_rate": 100.0,
+      "total_time": 42.941251277923584
+    }
+  },
+  "data_validation": {
+    "email_validation_invalid-email": {
+      "status": "pass",
+      "status_code": 422,
+      "expected": 422
+    },
+    "email_validation__invalid_com": {
+      "status": "pass",
+      "status_code": 422,
+      "expected": 422
+    },
+    "email_validation_test_": {
+      "status": "pass",
+      "status_code": 422,
+      "expected": 422
+    },
+    "email_validation_test__test_example_com": {
+      "status": "pass",
+      "status_code": 422,
+      "expected": 422
+    },
+    "email_validation_test__com": {
+      "status": "pass",
+      "status_code": 422,
+      "expected": 422
+    },
+    "password_validation_123": {
+      "status": "pass",
+      "status_code": 422,
+      "expected": 422
+    },
+    "password_validation_password": {
+      "status": "fail",
+      "status_code": 200,
+      "expected": 422
+    },
+    "password_validation_12345678": {
+      "status": "fail",
+      "status_code": 200,
+      "expected": 422
+    },
+    "password_validation_abcdefgh": {
+      "status": "fail",
+      "status_code": 200,
+      "expected": 422
+    }
+  },
+  "concurrent_operations": {
+    "concurrent_health_checks": {
+      "status": "pass",
+      "success_count": 10,
+      "error_count": 0,
+      "avg_response_time": 2.0630794
+    }
+  },
+  "memory_management": {
+    "memory_management": {
+      "status": "pass",
+      "early_avg_response_time": 2.048250603675842,
+      "late_avg_response_time": 2.036945104598999,
+      "degradation_percent": -0.551958781633163
+    }
+  }
+}

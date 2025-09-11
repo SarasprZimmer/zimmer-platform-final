@@ -8,6 +8,471 @@
 
 This guide provides comprehensive instructions for integrating external automation services with the Zimmer AI Platform. Based on our testing with a mock automation service, this guide covers all requirements, endpoints, API key integration, and best practices for successful integration.
 
+## 🚀 Quick Start Guide for Developers
+
+### Prerequisites Checklist
+Before starting your automation integration, ensure you have:
+
+- [ ] **Development Environment**: Python 3.8+ or Node.js 16+
+- [ ] **Web Framework**: FastAPI (Python) or Express.js (Node.js)
+- [ ] **Hosting Platform**: HTTPS-enabled server (AWS, DigitalOcean, etc.)
+- [ ] **Platform Access**: Contact Zimmer platform administrator
+- [ ] **Service Token**: Request from platform admin (required for authentication)
+
+### Step 1: Project Setup (5 minutes)
+
+#### Create Project Structure
+```bash
+mkdir your-automation-service
+cd your-automation-service
+
+# Python FastAPI setup
+pip install fastapi uvicorn python-multipart
+touch app.py requirements.txt .env
+
+# Or Node.js Express setup
+npm init -y
+npm install express cors dotenv
+touch app.js package.json .env
+```
+
+#### Basic Project Files
+```python
+# requirements.txt (Python)
+fastapi==0.104.1
+uvicorn==0.24.0
+python-multipart==0.0.6
+requests==2.31.0
+```
+
+```json
+// package.json (Node.js)
+{
+  "name": "your-automation-service",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1"
+  }
+}
+```
+
+### Step 2: Implement Health Check (10 minutes)
+
+#### Python FastAPI Implementation
+```python
+# app.py
+from fastapi import FastAPI
+import time
+
+app = FastAPI(title="Your Automation Service", version="1.0.0")
+START_TIME = time.time()
+
+@app.get("/health")
+async def health_check():
+    return {
+        "status": "ok",
+        "version": "1.0.0",
+        "uptime": int(time.time() - START_TIME)
+    }
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+```
+
+#### Node.js Express Implementation
+```javascript
+// app.js
+const express = require('express');
+const app = express();
+
+const START_TIME = Date.now();
+
+app.get('/health', (req, res) => {
+    res.json({
+        status: 'ok',
+        version: '1.0.0',
+        uptime: Math.floor((Date.now() - START_TIME) / 1000)
+    });
+});
+
+const PORT = process.env.PORT || 8000;
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
+```
+
+#### Test Your Health Check
+```bash
+# Start your service
+python app.py  # or node app.js
+
+# Test in another terminal
+curl http://localhost:8000/health
+
+# Expected response:
+# {
+#   "status": "ok",
+#   "version": "1.0.0",
+#   "uptime": 123
+# }
+```
+
+### Step 3: Add Service Token Authentication (15 minutes)
+
+#### Python Implementation
+```python
+# app.py (continued)
+from fastapi import HTTPException, Header, Depends
+import os
+
+def verify_service_token(x_zimmer_service_token: str = Header(None)):
+    if not x_zimmer_service_token:
+        raise HTTPException(status_code=401, detail="Missing service token")
+    
+    # In production, validate against platform
+    valid_tokens = os.getenv("VALID_SERVICE_TOKENS", "").split(",")
+    if x_zimmer_service_token not in valid_tokens:
+        raise HTTPException(status_code=401, detail="Invalid service token")
+    
+    return x_zimmer_service_token
+
+# Test endpoint with authentication
+@app.post("/test-auth")
+async def test_auth(service_token: str = Depends(verify_service_token)):
+    return {"message": "Authentication successful", "token": service_token[:10] + "..."}
+```
+
+#### Node.js Implementation
+```javascript
+// app.js (continued)
+const verifyServiceToken = (req, res, next) => {
+    const token = req.headers['x-zimmer-service-token'];
+    if (!token) {
+        return res.status(401).json({ error: 'Missing service token' });
+    }
+    
+    const validTokens = process.env.VALID_SERVICE_TOKENS?.split(',') || [];
+    if (!validTokens.includes(token)) {
+        return res.status(401).json({ error: 'Invalid service token' });
+    }
+    
+    next();
+};
+
+app.post('/test-auth', verifyServiceToken, (req, res) => {
+    res.json({ 
+        message: 'Authentication successful',
+        token: req.headers['x-zimmer-service-token'].substring(0, 10) + '...'
+    });
+});
+```
+
+#### Environment Configuration
+```bash
+# .env
+VALID_SERVICE_TOKENS=zst_your_token_here,zst_backup_token
+PLATFORM_URL=https://zimmer-platform.com
+AUTOMATION_ID=123
+```
+
+### Step 4: Implement Core Endpoints (30 minutes)
+
+#### Provision Endpoint
+```python
+# app.py (continued)
+from pydantic import BaseModel
+from typing import Optional
+import time
+
+class ProvisionRequest(BaseModel):
+    user_automation_id: int
+    user_id: int
+    demo_tokens: int
+    bot_token: Optional[str] = None
+
+@app.post("/provision")
+async def provision_automation(
+    request: ProvisionRequest,
+    service_token: str = Depends(verify_service_token)
+):
+    try:
+        # Your provision logic here
+        # - Set up user instance
+        # - Initialize database records
+        # - Configure bot (if applicable)
+        
+        return {
+            "success": True,
+            "message": "Automation provisioned successfully",
+            "provisioned_at": time.strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
+            "integration_status": "active",
+            "service_url": f"https://your-service.com/user/{request.user_automation_id}"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Provision failed: {str(e)}")
+```
+
+#### Usage Consumption Endpoint
+```python
+# app.py (continued)
+class UsageRequest(BaseModel):
+    user_automation_id: int
+    units: int
+    usage_type: str
+    meta: Optional[dict] = None
+
+@app.post("/usage/consume")
+async def consume_usage(
+    request: UsageRequest,
+    service_token: str = Depends(verify_service_token)
+):
+    try:
+        # Your token consumption logic here
+        # - Check user's token balance
+        # - Consume tokens
+        # - Update database
+        
+        # Mock implementation
+        remaining_demo_tokens = max(0, 5 - request.units)
+        remaining_paid_tokens = 0
+        
+        return {
+            "accepted": True,
+            "remaining_demo_tokens": remaining_demo_tokens,
+            "remaining_paid_tokens": remaining_paid_tokens,
+            "message": "Tokens consumed successfully"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Usage consumption failed: {str(e)}")
+```
+
+### Step 5: Test Your Integration (10 minutes)
+
+#### Create Test Script
+```python
+# test_integration.py
+import requests
+import json
+
+def test_automation_service(base_url: str, service_token: str):
+    headers = {
+        "X-Zimmer-Service-Token": service_token,
+        "Content-Type": "application/json"
+    }
+    
+    print("🧪 Testing automation service...")
+    
+    # Test 1: Health Check
+    print("\n1️⃣ Testing health check...")
+    try:
+        response = requests.get(f"{base_url}/health", timeout=5)
+        print(f"   Status: {response.status_code}")
+        if response.status_code == 200:
+            print("   ✅ Health check passed")
+        else:
+            print(f"   ❌ Health check failed: {response.text}")
+    except Exception as e:
+        print(f"   ❌ Health check error: {e}")
+    
+    # Test 2: Provision
+    print("\n2️⃣ Testing provision...")
+    try:
+        data = {
+            "user_automation_id": 999,
+            "user_id": 999,
+            "demo_tokens": 5
+        }
+        response = requests.post(f"{base_url}/provision", headers=headers, json=data, timeout=10)
+        print(f"   Status: {response.status_code}")
+        if response.status_code == 200:
+            print("   ✅ Provision passed")
+        else:
+            print(f"   ❌ Provision failed: {response.text}")
+    except Exception as e:
+        print(f"   ❌ Provision error: {e}")
+    
+    # Test 3: Usage Consumption
+    print("\n3️⃣ Testing usage consumption...")
+    try:
+        data = {
+            "user_automation_id": 999,
+            "units": 2,
+            "usage_type": "chat_session"
+        }
+        response = requests.post(f"{base_url}/usage/consume", headers=headers, json=data, timeout=3)
+        print(f"   Status: {response.status_code}")
+        if response.status_code == 200:
+            print("   ✅ Usage consumption passed")
+        else:
+            print(f"   ❌ Usage consumption failed: {response.text}")
+    except Exception as e:
+        print(f"   ❌ Usage consumption error: {e}")
+
+if __name__ == "__main__":
+    test_automation_service(
+        base_url="http://localhost:8000",
+        service_token="zst_your_token_here"
+    )
+```
+
+#### Run Tests
+```bash
+# Start your service
+python app.py
+
+# In another terminal, run tests
+python test_integration.py
+```
+
+### Step 6: Deploy to Production (20 minutes)
+
+#### Docker Setup
+```dockerfile
+# Dockerfile
+FROM python:3.9-slim
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+
+COPY . .
+
+EXPOSE 8000
+
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+```
+
+#### Docker Compose
+```yaml
+# docker-compose.yml
+version: '3.8'
+services:
+  automation-service:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - VALID_SERVICE_TOKENS=${SERVICE_TOKENS}
+      - PLATFORM_URL=${PLATFORM_URL}
+    restart: unless-stopped
+```
+
+#### Deploy Commands
+```bash
+# Build and run with Docker
+docker build -t your-automation-service .
+docker run -p 8000:8000 -e VALID_SERVICE_TOKENS="zst_your_token" your-automation-service
+
+# Or with Docker Compose
+docker-compose up -d
+```
+
+### Step 7: Register with Platform (5 minutes)
+
+1. **Contact Platform Administrator**
+   - Email: admin@zimmer-platform.com
+   - Provide your service URL and health check endpoint
+   - Request service token for authentication
+
+2. **Platform Registration Details**
+   - Service Name: Your Automation Name
+   - Base URL: https://your-automation-service.com
+   - Health Check URL: https://your-automation-service.com/health
+   - Pricing: $X per token or subscription model
+
+3. **Receive Service Token**
+   - Platform admin will provide your service token
+   - Update your `.env` file with the token
+   - Test authentication with the provided token
+
+### Step 8: Verify Platform Integration (10 minutes)
+
+#### Platform Health Check
+```bash
+# Platform will automatically check your health endpoint
+# Monitor status in admin dashboard or via API
+
+curl -X POST "https://zimmer-platform.com/api/admin/automations/{automation_id}/health-check" \
+  -H "Authorization: Bearer admin_token"
+```
+
+#### Expected Success Indicators
+- [ ] Health check returns 200 with required fields
+- [ ] Provision endpoint works with service token
+- [ ] Usage consumption manages tokens correctly
+- [ ] Platform shows "healthy" status
+- [ ] Automation appears in marketplace
+
+### 🎯 Quick Start Checklist
+
+**Development (30 minutes)**
+- [ ] Project setup and basic structure
+- [ ] Health check endpoint implemented
+- [ ] Service token authentication added
+- [ ] Core endpoints (provision, usage) implemented
+- [ ] Local testing completed
+
+**Deployment (30 minutes)**
+- [ ] Docker configuration created
+- [ ] Service deployed to production
+- [ ] HTTPS enabled and working
+- [ ] Environment variables configured
+- [ ] Service accessible from internet
+
+**Platform Integration (15 minutes)**
+- [ ] Contacted platform administrator
+- [ ] Received service token
+- [ ] Updated configuration with token
+- [ ] Platform health check passing
+- [ ] Automation listed in marketplace
+
+**Total Time: ~75 minutes**
+
+### 🚨 Common Quick Start Issues
+
+**Issue: Health check not accessible**
+- Ensure service is running on correct port
+- Check firewall settings
+- Verify URL is accessible from internet
+
+**Issue: Service token authentication fails**
+- Verify token format (should start with "zst_")
+- Check environment variable is set correctly
+- Ensure token is in valid tokens list
+
+**Issue: Platform health check fails**
+- Check response format matches specification
+- Ensure all required fields are present
+- Verify response time is under 5 seconds
+
+**Issue: Provision endpoint errors**
+- Check request format matches specification
+- Verify all required fields are included
+- Ensure proper error handling
+
+### 📞 Quick Support
+
+**Need Help?**
+- **Documentation**: This guide and API reference
+- **Examples**: See `mock_automation_service.py` for complete implementation
+- **Platform Admin**: admin@zimmer-platform.com
+- **Developer Support**: #platform-support on Discord
+
+**Emergency Issues**
+- Service down: Check health status in admin dashboard
+- Authentication issues: Verify service token with platform admin
+- Integration problems: Review platform logs and error messages
+
+---
+
 ## 🔑 API Key Integration Overview
 
 The Zimmer platform provides **centralized OpenAI API key management** for all automations. This means:
