@@ -3,17 +3,17 @@
     "user_creation": {
       "status": "pass",
       "status_code": 200,
-      "response_time": 2.40405
+      "response_time": 2.483815
     },
     "user_profile_retrieval": {
       "status": "pass",
       "status_code": 200,
-      "response_time": 2.03895
+      "response_time": 2.044841
     },
     "user_settings": {
       "status": "pass",
       "status_code": 200,
-      "response_time": 2.085251
+      "response_time": 2.034805
     }
   },
   "error_handling": {
@@ -54,7 +54,7 @@
       "success_count": 20,
       "total_requests": 20,
       "success_rate": 100.0,
-      "total_time": 42.941251277923584
+      "total_time": 42.81898260116577
     }
   },
   "data_validation": {
@@ -109,15 +109,15 @@
       "status": "pass",
       "success_count": 10,
       "error_count": 0,
-      "avg_response_time": 2.0630794
+      "avg_response_time": 2.0715392999999995
     }
   },
   "memory_management": {
     "memory_management": {
       "status": "pass",
-      "early_avg_response_time": 2.048250603675842,
-      "late_avg_response_time": 2.036945104598999,
-      "degradation_percent": -0.551958781633163
+      "early_avg_response_time": 2.040889120101929,
+      "late_avg_response_time": 2.0467215538024903,
+      "degradation_percent": 0.2857790579171804
     }
   }
 }

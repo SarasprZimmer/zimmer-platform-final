@@ -14,8 +14,69 @@ from models.kb_status_history import KBStatusHistory
 from models.kb_template import KBTemplate
 from schemas.admin import UserListResponse, PaymentListResponse, UserTokenUsageResponse, UserAutomationAdminResponse, PaymentResponse, UsageStatsResponse, PeriodInfo
 from utils.auth_dependency import get_current_admin_user, get_db
+from cache_manager import cache as cache_manager
 
 router = APIRouter()
+
+@router.get("/users", response_model=UserListResponse)
+async def get_users(
+    is_admin: Optional[bool] = Query(None, description="Filter by admin status"),
+    db: Session = Depends(get_db),
+    current_admin: User = Depends(get_current_admin_user)
+):
+    """
+    Get list of all users/clients (admin only) - Main endpoint
+    """
+    # Check cache first
+    cache_key = f"admin_users_{is_admin}"
+    cached_data = cache_manager.get(cache_key)
+    
+    if cached_data:
+        return UserListResponse(**cached_data)
+    
+    try:
+        # Build base query
+        query = db.query(User)
+        
+        # Apply filters if provided
+        if is_admin is not None:
+            query = query.filter(User.is_admin == is_admin)
+        
+        # Get total count
+        total_count = query.count()
+        
+        # Get users
+        users = query.all()
+        
+        # Format response
+        formatted_users = []
+        for user in users:
+            formatted_users.append({
+                "id": user.id,
+                "email": user.email,
+                "name": user.name,
+                "phone_number": user.phone_number,
+                "role": user.role.value if user.role else None,
+                "is_admin": user.is_admin,
+                "is_active": user.is_active,
+                "created_at": user.created_at.isoformat() if user.created_at else None
+            })
+        
+        result = UserListResponse(
+            total_count=total_count,
+            users=formatted_users
+        )
+        
+        # Cache the result for 3 minutes
+        cache_manager.set(cache_key, result.dict(), ttl=180)
+        
+        return result
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve users: {str(e)}"
+        )
 
 @router.get("/users-legacy", response_model=UserListResponse)
 async def get_users_legacy(
@@ -26,6 +87,13 @@ async def get_users_legacy(
     """
     Get list of all users/clients (admin only)
     """
+    # Check cache first
+    cache_key = f"admin_users_{is_admin}"
+    cached_data = cache_manager.get(cache_key)
+    
+    if cached_data:
+        return UserListResponse(**cached_data)
+    
     try:
         # Build base query
         query = db.query(User)
@@ -52,10 +120,15 @@ async def get_users_legacy(
                 "created_at": user.created_at
             })
         
-        return UserListResponse(
+        result = UserListResponse(
             total_count=total_count,
             users=formatted_users
         )
+        
+        # Cache the result for 3 minutes
+        cache_manager.set(cache_key, result.dict(), ttl=180)
+        
+        return result
         
     except Exception as e:
         raise HTTPException(
@@ -232,10 +305,10 @@ async def get_user_automations_admin(
                 "automation_id": ua.automation_id,
                 "automation_name": automation_name,
                 "tokens_remaining": ua.tokens_remaining or 0,
-                "demo_tokens": ua.demo_tokens,
-                "is_demo_active": ua.is_demo_active,
-                "demo_expired": ua.demo_expired,
-                "status": ua.status,
+                "demo_tokens": ua.demo_tokens or 0,
+                "is_demo_active": ua.is_demo_active or False,
+                "demo_expired": ua.demo_expired or False,
+                "status": ua.status or "active",
                 "created_at": ua.created_at
             })
         
@@ -348,12 +421,43 @@ async def get_automations(
             detail=f"Failed to retrieve automations: {str(e)}"
         ) 
 
-@router.get("/usage/stats")
+@router.get("/usage")
 async def get_usage_stats(
+    db: Session = Depends(get_db),
     current_admin: User = Depends(get_current_admin_user)
 ):
     """
-    Get usage statistics (admin only) - DEBUG VERSION
+    Get usage statistics (admin only)
+    """
+    try:
+        from sqlalchemy import func
+        from datetime import datetime, timedelta
+        from models.token_usage import TokenUsage
+        
+        # Get tokens used in the last 30 days
+        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+        tokens_used = db.query(func.sum(TokenUsage.tokens_used)).filter(
+            TokenUsage.created_at >= thirty_days_ago
+        ).scalar() or 0
+        
+        return {
+            "tokens_used": int(tokens_used),
+            "period_days": 30
+        }
+            
+    except Exception as e:
+        return {
+            "tokens_used": 0,
+            "period_days": 30,
+            "error": str(e)
+        }
+
+@router.get("/usage/stats")
+async def get_usage_stats_detailed(
+    current_admin: User = Depends(get_current_admin_user)
+):
+    """
+    Get detailed usage statistics (admin only) - DEBUG VERSION
     """
     try:
         # Always return the same response for debugging
@@ -387,6 +491,108 @@ async def test_usage_stats(
         estimated_cost_usd=0,
         message="Test response"
     )
+
+@router.get("/test")
+async def test_endpoint():
+    """
+    Simple test endpoint to verify server is working
+    """
+    return {"message": "Admin router is working", "status": "ok"}
+
+@router.get("/dashboard/stats")
+async def get_dashboard_stats(
+    db: Session = Depends(get_db),
+    current_admin: User = Depends(get_current_admin_user)
+):
+    """
+    Get dashboard statistics for admin panel
+    """
+    try:
+        from sqlalchemy import func
+        from datetime import datetime, timedelta
+        from models.ticket import Ticket
+        from models.payment import Payment
+        from models.token_usage import TokenUsage
+        
+        # Get total users
+        total_users = db.query(User).count()
+        
+        # Get active tickets (open status)
+        active_tickets = db.query(Ticket).filter(Ticket.status == "open").count()
+        
+        # Get tokens used in the last 30 days
+        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+        tokens_used = db.query(func.sum(TokenUsage.tokens_used)).filter(
+            TokenUsage.created_at >= thirty_days_ago
+        ).scalar() or 0
+        
+        # Get monthly revenue (current month)
+        current_month_start = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        monthly_revenue = db.query(func.sum(Payment.amount)).filter(
+            Payment.status == "completed",
+            Payment.created_at >= current_month_start
+        ).scalar() or 0
+        
+        return {
+            "total_users": total_users,
+            "active_tickets": active_tickets,
+            "tokens_used": int(tokens_used),
+            "monthly_revenue": float(monthly_revenue)
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve dashboard stats: {str(e)}"
+        )
+
+@router.get("/dashboard/activity")
+async def get_dashboard_activity(
+    limit: int = Query(10, le=50, description="Number of activities to return"),
+    db: Session = Depends(get_db),
+    current_admin: User = Depends(get_current_admin_user)
+):
+    """
+    Get recent dashboard activities
+    """
+    try:
+        from models.ticket import Ticket
+        from models.payment import Payment
+        
+        activities = []
+        
+        # Get recent tickets
+        recent_tickets = db.query(Ticket).order_by(Ticket.created_at.desc()).limit(5).all()
+        for ticket in recent_tickets:
+            activities.append({
+                "id": f"ticket_{ticket.id}",
+                "type": "ticket",
+                "message": f"تیکت جدید از {ticket.user_id}: {ticket.subject[:50]}...",
+                "created_at": ticket.created_at.isoformat()
+            })
+        
+        # Get recent payments
+        recent_payments = db.query(Payment).filter(
+            Payment.status == "completed"
+        ).order_by(Payment.created_at.desc()).limit(5).all()
+        
+        for payment in recent_payments:
+            activities.append({
+                "id": f"payment_{payment.id}",
+                "type": "payment",
+                "message": f"پرداخت جدید: {payment.amount} ریال",
+                "created_at": payment.created_at.isoformat()
+            })
+        
+        # Sort by created_at and limit
+        activities.sort(key=lambda x: x["created_at"], reverse=True)
+        return activities[:limit]
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve dashboard activity: {str(e)}"
+        )
 
 @router.get("/kb-monitoring")
 async def get_kb_monitoring(

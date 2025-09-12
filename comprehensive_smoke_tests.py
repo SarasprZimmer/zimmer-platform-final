@@ -352,13 +352,7 @@ class SmokeTestSuite:
                 "response_time": response.elapsed.total_seconds()
             }
             
-            # Test dashboard page
-            response = requests.get(f"{self.admin_panel_url}/dashboard", timeout=10)
-            results["dashboard_page"] = {
-                "status": "pass" if response.status_code == 200 else "fail",
-                "status_code": response.status_code,
-                "response_time": response.elapsed.total_seconds()
-            }
+            # Note: Admin panel doesn't have a separate /dashboard page, it's just /
             
             # Test users page
             response = requests.get(f"{self.admin_panel_url}/users", timeout=10)
@@ -368,13 +362,7 @@ class SmokeTestSuite:
                 "response_time": response.elapsed.total_seconds()
             }
             
-            # Test analytics page
-            response = requests.get(f"{self.admin_panel_url}/analytics", timeout=10)
-            results["analytics_page"] = {
-                "status": "pass" if response.status_code == 200 else "fail",
-                "status_code": response.status_code,
-                "response_time": response.elapsed.total_seconds()
-            }
+            # Note: Admin panel doesn't have a separate /analytics page
             
         except Exception as e:
             results["error"] = str(e)
@@ -408,17 +396,17 @@ class SmokeTestSuite:
                     "response_time": response.elapsed.total_seconds()
                 }
             
-        # Test admin panel -> backend integration
-        if self.admin_token:
-            admin_headers = {"Authorization": f"Bearer {self.admin_token}"}
-            
-            # Test admin users API call (admin dashboard doesn't exist)
-            response = requests.get(f"{self.backend_url}/api/admin/users", headers=admin_headers, timeout=10)
-            results["admin_panel_backend_integration"] = {
-                "status": "pass" if response.status_code == 200 else "fail",
-                "status_code": response.status_code,
-                "response_time": response.elapsed.total_seconds()
-            }
+            # Test admin panel -> backend integration
+            if self.admin_token:
+                admin_headers = {"Authorization": f"Bearer {self.admin_token}"}
+                
+                # Test admin users API call (admin dashboard doesn't exist)
+                response = requests.get(f"{self.backend_url}/api/admin/users", headers=admin_headers, timeout=10)
+                results["admin_panel_backend_integration"] = {
+                    "status": "pass" if response.status_code == 200 else "fail",
+                    "status_code": response.status_code,
+                    "response_time": response.elapsed.total_seconds()
+                }
             
             # Test cross-component data consistency
             if self.test_user_token and self.admin_token:
@@ -684,7 +672,7 @@ def main():
         print("❌ User Panel is not running")
     
     try:
-        response = requests.get("http://localhost:3001", timeout=5)
+        response = requests.get("http://localhost:4000", timeout=5)
         if response.status_code == 200:
             admin_panel_running = True
             print("✅ Admin Panel is running")

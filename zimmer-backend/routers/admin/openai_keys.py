@@ -327,6 +327,23 @@ async def test_openai_key(
 #     
 #     return query.all()
 
+@router.delete("/keys/{key_id}")
+async def delete_openai_key(
+    key_id: int,
+    db: Session = Depends(get_db),
+    current_admin: User = Depends(get_current_admin_user)
+):
+    """Delete an OpenAI key"""
+    
+    key = db.query(OpenAIKey).filter(OpenAIKey.id == key_id).first()
+    if not key:
+        raise HTTPException(status_code=404, detail="کلید OpenAI یافت نشد")
+    
+    db.delete(key)
+    db.commit()
+    
+    return {"message": "کلید با موفقیت حذف شد"}
+
 @router.post("/reset-daily")
 async def reset_daily_usage(
     db: Session = Depends(get_db),

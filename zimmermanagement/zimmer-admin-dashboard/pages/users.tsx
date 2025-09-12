@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { adminAPI } from '../lib/api';
+import { authClient } from '../lib/auth-client';
 import Layout from '../components/Layout';
 import { TableSkeleton } from '../components/LoadingSkeletons';
 import ResponsiveTable from '../components/ResponsiveTable';
@@ -11,7 +12,7 @@ interface User {
   name: string;
   email: string;
   phone_number: string | null;
-  role: 'manager' | 'technical_team' | 'support_staff';
+  role: 'manager' | 'technical_team' | 'support_staff' | 'customer';
   is_active: boolean;
   created_at: string;
 }
@@ -24,6 +25,7 @@ interface UserStats {
     managers: number;
     technical_team: number;
     support_staff: number;
+    customers: number;
   };
 }
 
@@ -32,7 +34,7 @@ interface UserFormData {
   email: string;
   phone_number: string;
   password?: string;
-  role: 'manager' | 'technical_team' | 'support_staff';
+  role: 'manager' | 'technical_team' | 'support_staff' | 'customer';
 }
 
 
@@ -52,10 +54,12 @@ export default function Users() {
     email: '',
     phone_number: '',
     password: '',
-    role: 'support_staff'
+    role: 'customer'
   });
 
   useEffect(() => {
+    console.log('Users page useEffect - user:', user);
+    console.log('Users page useEffect - authClient token:', authClient.getAccessToken());
     fetchUsers();
     fetchStats();
   }, []);
@@ -63,15 +67,29 @@ export default function Users() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
+      const token = authClient.getAccessToken();
+      console.log('Fetching users with token:', token ? 'present' : 'missing');
+      
       const params: any = {};
       if (searchTerm) params.search = searchTerm;
       if (roleFilter) params.role = roleFilter;
       if (statusFilter) params.is_active = statusFilter === 'active';
       
+      console.log('Fetching users with params:', params);
       const usersData = await adminAPI.getUsers(params);
-      setUsers(Array.isArray(usersData) ? usersData : []);
+      console.log('Users data received:', usersData);
+      // Handle both array and object responses
+      if (Array.isArray(usersData)) {
+        setUsers(usersData);
+      } else if (usersData && usersData.users && Array.isArray(usersData.users)) {
+        setUsers(usersData.users);
+      } else {
+        console.error('Unexpected users data format:', usersData);
+        setUsers([]);
+      }
     } catch (err: any) {
       console.error('API Error:', err);
+      console.error('Error details:', err.response?.data);
       toast.error('خطا در بارگذاری کاربران');
       setUsers([]);
     } finally {
@@ -81,14 +99,23 @@ export default function Users() {
 
   const fetchStats = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/admin/users/stats`, {
+      const token = authClient.getAccessToken();
+      if (!token) {
+        console.error('No access token available for stats');
+        return;
+      }
+      
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/admin/users/managers/stats`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       });
       if (response.ok) {
         const statsData = await response.json();
         setStats(statsData);
+      } else {
+        console.error('Stats fetch failed:', response.status, response.statusText);
       }
     } catch (err) {
       console.error('Stats Error:', err);
@@ -143,10 +170,16 @@ export default function Users() {
 
   const handleActivateUser = async (userId: number) => {
     try {
+      const token = authClient.getAccessToken();
+      if (!token) {
+        console.error('No access token available for activate user');
+        return;
+      }
+      
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/admin/users/${userId}/activate`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
@@ -168,7 +201,7 @@ export default function Users() {
       email: '',
       phone_number: '',
       password: '',
-      role: 'support_staff'
+      role: 'customer'
     });
   };
 
@@ -188,7 +221,8 @@ export default function Users() {
     const labels = {
       manager: 'مدیر',
       technical_team: 'تیم فنی',
-      support_staff: 'پشتیبانی'
+      support_staff: 'پشتیبانی',
+      customer: 'مشتری'
     };
     return labels[role as keyof typeof labels] || role;
   };
@@ -197,7 +231,8 @@ export default function Users() {
     const colors = {
       manager: 'bg-red-100 text-red-800',
       technical_team: 'bg-blue-100 text-blue-800',
-      support_staff: 'bg-green-100 text-green-800'
+      support_staff: 'bg-green-100 text-green-800',
+      customer: 'bg-purple-100 text-purple-800'
     };
     return colors[role as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
@@ -278,6 +313,7 @@ export default function Users() {
                 <option value="manager">مدیر</option>
                 <option value="technical_team">تیم فنی</option>
                 <option value="support_staff">پشتیبانی</option>
+                <option value="customer">مشتری</option>
               </select>
             </div>
             <div>
@@ -441,6 +477,7 @@ export default function Users() {
                       onChange={(e) => setFormData({...formData, role: e.target.value as any})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
+                      <option value="customer">مشتری</option>
                       <option value="support_staff">پشتیبانی</option>
                       <option value="technical_team">تیم فنی</option>
                       <option value="manager">مدیر</option>
@@ -523,6 +560,7 @@ export default function Users() {
                       onChange={(e) => setFormData({...formData, role: e.target.value as any})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
+                      <option value="customer">مشتری</option>
                       <option value="support_staff">پشتیبانی</option>
                       <option value="technical_team">تیم فنی</option>
                       <option value="manager">مدیر</option>

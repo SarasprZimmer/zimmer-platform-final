@@ -8,6 +8,7 @@ import psutil
 import gc
 from asyncio import Semaphore
 from dotenv import load_dotenv
+from cache_manager import cache as cache_manager
 
 # Load environment variables
 load_dotenv()
@@ -48,6 +49,8 @@ configure_cors(app, allowed_origins=[
     "http://127.0.0.1:3001", 
     "http://localhost:4000",  # Admin panel dev (new)
     "http://127.0.0.1:4000", 
+    "http://localhost:8000",  # Backend dev (localhost)
+    "http://127.0.0.1:8000",  # Backend dev (127.0.0.1)
     "https://zimmerai.com",   # Production
     "https://admin.zimmerai.com",  # Production admin
 ])
@@ -58,13 +61,30 @@ async def test_cors():
 
 @app.get("/health")
 async def health_check():
-    """Simple health check endpoint"""
-    return {
+    """Simple health check endpoint with caching"""
+    # Check cache first
+    cache_key = "health_check"
+    cached_health = cache_manager.get(cache_key)
+    
+    if cached_health:
+        print(f"✅ Cache HIT for {cache_key}")
+        return cached_health
+    
+    print(f"❌ Cache MISS for {cache_key}")
+    
+    # Generate health data
+    health_data = {
         "status": "healthy",
         "timestamp": time.time(),
         "memory_percent": psutil.virtual_memory().percent,
         "cpu_percent": psutil.cpu_percent()
     }
+    
+    # Cache for 30 seconds
+    cache_manager.set(cache_key, health_data, ttl=30)
+    print(f"💾 Cached {cache_key} for 30 seconds")
+    
+    return health_data
 
 @app.get("/circuit-breaker/stats")
 async def get_circuit_breaker_stats():

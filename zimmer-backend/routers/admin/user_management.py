@@ -12,7 +12,7 @@ import logging
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-@router.get("/users", response_model=List[UserListResponse])
+@router.get("/users/managers", response_model=List[UserListResponse])
 async def list_users(
     search: Optional[str] = Query(None, description="Search by name or email"),
     role: Optional[UserRole] = Query(None, description="Filter by role"),
@@ -50,7 +50,7 @@ async def list_users(
     
     return users
 
-@router.post("/users", response_model=UserListResponse)
+@router.post("/users/managers", response_model=UserListResponse)
 async def create_user(
     user_data: UserCreateRequest,
     db: Session = Depends(get_db),
@@ -88,7 +88,7 @@ async def create_user(
     
     return new_user
 
-@router.put("/users/{user_id}/role", response_model=UserListResponse)
+@router.put("/users/managers/{user_id}/role", response_model=UserListResponse)
 async def update_user_role(
     user_id: int = Path(...),
     role_data: UserUpdateRoleRequest = None,
@@ -127,7 +127,7 @@ async def update_user_role(
     
     return user
 
-@router.get("/users/stats")
+@router.get("/users/managers/stats")
 async def get_user_stats(
     db: Session = Depends(get_db),
     current_manager: User = Depends(get_current_manager_user)
@@ -143,6 +143,7 @@ async def get_user_stats(
     manager_count = db.query(User).filter(User.role == UserRole.manager).count()
     technical_team_count = db.query(User).filter(User.role == UserRole.technical_team).count()
     support_staff_count = db.query(User).filter(User.role == UserRole.support_staff).count()
+    customer_count = db.query(User).filter(User.role == UserRole.customer).count()
     
     return {
         "total_users": total_users,
@@ -151,11 +152,12 @@ async def get_user_stats(
         "by_role": {
             "managers": manager_count,
             "technical_team": technical_team_count,
-            "support_staff": support_staff_count
+            "support_staff": support_staff_count,
+            "customers": customer_count
         }
     }
 
-@router.get("/users/{user_id}", response_model=UserListResponse)
+@router.get("/users/managers/{user_id}", response_model=UserListResponse)
 async def get_user(
     user_id: int = Path(...),
     db: Session = Depends(get_db),
@@ -170,7 +172,7 @@ async def get_user(
     
     return user
 
-@router.put("/users/{user_id}", response_model=UserListResponse)
+@router.put("/users/managers/{user_id}", response_model=UserListResponse)
 async def update_user(
     user_id: int = Path(...),
     user_data: UserUpdateRequest = None,
@@ -234,7 +236,7 @@ async def update_user(
     
     return user
 
-@router.delete("/users/{user_id}")
+@router.delete("/users/managers/{user_id}")
 async def deactivate_user(
     user_id: int = Path(...),
     db: Session = Depends(get_db),
@@ -268,7 +270,7 @@ async def deactivate_user(
     
     return {"message": "User deactivated successfully"}
 
-@router.put("/users/{user_id}/activate")
+@router.put("/users/managers/{user_id}/activate")
 async def activate_user(
     user_id: int = Path(...),
     db: Session = Depends(get_db),
@@ -288,7 +290,7 @@ async def activate_user(
     
     return {"message": "User activated successfully"}
 
-@router.post("/users/bulk-deactivate")
+@router.post("/users/managers/bulk-deactivate")
 async def bulk_deactivate_users(
     user_ids: List[int],
     db: Session = Depends(get_db),

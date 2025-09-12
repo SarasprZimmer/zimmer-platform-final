@@ -8,6 +8,7 @@ class UserRole(str, enum.Enum):
     manager = "manager"
     technical_team = "technical_team"
     support_staff = "support_staff"
+    customer = "customer"
 
 class User(Base):
     __tablename__ = "users"
@@ -40,4 +41,4 @@ class User(Base):
     @property
     def is_admin(self) -> bool:
         """Check if user has admin privileges based on role"""
-        return self.role in [UserRole.manager, UserRole.technical_team] 
+        return self.role in [UserRole.manager, UserRole.technical_team, UserRole.support_staff] 

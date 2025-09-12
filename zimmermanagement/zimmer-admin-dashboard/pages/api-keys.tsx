@@ -91,7 +91,7 @@ const APIKeysPage: React.FC = () => {
 
   const fetchKeys = async () => {
     try {
-      let url = `http://127.0.0.1:8000/api/admin/openai-keys`;
+      let url = `http://127.0.0.1:8000/api/admin/list`;
       const params = new URLSearchParams();
       if (filterAutomation) params.append('automation_id', filterAutomation.toString());
       if (filterStatus) params.append('status', filterStatus);
@@ -102,10 +102,20 @@ const APIKeysPage: React.FC = () => {
       });
       if (response.ok) {
         const data = await response.json();
-        setKeys(data);
+        // Ensure data is an array before setting it
+        if (Array.isArray(data)) {
+          setKeys(data);
+        } else {
+          console.error('Expected array but got:', data);
+          setKeys([]);
+        }
+      } else {
+        console.error('Failed to fetch keys:', response.status, response.statusText);
+        setKeys([]);
       }
     } catch (error) {
       console.error('Error fetching keys:', error);
+      setKeys([]);
     } finally {
       setLoading(false);
     }
@@ -129,7 +139,7 @@ const APIKeysPage: React.FC = () => {
 
   const handleCreate = async () => {
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/admin/openai-keys`, {
+      const response = await fetch(`http://127.0.0.1:8000/api/admin/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -156,7 +166,7 @@ const APIKeysPage: React.FC = () => {
     if (!selectedKey) return;
 
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/admin/openai-keys/${selectedKey.id}`, {
+      const response = await fetch(`http://127.0.0.1:8000/api/admin/keys/${selectedKey.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -184,7 +194,7 @@ const APIKeysPage: React.FC = () => {
     if (!selectedKey) return;
 
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/admin/openai-keys/${selectedKey.id}`, {
+      const response = await fetch(`http://127.0.0.1:8000/api/admin/keys/${selectedKey.id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -204,7 +214,7 @@ const APIKeysPage: React.FC = () => {
 
   const handleStatusUpdate = async (keyId: number, status: string) => {
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/admin/openai-keys/${keyId}/status`, {
+      const response = await fetch(`http://127.0.0.1:8000/api/admin/keys/${keyId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -229,7 +239,7 @@ const APIKeysPage: React.FC = () => {
     setTestResult(null);
 
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/admin/openai-keys/${keyId}/test`, {
+      const response = await fetch(`http://127.0.0.1:8000/api/admin/keys/${keyId}/test`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -402,7 +412,7 @@ const APIKeysPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {keys.map((key) => (
+                {(keys || []).map((key) => (
                   <tr key={key.id}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>

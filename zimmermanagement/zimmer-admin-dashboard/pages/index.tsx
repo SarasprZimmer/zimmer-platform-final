@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import { useAuth } from '../contexts/AuthContext';
+import { authClient } from '../lib/auth-client';
 
 interface DashboardStats {
   total_users: number;
@@ -23,6 +24,8 @@ export default function Dashboard() {
   const { user } = useAuth();
 
   useEffect(() => {
+    console.log('Dashboard useEffect - user:', user);
+    console.log('Dashboard useEffect - authClient token:', authClient.getAccessToken());
     if (user) {
       fetchDashboardData();
     }
@@ -31,19 +34,55 @@ export default function Dashboard() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
+      const token = authClient.getAccessToken();
+      
+      if (!token) {
+        console.error('No access token available');
+        setStats({
+          total_users: 0,
+          active_tickets: 0,
+          tokens_used: 0,
+          monthly_revenue: 0
+        });
+        setLoading(false);
+        return;
+      }
+      
+      // Test if backend is accessible
+      try {
+        const testResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/admin/test`);
+        console.log('Backend test response:', testResponse.status, await testResponse.text());
+      } catch (error) {
+        console.error('Backend test failed:', error);
+      }
+      
+      // Test with auth
+      try {
+        const testAuthResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/admin/test-usage-stats`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        console.log('Backend auth test response:', testAuthResponse.status, await testAuthResponse.text());
+      } catch (error) {
+        console.error('Backend auth test failed:', error);
+      }
       
       // Fetch stats
       const statsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/admin/dashboard/stats`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
       
       if (statsResponse.ok) {
         const statsData = await statsResponse.json();
+        console.log('Dashboard stats data:', statsData);
         setStats(statsData);
       } else {
+        console.log('Dashboard stats endpoint failed, using individual endpoints');
         // Fallback to individual endpoints if dashboard stats endpoint doesn't exist
         await fetchIndividualStats();
       }
@@ -51,7 +90,7 @@ export default function Dashboard() {
       // Fetch recent activity
       const activityResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/admin/dashboard/activity`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
@@ -81,10 +120,23 @@ export default function Dashboard() {
 
   const fetchIndividualStats = async () => {
     try {
+      const token = authClient.getAccessToken();
+      
+      if (!token) {
+        console.error('No access token available for individual stats');
+        setStats({
+          total_users: 0,
+          active_tickets: 0,
+          tokens_used: 0,
+          monthly_revenue: 0
+        });
+        return;
+      }
+      
       // Fetch users count
       const usersResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/admin/users/stats`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
@@ -92,7 +144,7 @@ export default function Dashboard() {
       // Fetch tickets count
       const ticketsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/admin/tickets?status=open`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
@@ -100,7 +152,7 @@ export default function Dashboard() {
       // Fetch usage stats
       const usageResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/admin/usage`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
@@ -108,30 +160,37 @@ export default function Dashboard() {
       // Fetch payments for revenue
       const paymentsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/admin/payments`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
 
       const usersData = usersResponse.ok ? await usersResponse.json() : { total_users: 0 };
-      const ticketsData = ticketsResponse.ok ? await ticketsResponse.json() : [];
+      const ticketsData = ticketsResponse.ok ? await ticketsResponse.json() : { tickets: [] };
       const usageData = usageResponse.ok ? await usageResponse.json() : { tokens_used: 0 };
-      const paymentsData = paymentsResponse.ok ? await paymentsResponse.json() : [];
+      const paymentsData = paymentsResponse.ok ? await paymentsResponse.json() : { payments: [] };
+
+      console.log('Individual stats data:', {
+        usersData,
+        ticketsData,
+        usageData,
+        paymentsData
+      });
 
       // Calculate monthly revenue
       const currentMonth = new Date().getMonth();
       const currentYear = new Date().getFullYear();
-      const monthlyRevenue = Array.isArray(paymentsData) ? 
-        paymentsData
-          .filter((payment: any) => {
-            const paymentDate = new Date(payment.date || payment.created_at);
-            return paymentDate.getMonth() === currentMonth && paymentDate.getFullYear() === currentYear;
-          })
-          .reduce((sum: number, payment: any) => sum + (payment.amount || 0), 0) : 0;
+      const payments = Array.isArray(paymentsData.payments) ? paymentsData.payments : (Array.isArray(paymentsData) ? paymentsData : []);
+      const monthlyRevenue = payments
+        .filter((payment: any) => {
+          const paymentDate = new Date(payment.date || payment.created_at);
+          return paymentDate.getMonth() === currentMonth && paymentDate.getFullYear() === currentYear;
+        })
+        .reduce((sum: number, payment: any) => sum + (payment.amount || 0), 0);
 
       setStats({
         total_users: usersData.total_users || 0,
-        active_tickets: Array.isArray(ticketsData) ? ticketsData.length : 0,
+        active_tickets: Array.isArray(ticketsData.tickets) ? ticketsData.tickets.length : (Array.isArray(ticketsData) ? ticketsData.length : 0),
         tokens_used: usageData.tokens_used || 0,
         monthly_revenue: monthlyRevenue
       });

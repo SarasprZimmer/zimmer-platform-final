@@ -66,6 +66,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (email: string, password: string) => {
     try {
       const data = await authAPI.login(email, password)
+      console.log('Login successful, setting user:', data.user)
       setUser(data.user)
       router.push('/')
     } catch (error) {
@@ -113,6 +114,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           // Don't try to validate token on startup - just assume it's valid
           // The user will be redirected to login if the token is invalid
           console.log('Token exists, skipping validation on startup')
+          console.log('Current user state:', user)
         } else {
           // No token exists, user needs to login
           console.log('No token found, user needs to login')
@@ -133,7 +135,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return () => {
       stopKeepAlive()
     }
-  }, [isHydrated])
+  }, [isHydrated, user])
 
   // Auto-hide expired message after 5 seconds
   useEffect(() => {

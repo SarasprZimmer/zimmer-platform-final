@@ -14,6 +14,7 @@ from schemas.admin import TokenUsageResponse, PaymentResponse
 from utils.security import hash_password, verify_password
 from utils.jwt import create_jwt_token
 from utils.auth_dependency import get_current_user
+from cache_manager import cache as cache_manager
 
 router = APIRouter()
 
@@ -92,8 +93,20 @@ async def get_current_user_info(
     """
     Get current user's basic information
     """
+    # Check cache first
+    cache_key = f"user_info_{current_user.id}"
+    cached_data = cache_manager.get(cache_key)
+    
+    if cached_data:
+        return UserResponse(**cached_data)
+    
     try:
-        return current_user
+        user_data = UserResponse.from_orm(current_user)
+        
+        # Cache the result for 5 minutes
+        cache_manager.set(cache_key, user_data.dict(), ttl=300)
+        
+        return user_data
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -295,7 +308,7 @@ async def change_user_password(
                 )
             
             # Import cache_manager here to avoid circular imports
-            from cache_manager import cache_manager
+            from cache_manager import cache as cache_manager
             
             stored_code = cache_manager.get(f"password_reset_code_{current_user.email}")
             if not stored_code or stored_code != verification_code:
@@ -614,6 +627,13 @@ async def get_user_dashboard(
     """
     Get comprehensive user dashboard data including demo token status
     """
+    # Check cache first
+    cache_key = f"user_dashboard_{current_user.id}"
+    cached_data = cache_manager.get(cache_key)
+    
+    if cached_data:
+        return cached_data
+    
     try:
         # Get user's automations with automation details
         query = db.query(
@@ -652,7 +672,7 @@ async def get_user_dashboard(
                 "created_at": ua.created_at
             })
         
-        return UserDashboardResponse(
+        dashboard_data = UserDashboardResponse(
             user=current_user,
             automations=automations,
             total_demo_tokens=total_demo_tokens,
@@ -660,6 +680,11 @@ async def get_user_dashboard(
             has_active_demo=has_active_demo,
             has_expired_demo=has_expired_demo
         )
+        
+        # Cache the result for 2 minutes
+        cache_manager.set(cache_key, dashboard_data.dict(), ttl=120)
+        
+        return dashboard_data
         
     except Exception as e:
         raise HTTPException(

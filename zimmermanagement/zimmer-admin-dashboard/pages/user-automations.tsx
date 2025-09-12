@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import ProtectedRoute from '../components/ProtectedRoute';
 import AdjustTokensModal from '../components/AdjustTokensModal';
-import { tokenAdjustmentAPI } from '../lib/api';
+import { tokenAdjustmentAPI, adminAPI } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { authClient } from '../lib/auth-client';
 
@@ -68,18 +68,7 @@ export default function UserAutomations() {
       setLoading(true);
       setError(null);
       
-      const response = await fetch(`http://127.0.0.1:8000/api/admin/user-automations`, {
-        headers: {
-          'Authorization': `Bearer ${authClient.getAccessToken()}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      
-      const data = await response.json();
+      const data = await adminAPI.getUserAutomations();
       setUserAutomations(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Error fetching user automations:', err);

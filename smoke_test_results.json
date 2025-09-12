@@ -4,41 +4,41 @@
       "root_endpoint": {
         "status": "pass",
         "status_code": 200,
-        "response_time": 2.034135
+        "response_time": 2.041338
       },
       "health_endpoint": {
         "status": "pass",
         "status_code": 200,
-        "response_time": 2.059765,
+        "response_time": 2.030015,
         "data": {
           "status": "healthy",
-          "timestamp": 1757579838.7638836,
-          "memory_percent": 66.8,
-          "cpu_percent": 31.3
+          "timestamp": 1757583706.6304402,
+          "memory_percent": 73.2,
+          "cpu_percent": 44.5
         }
       },
       "api_docs": {
         "status": "pass",
         "status_code": 200,
-        "response_time": 2.044645
+        "response_time": 2.060569
       }
     },
     "authentication": {
       "user_registration": {
         "status": "pass",
-        "status_code": 200,
-        "response_time": 2.405181
+        "status_code": 400,
+        "response_time": 2.049652
       },
       "user_login": {
         "status": "pass",
         "status_code": 200,
-        "response_time": 2.336658,
+        "response_time": 2.365112,
         "has_token": true
       },
       "admin_login": {
         "status": "pass",
         "status_code": 200,
-        "response_time": 2.33614,
+        "response_time": 2.364206,
         "has_token": true
       }
     },
@@ -46,186 +46,190 @@
       "public__automations_marketplace": {
         "status": "fail",
         "status_code": 401,
-        "response_time": 2.042072,
+        "response_time": 2.034988,
         "description": "Marketplace"
       },
       "public__optimized_automations_marketplace": {
         "status": "pass",
         "status_code": 200,
-        "response_time": 2.042072,
+        "response_time": 2.048322,
         "description": "Optimized Marketplace"
       },
       "public__optimized_cache_stats": {
         "status": "pass",
         "status_code": 200,
-        "response_time": 2.043281,
+        "response_time": 2.033466,
         "description": "Cache Stats"
       },
       "public__circuit-breaker_stats": {
         "status": "pass",
         "status_code": 200,
-        "response_time": 2.045473,
+        "response_time": 2.052156,
         "description": "Circuit Breaker Stats"
       },
       "protected__me": {
         "status": "pass",
         "status_code": 401,
-        "response_time": 2.027727,
+        "response_time": 2.036752,
         "description": "User Profile",
         "note": "401 expected without authentication"
       },
       "protected__user_dashboard": {
         "status": "pass",
         "status_code": 401,
-        "response_time": 2.040947,
+        "response_time": 2.050819,
         "description": "User Dashboard",
         "note": "401 expected without authentication"
       },
       "protected__admin_dashboard": {
         "status": "pass",
         "status_code": 401,
-        "response_time": 2.076637,
+        "response_time": 2.047525,
         "description": "Admin Dashboard",
         "note": "401 expected without authentication"
       },
       "protected__notifications": {
         "status": "pass",
         "status_code": 401,
-        "response_time": 2.048746,
+        "response_time": 2.050325,
         "description": "Notifications",
         "note": "401 expected without authentication"
       },
       "auth__me": {
         "status": "pass",
         "status_code": 200,
-        "response_time": 2.066893,
+        "response_time": 2.05885,
         "description": "User Profile (Auth)"
       },
       "auth__user_dashboard": {
         "status": "pass",
         "status_code": 200,
-        "response_time": 2.031674,
+        "response_time": 2.049934,
         "description": "User Dashboard (Auth)"
       },
       "auth__user_settings": {
         "status": "pass",
         "status_code": 200,
-        "response_time": 2.061879,
+        "response_time": 2.032812,
         "description": "User Settings (Auth)"
       },
       "admin__admin_users": {
         "status": "pass",
         "status_code": 200,
-        "response_time": 2.044932,
+        "response_time": 2.05243,
         "description": "Admin Users"
       },
       "admin__admin_users_stats": {
         "status": "pass",
         "status_code": 200,
-        "response_time": 2.072873,
+        "response_time": 2.030594,
         "description": "Admin User Stats"
       },
       "admin__admin_openai-keys": {
         "status": "pass",
         "status_code": 200,
-        "response_time": 2.047405,
+        "response_time": 2.061244,
         "description": "Admin OpenAI Keys"
       },
       "admin__admin_analytics": {
         "status": "pass",
         "status_code": 200,
-        "response_time": 2.051973,
+        "response_time": 2.058458,
         "description": "Admin Analytics"
       },
       "admin__admin_settings": {
         "status": "pass",
         "status_code": 200,
-        "response_time": 2.044118,
+        "response_time": 2.040756,
         "description": "Admin Settings"
       }
     }
   },
   "user_panel": {
     "main_page": {
-      "status": "fail",
-      "status_code": 500,
-      "response_time": 0.020966
+      "status": "pass",
+      "status_code": 200,
+      "response_time": 0.019556
     },
     "login_page": {
-      "status": "fail",
-      "status_code": 500,
-      "response_time": 0.022211
+      "status": "pass",
+      "status_code": 200,
+      "response_time": 0.015143
     },
     "dashboard_page": {
-      "status": "fail",
-      "status_code": 500,
-      "response_time": 0.022133
+      "status": "pass",
+      "status_code": 200,
+      "response_time": 0.021474
     },
     "automations_page": {
-      "status": "fail",
-      "status_code": 500,
-      "response_time": 1.335126
+      "status": "pass",
+      "status_code": 200,
+      "response_time": 0.022991
     },
     "settings_page": {
-      "status": "fail",
-      "status_code": 500,
-      "response_time": 0.289251
+      "status": "pass",
+      "status_code": 200,
+      "response_time": 0.038326
     }
   },
   "admin_panel": {
-    "error": "HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000021C5C1B3090>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+    "main_page": {
+      "status": "pass",
+      "status_code": 200,
+      "response_time": 0.026826
+    },
+    "users_page": {
+      "status": "pass",
+      "status_code": 200,
+      "response_time": 0.023225
+    }
   },
   "integration": {
     "user_panel_backend_integration": {
       "status": "pass",
       "status_code": 200,
-      "response_time": 2.072131
+      "response_time": 2.029508
     },
     "user_dashboard_integration": {
       "status": "pass",
       "status_code": 200,
-      "response_time": 2.030997
+      "response_time": 2.087596
     },
     "admin_panel_backend_integration": {
       "status": "pass",
       "status_code": 200,
-      "response_time": 2.081716
-    },
-    "admin_users_integration": {
-      "status": "pass",
-      "status_code": 200,
-      "response_time": 2.052914
+      "response_time": 2.043224
     },
     "data_consistency": {
       "status": "pass",
       "user_api_status": 200,
       "admin_api_status": 200,
-      "response_time": 2.070497
+      "response_time": 2.070478
     }
   },
   "performance": {
     "health_check": {
-      "avg_response_time": 2041.4,
-      "max_response_time": 2052.81,
-      "min_response_time": 2031.43,
+      "avg_response_time": 2043.49,
+      "max_response_time": 2066.29,
+      "min_response_time": 2029.08,
       "status": "slow"
     },
     "authentication": {
-      "avg_response_time": 2344.8,
-      "max_response_time": 2360.88,
-      "min_response_time": 2324.84,
+      "avg_response_time": 2580.64,
+      "max_response_time": 2671.87,
+      "min_response_time": 2503.17,
       "status": "slow"
     },
     "user_profile": {
-      "avg_response_time": 2036.92,
-      "max_response_time": 2050.79,
-      "min_response_time": 2029.71,
+      "avg_response_time": 2040.19,
+      "max_response_time": 2081.5,
+      "min_response_time": 2021.59,
       "status": "slow"
     },
     "admin_dashboard": {
-      "avg_response_time": 2048.79,
-      "max_response_time": 2061.24,
-      "min_response_time": 2037.67,
+      "avg_response_time": 2045.35,
+      "max_response_time": 2050.76,
+      "min_response_time": 2034.5,
       "status": "slow"
     }
   },
