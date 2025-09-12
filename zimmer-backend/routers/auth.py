@@ -48,6 +48,15 @@ async def login(request: dict, db: Session = Depends(get_db)):
                 detail="Invalid email or password"
             )
         
+        # Check email verification requirement
+        from settings import settings
+        if settings.REQUIRE_VERIFIED_EMAIL_FOR_LOGIN and not user.email_verified_at:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Email not verified. Please verify your email before logging in.",
+                headers={"X-Error-Code": "email_not_verified"}
+            )
+        
         # Check if 2FA is required
         if hasattr(user, 'twofa_enabled') and user.twofa_enabled:
             # Generate challenge token

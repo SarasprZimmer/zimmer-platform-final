@@ -174,6 +174,10 @@ async def performance_middleware(request: Request, call_next):
 # Import and include routers
 from routers import users, admin, fallback, knowledge, telegram, ticket, ticket_message, auth
 app.include_router(auth.router, tags=["auth"])
+
+# Import and include Google OAuth router
+from routers.auth_google import router as auth_google_router
+app.include_router(auth_google_router, tags=["auth-google"])
 app.include_router(users.router, prefix="/api", tags=["users"])
 
 # Import and include auth sessions router

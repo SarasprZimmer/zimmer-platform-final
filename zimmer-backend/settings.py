@@ -28,7 +28,13 @@ class Settings(BaseSettings):
     SMTP_FROM: str = os.getenv("SMTP_FROM", "no-reply@zimmerai.com")
     FRONTEND_VERIFY_URL: str = os.getenv("FRONTEND_VERIFY_URL", "http://localhost:3000/verify-email")
     EMAIL_VERIFICATION_TTL_MIN: int = int(os.getenv("EMAIL_VERIFICATION_TTL_MIN", "30"))
-    REQUIRE_VERIFIED_EMAIL_FOR_LOGIN: bool = os.getenv("REQUIRE_VERIFIED_EMAIL_FOR_LOGIN", "False").lower() == "true"
+    REQUIRE_VERIFIED_EMAIL_FOR_LOGIN: bool = os.getenv("REQUIRE_VERIFIED_EMAIL_FOR_LOGIN", "True").lower() == "true"
+    
+    # Google OAuth
+    GOOGLE_CLIENT_ID: str = os.getenv("GOOGLE_CLIENT_ID", "")
+    GOOGLE_CLIENT_SECRET: str = os.getenv("GOOGLE_CLIENT_SECRET", "")
+    GOOGLE_REDIRECT_URL: str = os.getenv("GOOGLE_REDIRECT_URL", "http://localhost:8000/api/auth/google/callback")
+    FRONTEND_BASE_URL: str = os.getenv("FRONTEND_BASE_URL", "http://localhost:3000")
     
     class Config:
         env_file = ".env"
