@@ -327,6 +327,27 @@ backups/
 test_*.py
 *_test.py
 tests/
+*test*.py
+*test*.js
+*test*.md
+*test*.json
+*smoke*.py
+*smoke*.ps1
+*smoke*.md
+*check*.py
+*verify*.py
+*create_test*.py
+*fix_test*.py
+*quick_*.py
+*detailed_*.py
+*comprehensive_*.py
+*production_*.py
+*performance_*.py
+*enhanced_*.py
+*mock_*.py
+*add_openai_*.py
+*create_user_*.py
+*missing_*.py
 
 # Migration files (keep only the latest)
 migrate_*.py.backup
