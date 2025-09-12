@@ -20,7 +20,8 @@ async function refreshAccessToken(): Promise<boolean> {
 
 export async function apiFetch(path: string, opts: RequestInit = {}): Promise<Response> {
   const headers = new Headers(opts.headers || {});
-  const access = getAccessToken();
+  // Use localStorage instead of in-memory storage to match main API client
+  const access = typeof window !== 'undefined' ? localStorage.getItem("access_token") : null;
   if (access) headers.set("Authorization", `Bearer ${access}`);
 
   // CSRF for unsafe methods
@@ -41,7 +42,7 @@ export async function apiFetch(path: string, opts: RequestInit = {}): Promise<Re
     const ok = await refreshAccessToken();
     if (!ok) return res;
     const retryHeaders = new Headers(opts.headers || {});
-    const access2 = getAccessToken();
+    const access2 = typeof window !== 'undefined' ? localStorage.getItem("access_token") : null;
     if (access2) retryHeaders.set("Authorization", `Bearer ${access2}`);
     if (["POST", "PUT", "PATCH", "DELETE"].includes(method)) {
       const csrf = getCsrfToken();
@@ -70,7 +71,13 @@ export async function login(email: string, password: string) {
   }
   if (!res.ok) throw new Error("login_failed");
   const j = await res.json();
-  if (j?.access_token) setAccessToken(j.access_token);
+  if (j?.access_token) {
+    setAccessToken(j.access_token);
+    // Also store in localStorage to match main API client
+    if (typeof window !== 'undefined') {
+      localStorage.setItem("access_token", j.access_token);
+    }
+  }
   return j;
 }
 
@@ -83,7 +90,13 @@ export async function verifyOtp(challenge_token: string, otp_code: string) {
   });
   if (!res.ok) throw new Error("otp_failed");
   const j = await res.json();
-  if (j?.access_token) setAccessToken(j.access_token);
+  if (j?.access_token) {
+    setAccessToken(j.access_token);
+    // Also store in localStorage to match main API client
+    if (typeof window !== 'undefined') {
+      localStorage.setItem("access_token", j.access_token);
+    }
+  }
   return j;
 }
 

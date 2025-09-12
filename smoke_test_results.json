@@ -4,41 +4,41 @@
       "root_endpoint": {
         "status": "pass",
         "status_code": 200,
-        "response_time": 2.041338
+        "response_time": 2.167428
       },
       "health_endpoint": {
         "status": "pass",
         "status_code": 200,
-        "response_time": 2.030015,
+        "response_time": 2.200988,
         "data": {
           "status": "healthy",
-          "timestamp": 1757583706.6304402,
-          "memory_percent": 73.2,
-          "cpu_percent": 44.5
+          "timestamp": 1757678310.7357078,
+          "memory_percent": 80.7,
+          "cpu_percent": 69.6
         }
       },
       "api_docs": {
         "status": "pass",
         "status_code": 200,
-        "response_time": 2.060569
+        "response_time": 2.319553
       }
     },
     "authentication": {
       "user_registration": {
         "status": "pass",
         "status_code": 400,
-        "response_time": 2.049652
+        "response_time": 2.283853
       },
       "user_login": {
         "status": "pass",
         "status_code": 200,
-        "response_time": 2.365112,
+        "response_time": 3.105734,
         "has_token": true
       },
       "admin_login": {
         "status": "pass",
         "status_code": 200,
-        "response_time": 2.364206,
+        "response_time": 3.388594,
         "has_token": true
       }
     },
@@ -46,101 +46,101 @@
       "public__automations_marketplace": {
         "status": "fail",
         "status_code": 401,
-        "response_time": 2.034988,
+        "response_time": 2.229279,
         "description": "Marketplace"
       },
       "public__optimized_automations_marketplace": {
         "status": "pass",
         "status_code": 200,
-        "response_time": 2.048322,
+        "response_time": 2.381342,
         "description": "Optimized Marketplace"
       },
       "public__optimized_cache_stats": {
         "status": "pass",
         "status_code": 200,
-        "response_time": 2.033466,
+        "response_time": 2.23246,
         "description": "Cache Stats"
       },
       "public__circuit-breaker_stats": {
         "status": "pass",
         "status_code": 200,
-        "response_time": 2.052156,
+        "response_time": 2.224783,
         "description": "Circuit Breaker Stats"
       },
       "protected__me": {
         "status": "pass",
         "status_code": 401,
-        "response_time": 2.036752,
+        "response_time": 2.243877,
         "description": "User Profile",
         "note": "401 expected without authentication"
       },
       "protected__user_dashboard": {
         "status": "pass",
         "status_code": 401,
-        "response_time": 2.050819,
+        "response_time": 2.28492,
         "description": "User Dashboard",
         "note": "401 expected without authentication"
       },
       "protected__admin_dashboard": {
         "status": "pass",
         "status_code": 401,
-        "response_time": 2.047525,
+        "response_time": 2.435719,
         "description": "Admin Dashboard",
         "note": "401 expected without authentication"
       },
       "protected__notifications": {
         "status": "pass",
         "status_code": 401,
-        "response_time": 2.050325,
+        "response_time": 2.237779,
         "description": "Notifications",
         "note": "401 expected without authentication"
       },
       "auth__me": {
         "status": "pass",
         "status_code": 200,
-        "response_time": 2.05885,
+        "response_time": 2.237445,
         "description": "User Profile (Auth)"
       },
       "auth__user_dashboard": {
         "status": "pass",
         "status_code": 200,
-        "response_time": 2.049934,
+        "response_time": 2.274481,
         "description": "User Dashboard (Auth)"
       },
       "auth__user_settings": {
         "status": "pass",
         "status_code": 200,
-        "response_time": 2.032812,
+        "response_time": 2.226506,
         "description": "User Settings (Auth)"
       },
       "admin__admin_users": {
         "status": "pass",
         "status_code": 200,
-        "response_time": 2.05243,
+        "response_time": 2.176073,
         "description": "Admin Users"
       },
       "admin__admin_users_stats": {
-        "status": "pass",
-        "status_code": 200,
-        "response_time": 2.030594,
+        "status": "fail",
+        "status_code": 404,
+        "response_time": 2.186685,
         "description": "Admin User Stats"
       },
       "admin__admin_openai-keys": {
         "status": "pass",
         "status_code": 200,
-        "response_time": 2.061244,
+        "response_time": 2.183135,
         "description": "Admin OpenAI Keys"
       },
       "admin__admin_analytics": {
         "status": "pass",
         "status_code": 200,
-        "response_time": 2.058458,
+        "response_time": 2.203458,
         "description": "Admin Analytics"
       },
       "admin__admin_settings": {
         "status": "pass",
         "status_code": 200,
-        "response_time": 2.040756,
+        "response_time": 2.153696,
         "description": "Admin Settings"
       }
     }
@@ -149,87 +149,87 @@
     "main_page": {
       "status": "pass",
       "status_code": 200,
-      "response_time": 0.019556
+      "response_time": 0.157842
     },
     "login_page": {
       "status": "pass",
       "status_code": 200,
-      "response_time": 0.015143
+      "response_time": 0.057328
     },
     "dashboard_page": {
       "status": "pass",
       "status_code": 200,
-      "response_time": 0.021474
+      "response_time": 0.071966
     },
     "automations_page": {
       "status": "pass",
       "status_code": 200,
-      "response_time": 0.022991
+      "response_time": 0.062623
     },
     "settings_page": {
       "status": "pass",
       "status_code": 200,
-      "response_time": 0.038326
+      "response_time": 0.069527
     }
   },
   "admin_panel": {
     "main_page": {
       "status": "pass",
       "status_code": 200,
-      "response_time": 0.026826
+      "response_time": 0.026488
     },
     "users_page": {
       "status": "pass",
       "status_code": 200,
-      "response_time": 0.023225
+      "response_time": 0.751771
     }
   },
   "integration": {
     "user_panel_backend_integration": {
       "status": "pass",
       "status_code": 200,
-      "response_time": 2.029508
+      "response_time": 2.170978
     },
     "user_dashboard_integration": {
       "status": "pass",
       "status_code": 200,
-      "response_time": 2.087596
+      "response_time": 2.121818
     },
     "admin_panel_backend_integration": {
       "status": "pass",
       "status_code": 200,
-      "response_time": 2.043224
+      "response_time": 2.196672
     },
     "data_consistency": {
       "status": "pass",
       "user_api_status": 200,
       "admin_api_status": 200,
-      "response_time": 2.070478
+      "response_time": 2.231843
     }
   },
   "performance": {
     "health_check": {
-      "avg_response_time": 2043.49,
-      "max_response_time": 2066.29,
-      "min_response_time": 2029.08,
+      "avg_response_time": 2133.97,
+      "max_response_time": 2155.9,
+      "min_response_time": 2123.91,
       "status": "slow"
     },
     "authentication": {
-      "avg_response_time": 2580.64,
-      "max_response_time": 2671.87,
-      "min_response_time": 2503.17,
+      "avg_response_time": 2448.13,
+      "max_response_time": 2618.02,
+      "min_response_time": 2312.23,
       "status": "slow"
     },
     "user_profile": {
-      "avg_response_time": 2040.19,
-      "max_response_time": 2081.5,
-      "min_response_time": 2021.59,
+      "avg_response_time": 2037.89,
+      "max_response_time": 2063.34,
+      "min_response_time": 2022.74,
       "status": "slow"
     },
     "admin_dashboard": {
-      "avg_response_time": 2045.35,
-      "max_response_time": 2050.76,
-      "min_response_time": 2034.5,
+      "avg_response_time": 2054.18,
+      "max_response_time": 2065.21,
+      "min_response_time": 2039.13,
       "status": "slow"
     }
   },

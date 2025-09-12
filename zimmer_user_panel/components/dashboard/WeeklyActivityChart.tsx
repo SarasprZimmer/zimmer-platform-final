@@ -14,7 +14,15 @@ export default function WeeklyActivityChart(){
     try{
       const r=await apiFetch("/api/user/usage?range=7d");
       if(!r.ok) throw new Error();
-      setData(await r.json());
+      const response = await r.json();
+      // Handle both array and object responses
+      if (Array.isArray(response)) {
+        setData(response);
+      } else if (response && response.recent_usage && Array.isArray(response.recent_usage)) {
+        setData(response.recent_usage);
+      } else {
+        setData([]);
+      }
     }catch{ 
       setErr("خطا در دریافت آمار هفتگی");
     }
@@ -24,7 +32,7 @@ export default function WeeklyActivityChart(){
       <div className="font-semibold mb-3">فعالیت هفتگی</div>
       {!data && !err && <Skeleton className="h-64" />}
       {err && <div className="text-sm text-red-600">{err}</div>}
-      {data && (
+      {data && data.length > 0 && (
         <motion.div initial={{opacity:0}} animate={{opacity:1}}>
           <div style={{width:"100%", height:260}}>
             <ResponsiveContainer>
@@ -39,6 +47,14 @@ export default function WeeklyActivityChart(){
             </ResponsiveContainer>
           </div>
         </motion.div>
+      )}
+      {data && data.length === 0 && (
+        <div className="flex items-center justify-center h-64 text-gray-500">
+          <div className="text-center">
+            <div className="text-lg mb-2">📊</div>
+            <div className="text-sm">داده ای برای نمایش وجود ندارد</div>
+          </div>
+        </div>
       )}
     </Card>
   );

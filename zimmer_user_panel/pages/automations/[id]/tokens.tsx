@@ -74,17 +74,23 @@ export default function TokenPurchasePage() {
   const fetchData = async () => {
     try {
       setLoadingData(true)
+      setError(null) // Clear any previous errors
       
-      // Fetch automation details
-      const automationResponse = await apiFetch(`/api/automations/${id}`)
+      // Fetch automation details with cache busting
+      const automationResponse = await apiFetch(`/api/automations/${id}?t=${Date.now()}`)
       if (!automationResponse.ok) {
         throw new Error('Automation not found')
       }
       const automationData = await automationResponse.json()
       setAutomation(automationData)
 
+      // Debug logging
+      console.log('Automation data:', automationData)
+      console.log('user_has_automation:', automationData.user_has_automation)
+
       // Check if user has this automation
       if (!automationData.user_has_automation) {
+        console.log('User does not have automation, showing error')
         setError('شما این اتوماسیون را ندارید. ابتدا آن را خریداری کنید.')
         return
       }
@@ -97,6 +103,7 @@ export default function TokenPurchasePage() {
       }
 
     } catch (err) {
+      console.error('Error fetching data:', err)
       setError('خطا در بارگذاری اطلاعات')
     } finally {
       setLoadingData(false)
@@ -185,12 +192,20 @@ export default function TokenPurchasePage() {
           <Card>
             <div className="text-center py-8">
               <p className="text-red-600 mb-4">{error}</p>
-              <button
-                onClick={() => router.back()}
-                className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
-              >
-                بازگشت
-              </button>
+              <div className="space-x-4 space-x-reverse">
+                <button
+                  onClick={() => fetchData()}
+                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                >
+                  🔄 تلاش مجدد
+                </button>
+                <button
+                  onClick={() => router.back()}
+                  className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+                >
+                  بازگشت
+                </button>
+              </div>
             </div>
           </Card>
         </div>
