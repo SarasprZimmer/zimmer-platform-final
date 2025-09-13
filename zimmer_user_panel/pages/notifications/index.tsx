@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useAuth } from "@/contexts/AuthContext";
@@ -31,7 +31,7 @@ export default function NotificationsPage(){
   const typeParam = useMemo(()=> tab==="all"||tab==="unread" ? "" : tab, [tab]);
   const readParam = useMemo(()=> tab==="unread" ? "false" : "", [tab]);
 
-  async function load(reset:boolean){
+  const load = useCallback(async (reset:boolean) => {
     const params = new URLSearchParams();
     params.set("limit", String(LIMIT));
     params.set("offset", String(reset?0:offset));
@@ -43,9 +43,9 @@ export default function NotificationsPage(){
     const batch: Notify[] = Array.isArray(j) ? j : (j.items||[]);
     if(reset){ setItems(batch); setOffset(batch.length); setHasMore(batch.length===LIMIT); }
     else { setItems(prev => [ ...(prev||[]), ...batch ]); setOffset(o=>o+batch.length); setHasMore(batch.length===LIMIT); }
-  }
+  }, [offset, typeParam, readParam])
 
-  useEffect(()=>{ if(isAuthenticated) load(true); },[tab, isAuthenticated]);
+  useEffect(()=>{ if(isAuthenticated) load(true); },[tab, isAuthenticated, load]);
 
   function toggle(id:number){ setSelected(s => ({...s, [id]: !s[id]})); }
   function clearSelection(){ setSelected({}); }

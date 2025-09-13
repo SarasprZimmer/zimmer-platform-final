@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useRouter } from "next/router";
 import { useAuth } from "@/contexts/AuthContext";
 import DashboardLayout from "@/components/DashboardLayout";
@@ -37,16 +37,16 @@ export default function PaymentPage(){
     }
   }, [isAuthenticated, loading, router]);
 
-  async function load(){
+  const load = useCallback(async () => {
     const a = await apiFetch("/api/user/automations/active");
     setActive(a.ok ? await a.json() : []);
     const s = await apiFetch("/api/user/payments/summary?months=6");
     setMonths(s.ok ? (await s.json()).points : []);
     const p = await apiFetch(`/api/user/payments?limit=${limit}&offset=${page*limit}&order=desc`);
     if(p.ok){ const j = await p.json(); setRows(j.items||[]); setTotal(j.total||0); } else { setRows([]); setTotal(0); }
-  }
+  }, [page])
 
-  useEffect(()=>{ if(isAuthenticated) load(); },[page, isAuthenticated]);
+  useEffect(()=>{ if(isAuthenticated) load(); },[page, isAuthenticated, load]);
 
   const pageCount = useMemo(()=> Math.ceil((total||0)/limit), [total]);
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import { apiFetch } from '@/lib/apiClient';
@@ -33,13 +33,7 @@ export default function PurchasePage() {
   const [discountInfo, setDiscountInfo] = useState<DiscountInfo | null>(null);
   const [processing, setProcessing] = useState(false);
 
-  useEffect(() => {
-    if (id) {
-      fetchAutomation();
-    }
-  }, [id]);
-
-  const fetchAutomation = async () => {
+  const fetchAutomation = useCallback(async () => {
     try {
       const response = await apiFetch(`/api/automations/${id}`);
       const data = await response.json();
@@ -49,7 +43,13 @@ export default function PurchasePage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    if (id) {
+      fetchAutomation();
+    }
+  }, [id, fetchAutomation]);
 
   const handleDiscountValidation = async (code: string) => {
     if (!code || !automation) return;

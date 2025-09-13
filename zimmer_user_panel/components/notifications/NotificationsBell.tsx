@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import Link from "next/link";
 import { apiFetch } from "@/lib/apiClient";
 import { Notify, routeForNotification, typeLabel } from "@/lib/notifications";
@@ -17,7 +17,7 @@ export default function NotificationsBell(){
   const [hasMore, setHasMore] = useState(true);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  async function fetchBatch(reset=false){
+  const fetchBatch = useCallback(async (reset=false) => {
     const q = `?limit=${PAGE_LIMIT}&offset=${reset ? 0 : offset}`;
     const r = await apiFetch(`/api/notifications${q}`);
     if(!r.ok){ if(reset) setItems([]); return; }
@@ -37,9 +37,9 @@ export default function NotificationsBell(){
         return prev + newUnread;
       });
     }
-  }
+  }, [offset])
 
-  async function loadInitial(){
+  const loadInitial = useCallback(async () => {
     await fetchBatch(true);
     // Try unread-count
     try {
@@ -49,7 +49,7 @@ export default function NotificationsBell(){
         if(typeof cj?.count === "number") setUnread(cj.count);
       }
     } catch {}
-  }
+  }, [fetchBatch])
 
   async function markAll(){
     setBusy(true);
@@ -111,7 +111,7 @@ export default function NotificationsBell(){
       document.removeEventListener("click", onDocClick);
       try{ es?.close(); }catch{}
     };
-  },[]);
+  },[loadInitial]);
 
   const unreadBadge = useMemo(()=> unread>99 ? "99+" : (unread>0? String(unread):""), [unread]);
 

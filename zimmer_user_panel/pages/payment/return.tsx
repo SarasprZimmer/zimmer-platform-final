@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/router'
 import { useAuth } from '@/contexts/AuthContext'
 import DashboardLayout from '@/components/DashboardLayout'
@@ -26,13 +26,7 @@ export default function PaymentReturnPage() {
     }
   }, [isAuthenticated, loading, router])
 
-  useEffect(() => {
-    if (payment_id && Authority && Status && isAuthenticated) {
-      verifyPayment()
-    }
-  }, [payment_id, Authority, Status, isAuthenticated])
-
-  const verifyPayment = async () => {
+  const verifyPayment = useCallback(async () => {
     try {
       setLoadingPayment(true)
       
@@ -51,7 +45,13 @@ export default function PaymentReturnPage() {
     } finally {
       setLoadingPayment(false)
     }
-  }
+  }, [payment_id, Authority, Status])
+
+  useEffect(() => {
+    if (payment_id && Authority && Status && isAuthenticated) {
+      verifyPayment()
+    }
+  }, [payment_id, Authority, Status, isAuthenticated, verifyPayment])
 
   const getStatusColor = (status: string) => {
     switch (status) {

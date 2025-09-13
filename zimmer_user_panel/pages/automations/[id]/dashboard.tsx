@@ -41,12 +41,6 @@ export default function AutomationDashboardPage() {
     }
   }, [isAuthenticated, loading, router])
 
-  useEffect(() => {
-    if (id && isAuthenticated) {
-      fetchData()
-    }
-  }, [id, isAuthenticated, fetchData])
-
   const fetchData = useCallback(async () => {
     try {
       setLoadingData(true)
@@ -78,6 +72,12 @@ export default function AutomationDashboardPage() {
       setLoadingData(false)
     }
   }, [id])
+
+  useEffect(() => {
+    if (id && isAuthenticated) {
+      fetchData()
+    }
+  }, [id, isAuthenticated, fetchData])
 
   if (loading || loading_data) {
     return (

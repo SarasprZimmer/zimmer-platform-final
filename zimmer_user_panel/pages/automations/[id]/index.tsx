@@ -32,12 +32,6 @@ export default function AutomationDetailPage() {
     }
   }, [isAuthenticated, loading, router])
 
-  useEffect(() => {
-    if (id && isAuthenticated) {
-      fetchAutomation()
-    }
-  }, [id, isAuthenticated, fetchAutomation])
-
   const fetchAutomation = useCallback(async () => {
     try {
       setLoadingAutomation(true)
@@ -55,6 +49,12 @@ export default function AutomationDetailPage() {
       setLoadingAutomation(false)
     }
   }, [id])
+
+  useEffect(() => {
+    if (id && isAuthenticated) {
+      fetchAutomation()
+    }
+  }, [id, isAuthenticated, fetchAutomation])
 
   const handlePurchase = async () => {
     try {

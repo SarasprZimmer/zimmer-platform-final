@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/router'
 import { useAuth } from '@/contexts/AuthContext'
 import DashboardLayout from '@/components/DashboardLayout'
@@ -58,12 +58,6 @@ export default function TokenPurchasePage() {
     }
   }, [isAuthenticated, loading, router])
 
-  useEffect(() => {
-    if (id && isAuthenticated) {
-      fetchData()
-    }
-  }, [id, isAuthenticated])
-
   // Set token amount to 1 for flat fee pricing
   useEffect(() => {
     if (isFlatFee) {
@@ -71,7 +65,7 @@ export default function TokenPurchasePage() {
     }
   }, [isFlatFee])
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoadingData(true)
       setError(null) // Clear any previous errors
@@ -108,7 +102,13 @@ export default function TokenPurchasePage() {
     } finally {
       setLoadingData(false)
     }
-  }
+  }, [id])
+
+  useEffect(() => {
+    if (id && isAuthenticated) {
+      fetchData()
+    }
+  }, [id, isAuthenticated, fetchData])
 
   const handleDiscountValidation = async (code: string) => {
     if (!code || !automation) return

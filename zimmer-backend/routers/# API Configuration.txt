@@ -1,0 +1,33 @@
+# API Configuration
+NEXT_PUBLIC_API_URL=https://api.zimmerai.com
+NEXT_PUBLIC_API_BASE_URL=https://api.zimmerai.com
+
+# Database Configuration
+POSTGRES_USER=zimmer
+POSTGRES_PASSWORD=zimmer
+POSTGRES_DB=zimmer
+DATABASE_URL=postgresql+psycopg2://zimmer:zimmer@postgres:5432/zimmer
+
+# JWT Configuration
+JWT_SECRET_KEY=ba4fcdc6673d7bba11929b298e2f5c6181214b8fd646cef943febed0b5cb8c0e
+
+# Production Settings
+NODE_ENV=production
+DEBUG=false
+ENVIRONMENT=production
+REQUIRE_VERIFIED_EMAIL_FOR_LOGIN=true
+
+# CORS Configuration
+ALLOWED_ORIGINS=https://zimmerai.com,https://admin.zimmerai.com,https://api>
+GOOGLE_CLIENT_ID=131779465680-88ke00fde0uft03hn1q65kkin7sqkt2s.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=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
+GOOGLE_REDIRECT_URL=https://api.zimmerai.com/api/auth/google/callback
+FRONTEND_BASE_URL=https://zimmerai.com
+
+# Email Configuration (Update with your SMTP settings)
+SMTP_HOST=your-smtp-host
+SMTP_PORT=587
+SMTP_USER=your-smtp-user
+SMTP_PASSWORD=your-smtp-password
+SMTP_FROM=no-reply@zimmerai.com
+FRONTEND_VERIFY_URL=https://zimmerai.com/verify-email
