@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: zimmer_dashboard
+      POSTGRES_USER: zimmer_user
+      POSTGRES_PASSWORD: zimmer_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U zimmer_user -d zimmer_dashboard"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: 
+      context: ./zimmer-backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://zimmer_user:zimmer_password@postgres:5432/zimmer_dashboard
+      - JWT_SECRET_KEY=your-super-secret-jwt-key-here
+      - REQUIRE_VERIFIED_EMAIL_FOR_LOGIN=false
+      - GOOGLE_CLIENT_ID=your-google-client-id
+      - GOOGLE_CLIENT_SECRET=your-google-client-secret
+      - GOOGLE_REDIRECT_URL=http://localhost:8000/api/auth/google/callback
+      - FRONTEND_BASE_URL=http://localhost:3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./uploads:/app/uploads
+    user: root
+
+  user_panel:
+    build:
+      context: ./zimmer_user_panel
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    depends_on:
+      - backend
+    volumes:
+      - ./zimmer_user_panel/public:/app/public
+
+  admin_dashboard:
+    build:
+      context: ./zimmermanagement/zimmer-admin-dashboard
+      dockerfile: Dockerfile
+    ports:
+      - "4000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    depends_on:
+      - backend
+    volumes:
+      - ./zimmermanagement/zimmer-admin-dashboard/public:/app/public
+
+volumes:
+  postgres_data:
