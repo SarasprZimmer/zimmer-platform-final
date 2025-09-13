@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/router'
 import { useAuth } from '@/contexts/AuthContext'
 import DashboardLayout from '@/components/DashboardLayout'
@@ -45,9 +45,9 @@ export default function AutomationDashboardPage() {
     if (id && isAuthenticated) {
       fetchData()
     }
-  }, [id, isAuthenticated])
+  }, [id, isAuthenticated, fetchData])
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoadingData(true)
       
@@ -77,7 +77,7 @@ export default function AutomationDashboardPage() {
     } finally {
       setLoadingData(false)
     }
-  }
+  }, [id])
 
   if (loading || loading_data) {
     return (

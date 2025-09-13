@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/router'
 import { useAuth } from '@/contexts/AuthContext'
 import DashboardLayout from '@/components/DashboardLayout'
@@ -36,9 +36,9 @@ export default function AutomationDetailPage() {
     if (id && isAuthenticated) {
       fetchAutomation()
     }
-  }, [id, isAuthenticated])
+  }, [id, isAuthenticated, fetchAutomation])
 
-  const fetchAutomation = async () => {
+  const fetchAutomation = useCallback(async () => {
     try {
       setLoadingAutomation(true)
       const response = await apiFetch(`/api/automations/${id}`)
@@ -54,7 +54,7 @@ export default function AutomationDetailPage() {
     } finally {
       setLoadingAutomation(false)
     }
-  }
+  }, [id])
 
   const handlePurchase = async () => {
     try {
