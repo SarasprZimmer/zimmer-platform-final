@@ -10,7 +10,7 @@ export default function TestGoogleAuth() {
   useEffect(() => {
     const checkGoogleConfig = async () => {
       try {
-        const api = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+        const api = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || "${process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.zimmerai.com"}";
         const response = await fetch(`${api}/api/auth/google/configured`);
         
         if (response.ok) {

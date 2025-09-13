@@ -71,7 +71,7 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3000
-      # Points UI to backend
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.zimmerai.com}
       NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-https://api.zimmerai.com}
     depends_on:
       backend:
@@ -82,10 +82,12 @@ services:
   admin_dashboard:
     build:
       context: ./zimmermanagement/zimmer-admin-dashboard
+      dockerfile: Dockerfile
     restart: unless-stopped
     environment:
       NODE_ENV: production
       PORT: 3000
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.zimmerai.com}
       NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-https://api.zimmerai.com}
     depends_on:
       backend:

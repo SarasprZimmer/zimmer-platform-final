@@ -263,7 +263,7 @@ python test_auth_sessions.py
 ```
 
 ### Test Requirements
-- Backend server running on `http://localhost:8000`
+- Backend server running on `${process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.zimmerai.com"}`
 - Test user with email `admin@zimmerai.com` and password `admin123`
 - `httpx` library installed
 

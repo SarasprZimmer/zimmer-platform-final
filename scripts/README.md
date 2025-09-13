@@ -95,7 +95,7 @@ The test suite will:
 ## 🚨 Troubleshooting
 
 ### Test Won't Run
-- Ensure backend is running on `http://localhost:8000`
+- Ensure backend is running on `${process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.zimmerai.com"}`
 - Check PowerShell execution policy: `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser`
 - Verify Python and requests library are installed
 

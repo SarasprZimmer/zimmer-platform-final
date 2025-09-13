@@ -13,7 +13,7 @@ This scans **zimmer_user_panel/pages/** and writes:
 ## Strict mode (compare with OpenAPI)
 Export your API base (or set in zimmer_user_panel/.env.local as NEXT_PUBLIC_API_BASE_URL), then:
 ```bash
-NEXT_PUBLIC_API_BASE_URL=http://localhost:8000 OPENAPI=1 npm run analyze:features:strict
+NEXT_PUBLIC_API_BASE_URL=${process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.zimmerai.com"} OPENAPI=1 npm run analyze:features:strict
 ```
 If available, it will fetch `$API/openapi.json` and mark desired features as covered/missing based on endpoint presence on pages.
 

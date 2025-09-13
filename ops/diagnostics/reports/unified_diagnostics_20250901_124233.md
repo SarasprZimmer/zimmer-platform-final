@@ -31,7 +31,7 @@ Generated: 2025-09-01 12:42:45
 - Output:
     ≡ƒöì Zimmer API Endpoint Test Suite
     ==================================================
-    ≡ƒÜÇ Starting API endpoint tests against http://localhost:8000
+    ≡ƒÜÇ Starting API endpoint tests against ${process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.zimmerai.com"}
     ΓÅ░ Test started at: 2025-09-01 12:42:34
     ================================================================================
     Testing 1/39: CORS Test
@@ -119,7 +119,7 @@ Generated: 2025-09-01 12:42:45
     
     # API Endpoint Test Report
     Generated: 2025-09-01 12:42:45
-    Backend URL: http://localhost:8000
+    Backend URL: ${process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.zimmerai.com"}
     
     ## Summary
     - Total Endpoints Tested: 39

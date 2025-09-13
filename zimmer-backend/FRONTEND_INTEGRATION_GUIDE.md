@@ -17,7 +17,7 @@ The new authentication system uses **access/refresh tokens** with **HTTP-only co
 ### Authentication Endpoints
 
 ```typescript
-// Base URL: http://localhost:8000/api/auth
+// Base URL: ${process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.zimmerai.com"}/api/auth
 
 // 1. Login
 POST /api/auth/login
@@ -46,7 +46,7 @@ Response: { ok: boolean, message: string }
 ### User Endpoints
 
 ```typescript
-// Base URL: http://localhost:8000/api/users
+// Base URL: ${process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.zimmerai.com"}/api/users
 
 // Get current user info
 GET /api/users/me
@@ -90,7 +90,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const API_BASE = 'http://localhost:8000/api';
+  const API_BASE = '${process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.zimmerai.com"}/api';
 
   // Login function
   const login = async (email: string, password: string) => {
@@ -477,7 +477,7 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchDashboard = async () => {
       try {
-        const api = new ApiClient('http://localhost:8000/api', { accessToken: user?.accessToken });
+        const api = new ApiClient('${process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.zimmerai.com"}/api', { accessToken: user?.accessToken });
         const data = await api.getUserDashboard();
         setDashboardData(data);
       } catch (error) {
@@ -543,8 +543,8 @@ export default function Dashboard() {
 
 ```env
 # .env.local (Next.js)
-NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api
-NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
+NEXT_PUBLIC_API_BASE_URL=${process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.zimmerai.com"}/api
+NEXT_PUBLIC_BACKEND_URL=${process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.zimmerai.com"}
 ```
 
 ### CORS Configuration (Backend)

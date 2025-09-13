@@ -87,7 +87,7 @@ cp .env .env.local
 
 3. **Environment Variables:**
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_API_URL=${process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.zimmerai.com"}
 NODE_ENV=development
 PORT=4000
 NEXT_PUBLIC_ENABLE_DEBUG=true
@@ -146,7 +146,7 @@ zimmer-admin-dashboard/
 
 ## 🔌 API Integration
 
-The dashboard connects to the Zimmer backend API at `http://localhost:8000`. Make sure your backend server is running before using the dashboard.
+The dashboard connects to the Zimmer backend API at `${process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.zimmerai.com"}`. Make sure your backend server is running before using the dashboard.
 
 ### API Endpoints
 

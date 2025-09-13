@@ -274,7 +274,7 @@ sqlite3 zimmer_dashboard.db "PRAGMA index_list(user_automations);"
 sqlite3 zimmer_dashboard.db "SELECT telegram_bot_token, COUNT(*) FROM user_automations WHERE telegram_bot_token IS NOT NULL GROUP BY telegram_bot_token HAVING COUNT(*) > 1;"
 
 # Test API endpoint
-curl -X POST http://localhost:8000/api/user/automations \
+curl -X POST ${process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.zimmerai.com"}/api/user/automations \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
   -d '{"automation_id": 1, "telegram_bot_token": "test_token"}'

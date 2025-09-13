@@ -242,14 +242,14 @@ import requests
 
 # Get KB status
 response = requests.get(
-    "http://localhost:8000/api/admin/kb-status",
+    "${process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.zimmerai.com"}/api/admin/kb-status",
     headers={"Authorization": f"Bearer {admin_token}"},
     params={"automation_id": 1}
 )
 
 # Reset KB
 response = requests.post(
-    "http://localhost:8000/api/admin/kb-reset/1",
+    "${process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.zimmerai.com"}/api/admin/kb-reset/1",
     headers={"Authorization": f"Bearer {admin_token}"}
 )
 ```
