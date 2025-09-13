@@ -10,7 +10,7 @@ import { Toast } from '@/components/Toast'
 
 // Google Login Button Component
 function GoogleLoginButton() {
-  const api = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || "${process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.zimmerai.com"}";
+  const api = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || "https://api.zimmerai.com";
   const href = `${api}/api/auth/google/login`;
   
   return (
@@ -45,7 +45,7 @@ export default function LoginPage() {
     if (isAuthenticated) {
       router.push('/dashboard')
     }
-    fetchCsrf(process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || "${process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.zimmerai.com"}");
+    fetchCsrf(process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || "https://api.zimmerai.com");
   }, [isAuthenticated, router])
 
 
